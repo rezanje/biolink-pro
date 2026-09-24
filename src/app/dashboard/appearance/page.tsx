@@ -111,7 +111,7 @@ export default function AppearancePage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
             setIsLoading(false)
-            alert('Anda harus login terlebih dahulu')
+            alert('Please sign in first.')
             return
         }
 
@@ -141,7 +141,7 @@ export default function AppearancePage() {
 
         if (error) {
             console.error('Error saving appearance:', error)
-            alert('Gagal menyimpan tampilan')
+            alert('Could not save appearance settings.')
             setIsLoading(false)
             return
         }
@@ -158,8 +158,8 @@ export default function AppearancePage() {
         <div className="mx-auto flex max-w-[1200px] gap-8 px-5 pb-[150px] pt-6">
           <div className="min-w-0 flex-1">
             <header>
-                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Tampilan</h1>
-                <p className="mt-1.5 text-[13px] text-ink-2">Atur warna, tema, dan filter foto kartu publik kamu</p>
+                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Appearance</h1>
+                <p className="mt-1.5 text-[13px] text-ink-2">Customize colors, themes, and photo filters on your public card</p>
             </header>
 
             {/* Tema kartu publik */}
@@ -175,8 +175,8 @@ export default function AppearancePage() {
                         )}
                     </span>
                     <div>
-                        <h2 className="text-[15px] font-semibold">Tema Kartu</h2>
-                        <p className="text-[12px] text-ink-2">Nuansa halaman publik kamu</p>
+                        <h2 className="text-[15px] font-semibold">Card Theme</h2>
+                        <p className="text-[12px] text-ink-2">The look of your public profile</p>
                     </div>
                 </div>
 
@@ -187,7 +187,7 @@ export default function AppearancePage() {
                             }`}
                     >
                         <Sun className="h-4 w-4" strokeWidth={1.8} />
-                        Terang
+                        Light
                     </button>
                     <button
                         onClick={() => handleThemeModeChange('dark')}
@@ -196,7 +196,7 @@ export default function AppearancePage() {
                             }`}
                     >
                         <Moon className="h-4 w-4" strokeWidth={1.8} />
-                        Gelap
+                        Dark
                     </button>
                     <button
                         onClick={() => handleThemeModeChange('liquid_glass')}
@@ -205,17 +205,17 @@ export default function AppearancePage() {
                             }`}
                     >
                         <Sparkles className="h-4 w-4" strokeWidth={1.8} />
-                        Kaca
+                        Glass
                     </button>
                 </div>
 
                 {userTier === 'FREE' && (
                     <p className="mt-3 rounded-row bg-coral-soft px-3 py-2 text-center text-[11.5px] font-medium text-coral-soft-ink">
-                        Tema Gelap & Kaca terbuka di paket Premium
+                        Dark and Glass themes are available on the Premium plan
                     </p>
                 )}
                 {themeMode === 'liquid_glass' && (
-                    <p className="mt-3 text-[11.5px] text-ink-2">Efek kaca transparan — paling bagus kalau foto profil kamu terang</p>
+                    <p className="mt-3 text-[11.5px] text-ink-2">The transparent glass effect works best with a bright profile photo</p>
                 )}
             </section>
 
@@ -226,8 +226,8 @@ export default function AppearancePage() {
                         <ImageIcon className="h-[18px] w-[18px]" strokeWidth={1.8} />
                     </span>
                     <div>
-                        <h2 className="text-[15px] font-semibold">Filter Foto</h2>
-                        <p className="text-[12px] text-ink-2">Gaya foto profil di kartu publik</p>
+                        <h2 className="text-[15px] font-semibold">Photo Filter</h2>
+                        <p className="text-[12px] text-ink-2">Choose how your profile photo appears on your public card</p>
                     </div>
                 </div>
 
@@ -245,7 +245,7 @@ export default function AppearancePage() {
                         className={`rounded-full py-2.5 text-[12.5px] font-medium transition-colors ${imageFilter === 'grayscale' ? 'bg-ink text-white' : userTier === 'FREE' ? 'cursor-not-allowed text-ink-3' : 'text-ink-2 hover:text-ink'
                             }`}
                     >
-                        Hitam Putih{userTier === 'FREE' ? ' · Premium' : ''}
+                        Black and White{userTier === 'FREE' ? ' · Premium' : ''}
                     </button>
                 </div>
             </section>
@@ -257,8 +257,8 @@ export default function AppearancePage() {
                         <Palette className="h-[18px] w-[18px]" strokeWidth={1.8} />
                     </span>
                     <div>
-                        <h2 className="text-[15px] font-semibold">Warna Utama</h2>
-                        <p className="text-[12px] text-ink-2">Dipakai buat tombol di halaman publik</p>
+                        <h2 className="text-[15px] font-semibold">Accent Color</h2>
+                        <p className="text-[12px] text-ink-2">Used for buttons on your public profile</p>
                     </div>
                 </div>
 
@@ -268,7 +268,7 @@ export default function AppearancePage() {
                             key={color.value}
                             onClick={() => handleColorChange(color.value)}
                             disabled={userTier === 'FREE' && color.value !== '#3B82F6'}
-                            aria-label={`Warna ${color.value}`}
+                            aria-label={`Color ${color.value}`}
                             className={`flex aspect-square w-full items-center justify-center rounded-2xl transition-transform ${color.class} ${primaryColor === color.value ? 'ring-2 ring-ink ring-offset-2 ring-offset-surface' : 'hover:scale-105'
                                 } ${userTier === 'FREE' && color.value !== '#3B82F6' ? 'cursor-not-allowed opacity-20 grayscale' : ''}`}
                         >
@@ -279,20 +279,20 @@ export default function AppearancePage() {
 
                 {userTier === 'FREE' && (
                     <p className="mt-4 rounded-row bg-coral-soft px-3 py-2 text-center text-[11.5px] font-medium text-coral-soft-ink">
-                        Upgrade ke Premium buat buka semua warna
+                        Upgrade to Premium to unlock all colors
                     </p>
                 )}
             </section>
 
-            {/* Tipografi — belum tersedia */}
+            {/* Typography — coming soon */}
             <section className="mt-3 rounded-card bg-surface p-5 shadow-card">
                 <div className="flex items-center gap-3">
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fill-subtle text-ink-3">
                         <Type className="h-[18px] w-[18px]" strokeWidth={1.8} />
                     </span>
                     <div>
-                        <h2 className="text-[15px] font-semibold text-ink-2">Pilihan Font</h2>
-                        <p className="text-[12px] text-ink-3">Segera hadir</p>
+                        <h2 className="text-[15px] font-semibold text-ink-2">Font Options</h2>
+                        <p className="text-[12px] text-ink-3">Coming soon</p>
                     </div>
                 </div>
             </section>
@@ -309,12 +309,12 @@ export default function AppearancePage() {
                     ) : isSaved ? (
                         <>
                             <Check className="h-4 w-4" strokeWidth={2} />
-                            Tersimpan
+                            Saved
                         </>
                     ) : (
                         <>
                             <Save className="h-4 w-4" strokeWidth={1.8} />
-                            Simpan Tampilan
+                            Save Appearance
                         </>
                     )}
                 </button>

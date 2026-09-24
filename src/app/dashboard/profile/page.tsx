@@ -83,7 +83,7 @@ export default function ProfileEditor() {
         if (!file) return
 
         if (file.size > 5 * 1024 * 1024) {
-            alert('Maksimal 5MB bro')
+            alert('Maximum file size is 5 MB.')
             return
         }
 
@@ -103,7 +103,7 @@ export default function ProfileEditor() {
                 setGeneratedAvatarUrl(data.generated_url)
                 setOriginalAvatarUrl(data.original_url)
             } else {
-                alert(data.error || 'Gagal generate avatar')
+                alert(data.error || 'Could not generate avatar.')
             }
         } catch (err) {
             console.error(err)
@@ -266,17 +266,17 @@ export default function ProfileEditor() {
         if (!file) return
 
         if (!file.type.startsWith('image/')) {
-            setError('File harus berupa gambar (JPG, PNG, dll)')
+            setError('File must be an image (JPG, PNG, etc.).')
             return
         }
 
         if (file.size > 5 * 1024 * 1024) {
-            setError('Ukuran file maksimal 5MB')
+            setError('Maximum file size is 5 MB.')
             return
         }
 
         if (!userId) {
-            setError('Anda harus login terlebih dahulu')
+            setError('Please sign in first.')
             return
         }
 
@@ -293,7 +293,7 @@ export default function ProfileEditor() {
             await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('user_id', userId)
         } catch (err) {
             console.error(err)
-            setError('Gagal upload gambar. Silakan coba lagi.')
+            setError('Could not upload image. Please try again.')
         } finally {
             setIsUploading(false)
         }
@@ -324,17 +324,17 @@ export default function ProfileEditor() {
 
         // Free Tier Limit: Max 2 Photos
         if (userTier === 'FREE' && (formData.gallery?.length || 0) >= 2) {
-            alert('Free Tier maksimal 2 foto galeri. Upgrade ke Premium untuk unlimited!')
+            alert('The Free plan allows up to 2 gallery photos. Upgrade to Premium for unlimited photos.')
             return
         }
 
         if (file.size > 5 * 1024 * 1024) {
-            alert('Ukuran foto galeri maksimal 5MB.')
+            alert('Gallery photos must be 5 MB or smaller.')
             return
         }
 
         if (!userId) {
-            alert('Anda harus login terlebih dahulu')
+            alert('Please sign in first.')
             return
         }
 
@@ -344,7 +344,7 @@ export default function ProfileEditor() {
         const isFree = profileData?.tier === 'FREE'
 
         if (isFree && formData.gallery.length >= 3) {
-            alert('User FREE hanya bisa upload maksimal 3 foto. Upgrade untuk unlimited!')
+            alert('Free plan users can upload up to 3 photos. Upgrade for unlimited uploads.')
             return
         }
 
@@ -359,7 +359,7 @@ export default function ProfileEditor() {
             updateField('gallery', newGallery)
         } catch (err) {
             console.error(err)
-            alert('Gagal upload foto galeri.')
+            alert('Could not upload gallery photo.')
         }
     }
 
@@ -375,12 +375,12 @@ export default function ProfileEditor() {
     const addFileLink = () => {
         // Free Tier Limit: Max 1 Document
         if (userTier === 'FREE' && formData.files.length >= 1) {
-            alert('Free Tier maksimal 1 dokumen/link. Upgrade ke Premium!')
+            alert('The Free plan allows 1 document or link. Upgrade to Premium to add more.')
             return
         }
 
         if (!newFileTitle.trim() || !newFileUrl.trim()) {
-            alert('Judul dan URL harus diisi')
+            alert('Please enter a title and URL.')
             return
         }
 
@@ -410,7 +410,7 @@ export default function ProfileEditor() {
 
     const generateAIBio = async () => {
         if (!aiKeywords.trim()) {
-            alert('Masukan keyword dulu bro!')
+            alert('Enter a few keywords first.')
             return
         }
 
@@ -429,12 +429,12 @@ export default function ProfileEditor() {
                 setAiKeywords('')
             } else {
                 console.error('AI API Error Details:', data)
-                const errorMsg = data.error || 'Gagal buat bio, coba lagi ya.'
+                const errorMsg = data.error || 'Could not generate bio. Please try again.'
                 alert(`Error: ${errorMsg}`)
             }
         } catch (err) {
             console.error(err)
-            alert('Ada masalah pas hubungi AI.')
+            alert('There was a problem connecting to AI.')
         } finally {
             setIsGenerating(false)
         }
@@ -459,13 +459,13 @@ export default function ProfileEditor() {
         }
 
         if (!formData.slug) {
-            setError('Custom URL (Slug) harus diisi')
+            setError('A custom profile URL is required.')
             setIsLoading(false)
             return
         }
 
         if (!/^[a-z0-9-]+$/.test(formData.slug)) {
-            setError('Slug hanya boleh berisi huruf kecil, angka, dan tanda hubung (-)')
+            setError('Your profile URL can only contain lowercase letters, numbers, and hyphens (-).')
             setIsLoading(false)
             return
         }
@@ -492,7 +492,7 @@ export default function ProfileEditor() {
                 .single()
 
             if (existingUser) {
-                setError('Custom URL ini sudah dipakai orang lain. Ganti yang lain ya!')
+                setError('This custom profile URL is already in use. Choose another one.')
                 setIsLoading(false)
                 return
             }
@@ -568,7 +568,7 @@ export default function ProfileEditor() {
 
         } catch (err: any) {
             console.error('Save error:', err)
-            setError('Gagal menyimpan profil: ' + err.message)
+            setError('Could not save profile: ' + err.message)
         } finally {
             setIsLoading(false)
         }
@@ -581,26 +581,26 @@ export default function ProfileEditor() {
         <div className="mx-auto flex max-w-[1200px] gap-8 px-5 pb-[150px] pt-6">
           <div className="min-w-0 flex-1">
             <header>
-                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Edit Profil</h1>
-                <p className="mt-1.5 text-[13px] text-ink-2">Isi data yang tampil di kartu digital kamu</p>
+                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Edit Profile</h1>
+                <p className="mt-1.5 text-[13px] text-ink-2">Add the information shown on your digital card</p>
                 <span
                     className="mt-3 inline-block rounded-full bg-fill-subtle px-2.5 py-1 text-[10px] uppercase tracking-wider text-ink-2"
                     style={{ fontFamily: 'var(--font-mono)' }}
                 >
-                    Paket {userTier}
+                    {userTier} plan
                 </span>
             </header>
 
             <form onSubmit={handleSave}>
-                {/* Foto profil */}
+                {/* Profile photo */}
                 <section className="mt-5 rounded-card bg-surface p-5 shadow-card">
                     <div className="flex items-center gap-3">
                         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fill-subtle text-ink-2">
                             <Camera className="h-[18px] w-[18px]" strokeWidth={1.8} />
                         </span>
                         <div>
-                            <h2 className="text-[15px] font-semibold">Foto Profil</h2>
-                            <p className="text-[12px] text-ink-2">Jadi gambar utama di halaman publik</p>
+                            <h2 className="text-[15px] font-semibold">Profile Photo</h2>
+                            <p className="text-[12px] text-ink-2">Your main image on the public profile</p>
                         </div>
                     </div>
 
@@ -619,7 +619,7 @@ export default function ProfileEditor() {
                                     <button
                                         type="button"
                                         onClick={handleRemovePhoto}
-                                        aria-label="Hapus foto"
+                                        aria-label="Remove photo"
                                         className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-coral-soft text-coral-soft-ink shadow-row"
                                     >
                                         <X className="h-3.5 w-3.5" strokeWidth={2} />
@@ -644,7 +644,7 @@ export default function ProfileEditor() {
                                     ) : (
                                         <>
                                             <Upload className="h-6 w-6 text-ink-3" strokeWidth={1.6} />
-                                            <span className="text-[11px] text-ink-2">Unggah</span>
+                                            <span className="text-[11px] text-ink-2">Upload</span>
                                         </>
                                     )}
                                 </button>
@@ -666,24 +666,24 @@ export default function ProfileEditor() {
                             </p>
                             <p className="mt-1.5 flex items-center gap-2">
                                 <Upload className="h-3.5 w-3.5 text-ink-3" strokeWidth={1.8} />
-                                Maksimal 5MB
+                                Maximum 5 MB
                             </p>
                             <p className="mt-3 text-[11px] leading-relaxed text-ink-3">
-                                Pakai foto tegak rasio 3:4 biar hasilnya paling rapi.
+                                Use a portrait photo with a 3:4 ratio for the best fit.
                             </p>
                         </div>
                     </div>
                 </section>
 
-                {/* Kata sapaan */}
+                {/* Greeting */}
                 <section className="mt-3 rounded-card bg-surface p-5 shadow-card">
                     <div className="flex items-center gap-3">
                         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fill-subtle text-ink-2">
                             <Sparkles className="h-[18px] w-[18px]" strokeWidth={1.8} />
                         </span>
                         <div>
-                            <h2 className="text-[15px] font-semibold">Kata Sapaan</h2>
-                            <p className="text-[12px] text-ink-2">Muncul saat kartu kamu pertama dibuka</p>
+                            <h2 className="text-[15px] font-semibold">Greeting</h2>
+                            <p className="text-[12px] text-ink-2">Shown when someone first opens your card</p>
                         </div>
                     </div>
 
@@ -704,12 +704,12 @@ export default function ProfileEditor() {
                             </span>
                         )}
                     </div>
-                    <p className="mt-2 text-[11px] text-ink-3">Contoh: hello, halo, selamat datang, apa kabar</p>
+                    <p className="mt-2 text-[11px] text-ink-3">Examples: hello, welcome, nice to meet you</p>
 
                     {availableSpecialEditions.length > 0 && (
                         <div className="mt-5 border-t border-ink/[0.08] pt-5">
-                            <h3 className="text-[13.5px] font-semibold">Animasi Edisi Khusus</h3>
-                            <p className="mt-0.5 text-[12px] text-ink-2">Pilih animasi yang muncul di layar sapaan</p>
+                            <h3 className="text-[13.5px] font-semibold">Special Edition Animation</h3>
+                            <p className="mt-0.5 text-[12px] text-ink-2">Choose an animation for the greeting screen</p>
 
                             <div className="mt-3 grid gap-2">
                                 <button
@@ -739,16 +739,16 @@ export default function ProfileEditor() {
 
                             <div className="mt-4 flex items-center justify-between gap-4">
                                 <div className="min-w-0">
-                                    <h4 className="text-[13.5px] font-semibold">Aktifkan Animasi</h4>
+                            <h4 className="text-[13.5px] font-semibold">Enable Animation</h4>
                                     <p className="mt-0.5 text-[12px] text-ink-2">
-                                        {selectedSpecialEdition ? `Tampilkan ${selectedSpecialEdition.animationLabel} berulang di layar sapaan.` : 'Pilih animasinya dulu.'}
+                                        {selectedSpecialEdition ? `Repeat ${selectedSpecialEdition.animationLabel} on the greeting screen.` : 'Choose an animation first.'}
                                     </p>
                                 </div>
                                 <button
                                     type="button"
                                     disabled={!formData.selected_special_greeting_anim}
                                     onClick={() => updateField('enable_special_greeting_anim', !formData.enable_special_greeting_anim)}
-                                    aria-label="Aktifkan animasi edisi khusus"
+                                    aria-label="Enable special edition animation"
                                     className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${formData.enable_special_greeting_anim ? 'bg-ink' : 'bg-track'
                                         }`}
                                 >
@@ -762,20 +762,20 @@ export default function ProfileEditor() {
                     )}
                 </section>
 
-                {/* Galeri foto */}
+                {/* Photo gallery */}
                 <section className="mt-3 rounded-card bg-surface p-5 shadow-card">
                     <div className="flex items-center justify-between gap-3">
-                        <h2 className="text-[15px] font-semibold">Galeri Foto</h2>
+                        <h2 className="text-[15px] font-semibold">Photo Gallery</h2>
                         <label className="flex cursor-pointer items-center gap-1.5 rounded-full bg-fill-subtle px-3.5 py-2 text-[12px] font-medium text-ink-2">
                             <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.8} />
-                            Unggah
+                            Upload
                             <input type="file" className="hidden" accept="image/*" onChange={handleGalleryUpload} />
                         </label>
                     </div>
 
                     {formData.gallery.length === 0 ? (
                         <div className="mt-4 rounded-row border border-dashed border-ink/15 p-8 text-center text-[12.5px] text-ink-3">
-                            Belum ada foto di galeri
+                            No gallery photos yet
                         </div>
                     ) : (
                         <div className="mt-4 grid grid-cols-3 gap-2.5">
@@ -785,7 +785,7 @@ export default function ProfileEditor() {
                                     <button
                                         type="button"
                                         onClick={() => removeGalleryItem(item.id)}
-                                        aria-label="Hapus foto galeri"
+                                        aria-label="Remove gallery photo"
                                         className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-ink/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
                                     >
                                         <X className="h-3 w-3" strokeWidth={2} />
@@ -796,34 +796,34 @@ export default function ProfileEditor() {
                     )}
                 </section>
 
-                {/* Dokumen & link */}
+                {/* Documents and links */}
                 <section className="mt-3 rounded-card bg-surface p-5 shadow-card">
                     <div className="flex items-center justify-between gap-3">
-                        <h2 className="text-[15px] font-semibold">Dokumen & Link</h2>
+                        <h2 className="text-[15px] font-semibold">Documents & Links</h2>
                         <button
                             type="button"
                             onClick={() => setShowAddFile(!showAddFile)}
                             className="flex items-center gap-1.5 rounded-full bg-fill-subtle px-3.5 py-2 text-[12px] font-medium text-ink-2"
                         >
                             <FileText className="h-3.5 w-3.5" strokeWidth={1.8} />
-                            Tambah
+                            Add
                         </button>
                     </div>
 
                     {showAddFile && (
                         <div className="mt-4 rounded-row bg-fill-subtle p-4">
                             <div>
-                                <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Judul dokumen</label>
+                                <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Document title</label>
                                 <input
                                     type="text"
                                     value={newFileTitle}
                                     onChange={(e) => setNewFileTitle(e.target.value)}
-                                    placeholder="Contoh: Sertifikat Keaslian"
+                                    placeholder="Example: Certificate of Authenticity"
                                     className="mt-1.5 w-full rounded-row bg-surface px-4 py-2.5 text-[13.5px] text-ink outline-none placeholder:text-ink-3"
                                 />
                             </div>
                             <div className="mt-3">
-                                <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Alamat link</label>
+                                    <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Link URL</label>
                                 <input
                                     type="text"
                                     value={newFileUrl}
@@ -838,14 +838,14 @@ export default function ProfileEditor() {
                                     onClick={addFileLink}
                                     className="flex-1 rounded-full bg-ink py-2.5 text-[12.5px] font-medium text-white"
                                 >
-                                    Simpan
+                                    Save
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => { setShowAddFile(false); setNewFileTitle(''); setNewFileUrl('') }}
                                     className="rounded-full bg-surface px-5 py-2.5 text-[12.5px] font-medium text-ink-2"
                                 >
-                                    Batal
+                                        Cancel
                                 </button>
                             </div>
                         </div>
@@ -853,7 +853,7 @@ export default function ProfileEditor() {
 
                     {formData.files.length === 0 ? (
                         <div className="mt-4 rounded-row border border-dashed border-ink/15 p-8 text-center text-[12.5px] text-ink-3">
-                            Belum ada dokumen. Tambahkan link Google Drive, PDF, atau berkas lain.
+                            No documents yet. Add a Google Drive link, PDF, or another file.
                         </div>
                     ) : (
                         <div className="mt-4 grid gap-2.5">
@@ -871,7 +871,7 @@ export default function ProfileEditor() {
                                     <button
                                         type="button"
                                         onClick={() => removeFileItem(file.id)}
-                                        aria-label="Hapus dokumen"
+                                        aria-label="Delete document"
                                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-coral-soft hover:text-coral-soft-ink"
                                     >
                                         <Trash2 className="h-4 w-4" strokeWidth={1.8} />
@@ -888,23 +888,23 @@ export default function ProfileEditor() {
                         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fill-subtle text-ink-2">
                             <User className="h-[18px] w-[18px]" strokeWidth={1.8} />
                         </span>
-                        <h2 className="text-[15px] font-semibold">Informasi Dasar</h2>
+                        <h2 className="text-[15px] font-semibold">Basic Information</h2>
                     </div>
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Nama tampilan</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Display name</label>
                             <input
                                 type="text"
                                 value={formData.display_name}
                                 onChange={(e) => updateField('display_name', e.target.value)}
-                                placeholder="Nama lengkap kamu"
+                                placeholder="Your full name"
                                 className="mt-1.5 w-full rounded-row bg-fill-subtle px-4 py-3 text-[14px] text-ink outline-none placeholder:text-ink-3"
                             />
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Alamat kartu</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Card URL</label>
                             <div className="relative mt-1.5">
                                 <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[13px] text-ink-3">
                                     my.gentanala.com/
@@ -914,7 +914,7 @@ export default function ProfileEditor() {
                                     value={formData.slug}
                                     onChange={(e) => updateField('slug', e.target.value.toLowerCase().replace(/\s+/g, '-'))}
                                     disabled={userTier === 'FREE'}
-                                    placeholder="namakamu"
+                                    placeholder="yourname"
                                     className={`w-full rounded-row bg-fill-subtle py-3 pl-[8.6rem] pr-4 text-[14px] text-ink outline-none placeholder:text-ink-3 ${userTier === 'FREE' ? 'cursor-not-allowed opacity-70' : ''}`}
                                 />
                                 {userTier === 'FREE' && (
@@ -926,28 +926,28 @@ export default function ProfileEditor() {
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Perusahaan</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Company</label>
                             <div className="relative mt-1.5">
                                 <Building2 className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
                                 <input
                                     type="text"
                                     value={formData.company}
                                     onChange={(e) => updateField('company', e.target.value)}
-                                    placeholder="Nama perusahaan"
+                                    placeholder="Company name"
                                     className="w-full rounded-row bg-fill-subtle py-3 pl-11 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-3"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Jabatan</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Job title</label>
                             <div className="relative mt-1.5">
                                 <Briefcase className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
                                 <input
                                     type="text"
                                     value={formData.job_title}
                                     onChange={(e) => updateField('job_title', e.target.value)}
-                                    placeholder="CEO, Manager, dll"
+                                    placeholder="CEO, Manager, etc."
                                     className="w-full rounded-row bg-fill-subtle py-3 pl-11 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-3"
                                 />
                             </div>
@@ -956,7 +956,7 @@ export default function ProfileEditor() {
 
                     <div className="mt-3">
                         <div className="flex items-center justify-between gap-3">
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Bio singkat</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Short bio</label>
                             {userTier !== 'FREE' && (
                                 <button
                                     type="button"
@@ -964,19 +964,19 @@ export default function ProfileEditor() {
                                     className="flex items-center gap-1.5 rounded-full bg-fill-subtle px-3 py-1.5 text-[11px] font-medium text-ink-2"
                                 >
                                     <Sparkles className="h-3 w-3" strokeWidth={1.8} />
-                                    Tulis pakai AI
+                                    Write with AI
                                 </button>
                             )}
                         </div>
 
                         {showAIModal && (
                             <div className="mt-3 rounded-row bg-fill-subtle p-4">
-                                <p className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Mau nonjolin apa?</p>
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-ink-2">What would you like to highlight?</p>
                                 <input
                                     type="text"
                                     value={aiKeywords}
                                     onChange={(e) => setAiKeywords(e.target.value)}
-                                    placeholder="Misal: Arsitek, Founder jam tangan, suka golf"
+                                    placeholder="Example: architect, watch founder, golf enthusiast"
                                     className="mt-2 w-full rounded-row bg-surface px-4 py-2.5 text-[13.5px] text-ink outline-none placeholder:text-ink-3"
                                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), generateAIBio())}
                                 />
@@ -988,14 +988,14 @@ export default function ProfileEditor() {
                                         className="flex flex-1 items-center justify-center gap-2 rounded-full bg-ink py-2.5 text-[12.5px] font-medium text-white disabled:opacity-50"
                                     >
                                         {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" strokeWidth={1.8} />}
-                                        {isGenerating ? 'Lagi mikir...' : 'Buatkan bio'}
+                                        {isGenerating ? 'Generating…' : 'Generate Bio'}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setShowAIModal(false)}
                                         className="rounded-full bg-surface px-5 py-2.5 text-[12.5px] font-medium text-ink-2"
                                     >
-                                        Batal
+                                        Cancel
                                     </button>
                                 </div>
                             </div>
@@ -1005,7 +1005,7 @@ export default function ProfileEditor() {
                             <textarea
                                 value={formData.bio}
                                 onChange={(e) => updateField('bio', e.target.value)}
-                                placeholder="Tulis bio singkat kamu..."
+                                placeholder="Write a short bio..."
                                 rows={3}
                                 maxLength={200}
                                 className="w-full resize-none rounded-row bg-fill-subtle px-4 py-3 text-[14px] text-ink outline-none placeholder:text-ink-3"
@@ -1020,18 +1020,18 @@ export default function ProfileEditor() {
                     </div>
                 </section>
 
-                {/* Kontak langsung */}
+                {/* Direct contact details */}
                 <section className="mt-3 rounded-card bg-surface p-5 shadow-card">
                     <div className="flex items-center gap-3">
                         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fill-subtle text-ink-2">
                             <Phone className="h-[18px] w-[18px]" strokeWidth={1.8} />
                         </span>
-                        <h2 className="text-[15px] font-semibold">Kontak Langsung</h2>
+                        <h2 className="text-[15px] font-semibold">Direct Contact</h2>
                     </div>
 
                     <div className="mt-4 grid gap-3">
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Nomor HP</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Phone Number</label>
                             <div className="relative mt-1.5">
                                 <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
                                 <input
@@ -1045,7 +1045,7 @@ export default function ProfileEditor() {
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Nomor WhatsApp</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">WhatsApp Number</label>
                             <div className="relative mt-1.5">
                                 <MessageCircle className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
                                 <input
@@ -1066,7 +1066,7 @@ export default function ProfileEditor() {
                                     type="email"
                                     value={formData.email}
                                     onChange={(e) => updateField('email', e.target.value)}
-                                    placeholder="nama@email.com"
+                                    placeholder="name@email.com"
                                     className="w-full rounded-row bg-fill-subtle py-3 pl-11 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-3"
                                 />
                             </div>
@@ -1085,7 +1085,7 @@ export default function ProfileEditor() {
                     {isSaved && (
                         <p className="flex items-center gap-2 text-[12.5px] text-success-soft-ink">
                             <CheckCircle className="h-4 w-4" strokeWidth={1.8} />
-                            Tersimpan
+                            Saved
                         </p>
                     )}
                 </div>
@@ -1100,22 +1100,22 @@ export default function ProfileEditor() {
                     ) : (
                         <>
                             <Save className="h-4 w-4" strokeWidth={1.8} />
-                            Simpan Perubahan
+                            Save Changes
                         </>
                     )}
                 </button>
             </form>
 
-            {/* Kartu NFC yang terhubung */}
+            {/* Connected NFC cards */}
             <section className="mt-7">
-                <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Kartu NFC Saya</h2>
+                <h2 className="text-[19px] font-semibold tracking-[-0.025em]">My NFC Cards</h2>
                 <p className="mt-1.5 text-[12.5px] text-ink-2">
-                    Semua kartu yang terhubung ke akun kamu. Bisa dilepas satu per satu tanpa ganggu kartu lain.
+                    All cards connected to your account. You can unlink them one at a time without affecting other cards.
                 </p>
 
                 {mySerials.length === 0 ? (
                     <div className="mt-4 rounded-card border border-dashed border-ink/15 bg-surface/60 p-8 text-center text-[12.5px] text-ink-3">
-                        Belum ada kartu yang terhubung
+                        No cards connected yet
                     </div>
                 ) : (
                     <div className="mt-4 grid gap-2.5">
@@ -1132,13 +1132,13 @@ export default function ProfileEditor() {
                                         </span>
                                     </div>
                                     <p className="mt-1 text-[11px] text-ink-3">
-                                        Diklaim {new Date(serial.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        Claimed {new Date(serial.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </p>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={async () => {
-                                        if (!confirm(`Lepaskan kartu #${idx + 1} (${serial.serial_uuid.substring(0, 8)}...) dari akun Anda?\n\nKartu ini akan jadi kosong dan bisa diklaim orang lain.\nProfil dan kartu lain Anda TIDAK akan terpengaruh.`)) return
+                                        if (!confirm(`Unlink card #${idx + 1} (${serial.serial_uuid.substring(0, 8)}...) from your account?\n\nThis card will be unclaimed and can be claimed by someone else.\nYour profile and other cards will NOT be affected.`)) return
 
                                         try {
                                             const res = await fetch('/api/admin/users/delete', {
@@ -1148,18 +1148,18 @@ export default function ProfileEditor() {
                                             })
                                             const data = await res.json()
                                             if (data.error) {
-                                                alert('Gagal melepaskan kartu: ' + data.error)
+                                                alert('Could not unlink card: ' + data.error)
                                             } else {
-                                                alert('Kartu berhasil dilepas! Profil Anda tetap aman.')
+                                                alert('Card unlinked. Your profile is safe.')
                                                 setMySerials(prev => prev.filter(s => s.id !== serial.id))
                                             }
                                         } catch (err) {
-                                            alert('Gagal melepaskan kartu. Coba lagi nanti.')
+                                            alert('Could not unlink card. Please try again later.')
                                         }
                                     }}
                                     className="shrink-0 whitespace-nowrap rounded-full bg-coral-soft px-3.5 py-2 text-[11.5px] font-semibold text-coral-soft-ink transition-transform active:scale-[0.98]"
                                 >
-                                    Lepaskan
+                                    Unlink
                                 </button>
                             </div>
                         ))}
@@ -1167,19 +1167,19 @@ export default function ProfileEditor() {
                 )}
 
                 <p className="mt-3 text-[11px] leading-relaxed text-ink-3">
-                    Melepas kartu cuma mencabut kartu itu dari akun kamu. Profil dan kartu lain tetap aman —
-                    kartu yang dilepas jadi kosong dan bisa diklaim orang lain.
+                    Unlinking removes that card from your account. Your profile and other cards stay as they are;
+                    the unlinked card becomes available for someone else to claim.
                 </p>
             </section>
 
-            {/* Keluar akun — satu-satunya pintu logout setelah cangkang lama dilepas. */}
+            {/* Account sign-out */}
             <button
                 type="button"
                 onClick={handleLogout}
                 className="mt-7 flex w-full items-center justify-center gap-2 rounded-full bg-surface py-3.5 text-[13px] font-medium text-ink-2 shadow-row transition-transform active:scale-[0.99]"
             >
                 <LogOut className="h-4 w-4" strokeWidth={1.8} />
-                Keluar dari akun
+                Sign out
             </button>
           </div>
 

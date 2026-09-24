@@ -31,9 +31,9 @@ export default function PremiumLock({ children, isLocked, featureName, descripti
                         <Lock className="h-6 w-6 text-coral-soft-ink" strokeWidth={1.8} />
                     </div>
 
-                    <h3 className="text-[19px] font-semibold tracking-[-0.025em]">Fitur Premium</h3>
+                    <h3 className="text-[19px] font-semibold tracking-[-0.025em]">Premium feature</h3>
                     <p className="mt-2 text-[13px] text-ink-2">
-                        <span className="font-medium text-ink">{featureName}</span> cuma tersedia buat anggota Premium.
+                        <span className="font-medium text-ink">{featureName}</span> is available to Premium members only.
                     </p>
 
                     {description && (

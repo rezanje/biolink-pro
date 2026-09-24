@@ -63,7 +63,7 @@ export default function AssistantPage() {
         setSaving(false)
 
         if (dbError) {
-            setError('Gagal menyimpan. Coba lagi sebentar lagi.')
+            setError('Could not save your settings. Please try again.')
             return
         }
         setSaved(true)
@@ -91,16 +91,16 @@ export default function AssistantPage() {
     return (
         <div className="mx-auto max-w-[1200px] px-5 pb-[150px] pt-6">
             <header>
-                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Asisten</h1>
+                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Assistant</h1>
                 <p className="mt-1.5 text-[13px] text-ink-2">
-                    Karakter yang menyambut pengunjung kartu kamu dan bisa diajak ngobrol
+                    Choose the character that welcomes visitors to your card
                 </p>
             </header>
 
             {!PET_FEATURE_ENABLED && (
                 <p className="mt-4 rounded-card bg-coral-soft px-4 py-3 text-[12.5px] leading-relaxed text-coral-soft-ink">
-                    Asisten lagi dimatikan sementara, jadi belum tampil di kartu publik. Setelan di halaman ini
-                    tetap tersimpan dan langsung berlaku begitu fiturnya dinyalakan lagi.
+                    The assistant is temporarily disabled and will not appear on your public card. Your settings
+                    are still saved and will apply when the feature is enabled again.
                 </p>
             )}
 
@@ -113,14 +113,14 @@ export default function AssistantPage() {
                             {previewGreeting}
                         </p>
                     ) : (
-                        <p className="mt-4 text-[12.5px] text-ink-3">Asisten sedang dimatikan</p>
+                        <p className="mt-4 text-[12.5px] text-ink-3">Assistant is turned off</p>
                     )}
                 </div>
             </section>
 
             {/* Pemilih karakter */}
             <section className="mt-3 rounded-card bg-surface p-5 shadow-card">
-                <h2 className="text-[15px] font-semibold">Pilih karakter</h2>
+                <h2 className="text-[15px] font-semibold">Choose a character</h2>
                 <div className="mt-4 grid grid-cols-2 gap-2.5">
                     {PET_CHARACTERS.map((c) => (
                         <button
@@ -143,7 +143,7 @@ export default function AssistantPage() {
 
             {/* Nama + sakelar */}
             <section className="mt-3 rounded-card bg-surface p-5 shadow-card">
-                <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Nama panggilan</label>
+                <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Nickname</label>
                 <input
                     type="text"
                     value={form.name}
@@ -155,14 +155,14 @@ export default function AssistantPage() {
 
                 <div className="mt-5 flex items-center justify-between gap-4">
                     <div>
-                        <h3 className="text-[13.5px] font-semibold">Tampilkan di kartu publik</h3>
+                        <h3 className="text-[13.5px] font-semibold">Show on public card</h3>
                         <p className="mt-0.5 text-[12px] text-ink-2">
-                            Mati = kartu kamu tampil persis seperti sebelum ada asisten
+                            Turn it off to show your card without the assistant
                         </p>
                     </div>
                     <button
                         onClick={() => setForm({ ...form, enabled: !form.enabled })}
-                        aria-label="Tampilkan asisten di kartu publik"
+                        aria-label="Show assistant on public card"
                         className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${form.enabled ? 'bg-ink' : 'bg-track'}`}
                     >
                         <span className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-row transition-transform ${form.enabled ? 'translate-x-7' : 'translate-x-1'}`} />
@@ -182,12 +182,12 @@ export default function AssistantPage() {
                 ) : saved ? (
                     <>
                         <Check className="h-4 w-4" strokeWidth={2} />
-                        Tersimpan
+                        Saved
                     </>
                 ) : (
                     <>
                         <Save className="h-4 w-4" strokeWidth={1.8} />
-                        Simpan Asisten
+                        Save Assistant
                     </>
                 )}
             </button>
