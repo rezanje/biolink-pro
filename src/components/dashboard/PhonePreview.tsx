@@ -159,7 +159,7 @@ export default function PhonePreview() {
                             <div className="bg-white p-3 rounded-xl inline-block">
                                 <QRCodeSVG value={profileUrl} size={120} level="M" />
                             </div>
-                            <p className={`text-[10px] mt-2 ${isLightMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Scan untuk buka profil</p>
+                            <p className={`text-[10px] mt-2 ${isLightMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Scan to open profile</p>
                         </motion.div>
                     )}
 

@@ -20,13 +20,11 @@ import KabutNav from '@/components/dashboard/KabutNav'
 import { createClient } from '@/lib/supabase/client'
 
 const navItems = [
-    { href: '/dashboard', icon: LayoutDashboard, label: 'Beranda' },
+    { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
     { href: '/dashboard/analytics', icon: BarChart3, label: 'Analytics', feature: 'analytics_leads' },
-    { href: '/dashboard/profile', icon: User, label: 'Edit Profil' },
-    { href: '/dashboard/links', icon: Link2, label: 'Atur Link' },
-    { href: '/dashboard/appearance', icon: Palette, label: 'Tampilan' },
-    // AI Assistant disembunyikan dulu. Halamannya masih ada di
-    // /dashboard/ai-assistant — tinggal kembalikan barisnya kalau mau dipakai lagi.
+    { href: '/dashboard/profile', icon: User, label: 'Edit Profile' },
+    { href: '/dashboard/links', icon: Link2, label: 'Manage Links' },
+    { href: '/dashboard/appearance', icon: Palette, label: 'Appearance' },
 ]
 
 // Rute yang sudah dipindahkan ke arah desain Kabut. Layar di daftar ini memakai
@@ -120,7 +118,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                                     {profile.display_name?.[0]?.toUpperCase()}
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-sm font-medium text-zinc-900 truncate">Preview Profil</p>
+                                    <p className="text-sm font-medium text-zinc-900 truncate">Preview Profile</p>
                                     <p className="text-xs text-zinc-400 truncate">/{profile.slug}</p>
                                 </div>
                             </div>
@@ -133,7 +131,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                         className="flex items-center gap-3 w-full px-4 py-3 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                     >
                         <LogOut className="w-5 h-5" />
-                        Keluar
+                        Sign out
                     </button>
                 </div>
             </aside>
@@ -145,7 +143,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                         <CreditCard className="w-6 h-6 text-blue-600" />
                         <span className="text-lg font-bold text-zinc-900">GenHub</span>
                     </Link>
-                    <button onClick={handleLogout} className="p-2 text-zinc-400 hover:text-red-500 transition-colors">
+                    <button onClick={handleLogout} aria-label="Sign out" className="p-2 text-zinc-400 hover:text-red-500 transition-colors">
                         <LogOut className="w-5 h-5" />
                     </button>
                 </header>

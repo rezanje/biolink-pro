@@ -9,11 +9,11 @@ import { BarChart3, Home, Link2, Palette, User } from 'lucide-react'
 // DashboardShell lama supaya layar yang belum dipindahkan tetap memakai
 // navigasi lamanya tanpa bentrok.
 const ITEMS = [
-    { href: '/dashboard', icon: Home, label: 'Beranda' },
-    { href: '/dashboard/analytics', icon: BarChart3, label: 'Statistik' },
-    { href: '/dashboard/links', icon: Link2, label: 'Tautan' },
-    { href: '/dashboard/profile', icon: User, label: 'Profil' },
-    { href: '/dashboard/appearance', icon: Palette, label: 'Ganti tampilan profil' },
+    { href: '/dashboard', icon: Home, label: 'Overview' },
+    { href: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
+    { href: '/dashboard/links', icon: Link2, label: 'Links' },
+    { href: '/dashboard/profile', icon: User, label: 'Profile' },
+    { href: '/dashboard/appearance', icon: Palette, label: 'Appearance' },
 ]
 
 export default function KabutNav() {
@@ -22,7 +22,7 @@ export default function KabutNav() {
     return (
         <div className="fixed bottom-6 left-[22px] right-[22px] z-50 md:left-1/2 md:w-[420px] md:-translate-x-1/2">
             <nav
-                aria-label="Navigasi dashboard"
+                aria-label="Dashboard navigation"
                 className="h-[68px] rounded-full border border-white/80 bg-white/[0.72] px-2 shadow-nav backdrop-blur-[26px] backdrop-saturate-[1.7]"
             >
                 <ul className="flex h-full items-center justify-around">

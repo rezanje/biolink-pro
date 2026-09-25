@@ -300,8 +300,8 @@ export default function AnalyticsPage() {
         >
             <div className="mx-auto max-w-[1200px] px-5 pb-[150px] pt-6">
                 <header>
-                    <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Statistik</h1>
-                    <p className="mt-1.5 text-[13px] text-ink-2">Pantau performa kartu digital dan calon pelanggan kamu</p>
+                    <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Analytics</h1>
+                    <p className="mt-1.5 text-[13px] text-ink-2">Track your digital card performance and potential customers</p>
                 </header>
 
                 {/* Rentang waktu */}
@@ -313,7 +313,7 @@ export default function AnalyticsPage() {
                             className={`rounded-full py-2.5 text-[12.5px] font-medium transition-colors ${dateRange === range ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink'
                                 }`}
                         >
-                            {range.replace('d', ' hari')}
+                            {range.replace('d', ' days')}
                         </button>
                     ))}
                 </div>
@@ -326,20 +326,20 @@ export default function AnalyticsPage() {
                         </span>
                         <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                                <h3 className="text-[15px] font-semibold">Formulir Kontak</h3>
+                                <h3 className="text-[15px] font-semibold">Contact Form</h3>
                                 {leadCaptureEnabled && (
                                     <span className="rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-success-soft-ink">
-                                        Aktif
+                                        Active
                                     </span>
                                 )}
                             </div>
                             <p className="mt-1 text-[12.5px] leading-snug text-ink-2">
-                                Kumpulkan nama, WhatsApp, dan email pengunjung dari kartu publik kamu
+                                Collect visitors' names, WhatsApp numbers, and email addresses from your public card
                             </p>
                         </div>
                         <button
                             onClick={toggleLeadCapture}
-                            aria-label="Aktifkan formulir kontak"
+                            aria-label="Enable contact form"
                             className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${leadCaptureEnabled ? 'bg-ink' : 'bg-track'}`}
                         >
                             <span className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-row transition-transform ${leadCaptureEnabled ? 'translate-x-7' : 'translate-x-1'}`} />
@@ -352,7 +352,7 @@ export default function AnalyticsPage() {
                             <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-2 text-[12.5px] font-medium text-ink-2">
                                     <Clock className="h-4 w-4 text-ink-3" strokeWidth={1.8} />
-                                    Muncul setelah
+                                    Show after
                                 </span>
                                 <span
                                     className="rounded-full bg-surface px-2.5 py-1 text-[11px] text-ink-2"
@@ -373,8 +373,8 @@ export default function AnalyticsPage() {
                                 className="mt-3 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-track accent-ink"
                             />
                             <div className="mt-2 flex justify-between text-[10px] text-ink-3">
-                                <span>Cepat (1 detik)</span>
-                                <span>Lambat (15 detik)</span>
+                                <span>Fast (1 second)</span>
+                                <span>Slow (15 seconds)</span>
                             </div>
                         </div>
                     )}
@@ -386,11 +386,11 @@ export default function AnalyticsPage() {
                     </div>
                 ) : (
                     <>
-                        {/* Empat angka — satu kartu */}
+                        {/* Four summary metrics */}
                         <section className="mt-3 grid grid-cols-2 gap-y-5 divide-x divide-ink/[0.08] rounded-card-sm bg-surface px-2 py-4 shadow-row md:grid-cols-4">
                             <Stat icon={Eye} label="Total Views" value={stats.totalViews} />
                             <Stat icon={MousePointer2} label="Link Clicks" value={stats.totalClicks} />
-                            <Stat icon={Users} label="Total Leads" value={stats.totalLeads} />
+                            <Stat icon={Users} label="Total Contacts" value={stats.totalLeads} />
                             <Stat
                                 icon={TrendingUp}
                                 label="CTR"
@@ -398,10 +398,10 @@ export default function AnalyticsPage() {
                             />
                         </section>
 
-                        {/* Grafik lalu lintas */}
+                        {/* Traffic chart */}
                         <section className="mt-3 rounded-card bg-surface p-5 shadow-card">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-[15px] font-semibold">Lalu Lintas</h3>
+                                <h3 className="text-[15px] font-semibold">Traffic</h3>
                                 <div className="flex items-center gap-4 text-[11.5px] text-ink-2">
                                     <span className="flex items-center gap-1.5">
                                         <span className="h-2.5 w-2.5 rounded-full bg-track" />
@@ -449,16 +449,16 @@ export default function AnalyticsPage() {
                             </div>
                         </section>
 
-                        {/* Daftar calon pelanggan */}
+                        {/* Contact list */}
                         <section className="mt-7">
                             <div className="flex items-center justify-between gap-3">
-                                <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Calon Pelanggan</h2>
+                                <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Contacts</h2>
                                 <button
                                     onClick={exportLeads}
                                     className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-[12.5px] font-medium text-white shadow-ink transition-transform active:scale-[0.98]"
                                 >
                                     <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
-                                    Unduh
+                                    Export
                                 </button>
                             </div>
 
@@ -469,10 +469,10 @@ export default function AnalyticsPage() {
                                         onChange={(e) => setStatusFilter(e.target.value)}
                                         className="w-full cursor-pointer appearance-none rounded-row bg-surface py-3 pl-4 pr-9 text-[12.5px] text-ink shadow-row focus:outline-none"
                                     >
-                                        <option value="all">Semua status</option>
-                                        <option value="new">Baru</option>
-                                        <option value="contacted">Sudah dihubungi</option>
-                                        <option value="converted">Jadi pelanggan</option>
+                                        <option value="all">All statuses</option>
+                                        <option value="new">New</option>
+                                        <option value="contacted">Contacted</option>
+                                        <option value="converted">Customer</option>
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-ink-3">
                                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -484,7 +484,7 @@ export default function AnalyticsPage() {
                                     className="flex shrink-0 items-center gap-2 rounded-row bg-surface px-4 py-3 text-[12.5px] font-medium text-ink-2 shadow-row"
                                 >
                                     <ArrowUpDown className="h-4 w-4" strokeWidth={1.8} />
-                                    {sortOrder === 'desc' ? 'Terbaru' : 'Terlama'}
+                                    {sortOrder === 'desc' ? 'Newest' : 'Oldest'}
                                 </button>
                             </div>
 
@@ -511,9 +511,9 @@ export default function AnalyticsPage() {
 
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-2">
-                                                        <p className="truncate text-[14.5px] font-medium">{lead.name || 'Tanpa nama'}</p>
+                                                        <p className="truncate text-[14.5px] font-medium">{lead.name || 'No name'}</p>
                                                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${getStatusColor(lead.status || 'new')}`}>
-                                                            {lead.status === 'contacted' ? 'Dihubungi' : lead.status === 'converted' ? 'Pelanggan' : 'Baru'}
+                                                            {lead.status === 'contacted' ? 'Contacted' : lead.status === 'converted' ? 'Customer' : 'New'}
                                                         </span>
                                                     </div>
                                                     <p className="mt-0.5 truncate text-[12px] text-ink-2">
@@ -521,14 +521,14 @@ export default function AnalyticsPage() {
                                                     </p>
                                                 </div>
 
-                                                {/* Tombol chat langsung — tidak ikut membuka detail */}
+                                                {/* Direct chat button; does not open the contact details */}
                                                 {wa && (
                                                     <a
                                                         href={wa}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         onClick={(e) => e.stopPropagation()}
-                                                        aria-label={`Chat WhatsApp ${lead.name || 'calon pelanggan'}`}
+                                                        aria-label={`Chat with ${lead.name || 'contact'} on WhatsApp`}
                                                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success-soft text-success-soft-ink transition-transform active:scale-95"
                                                     >
                                                         <MessageSquare className="h-4 w-4" strokeWidth={1.8} />
@@ -542,15 +542,15 @@ export default function AnalyticsPage() {
                             ) : (
                                 <div className="mt-4 rounded-card border border-dashed border-ink/15 bg-surface/60 p-10 text-center">
                                     <MessageSquare className="mx-auto mb-3 h-10 w-10 text-ink-3" strokeWidth={1.5} />
-                                    <h3 className="text-[15px] font-medium">Belum ada calon pelanggan</h3>
-                                    <p className="mt-1.5 text-[12.5px] text-ink-2">Aktifkan formulir kontak biar pengunjung bisa ninggalin nomor</p>
+                                    <h3 className="text-[15px] font-medium">No contacts yet</h3>
+                                    <p className="mt-1.5 text-[12.5px] text-ink-2">Enable the contact form so visitors can leave their details</p>
                                 </div>
                             )}
                         </section>
                     </>
                 )}
 
-                {/* Detail satu calon pelanggan — dibuka dengan mengetuk kartunya */}
+                {/* Contact details */}
                 {activeLead && (
                     <div
                         className="fixed inset-0 z-50 flex items-end justify-center bg-ink/25 p-0 backdrop-blur-sm sm:items-center sm:p-4"
@@ -567,17 +567,17 @@ export default function AnalyticsPage() {
                                     </span>
                                     <div className="min-w-0">
                                         <h3 className="truncate text-[17px] font-semibold tracking-[-0.02em]">
-                                            {activeLead.name || 'Tanpa nama'}
+                                            {activeLead.name || 'No name'}
                                         </h3>
                                         <p className="mt-0.5 text-[11.5px] text-ink-3">
-                                            Masuk {new Date(activeLead.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} ·{' '}
+                                            Added {new Date(activeLead.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} ·{' '}
                                             {new Date(activeLead.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setActiveLead(null)}
-                                    aria-label="Tutup"
+                                    aria-label="Close"
                                     className="shrink-0 text-ink-3 transition-colors hover:text-ink"
                                 >
                                     <X className="h-5 w-5" strokeWidth={1.8} />
@@ -608,7 +608,7 @@ export default function AnalyticsPage() {
                                     <div className="flex items-center gap-3 rounded-row bg-fill-subtle px-4 py-3">
                                         <Building2 className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={1.8} />
                                         <div className="min-w-0">
-                                            <p className="text-[10.5px] uppercase tracking-wider text-ink-3">Perusahaan</p>
+                                            <p className="text-[10.5px] uppercase tracking-wider text-ink-3">Company</p>
                                             <p className="truncate text-[14px]">{activeLead.company}</p>
                                         </div>
                                     </div>
@@ -620,9 +620,9 @@ export default function AnalyticsPage() {
                                 <p className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Status</p>
                                 <div className="mt-2 grid grid-cols-3 gap-1 rounded-full bg-fill-subtle p-1">
                                     {[
-                                        { id: 'new', label: 'Baru' },
-                                        { id: 'contacted', label: 'Dihubungi' },
-                                        { id: 'converted', label: 'Pelanggan' },
+                                        { id: 'new', label: 'New' },
+                                        { id: 'contacted', label: 'Contacted' },
+                                        { id: 'converted', label: 'Customer' },
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
@@ -646,11 +646,11 @@ export default function AnalyticsPage() {
                                         className="flex items-center justify-center gap-2 rounded-full bg-ink py-4 text-[13px] font-medium text-white shadow-ink transition-transform active:scale-[0.99]"
                                     >
                                         <MessageSquare className="h-4 w-4" strokeWidth={1.8} />
-                                        Chat lewat WhatsApp
-                                    </a>
-                                ) : (
-                                    <p className="rounded-row bg-fill-subtle px-4 py-3 text-center text-[12px] text-ink-3">
-                                        Nomornya tidak bisa dipakai buat chat langsung
+                                         Chat on WhatsApp
+                                     </a>
+                                 ) : (
+                                     <p className="rounded-row bg-fill-subtle px-4 py-3 text-center text-[12px] text-ink-3">
+                                         This number cannot be used to start a chat
                                     </p>
                                 )}
 
@@ -660,7 +660,7 @@ export default function AnalyticsPage() {
                                         className="flex items-center justify-center gap-2 rounded-full bg-fill-subtle py-3.5 text-[13px] font-medium text-ink-2 transition-colors hover:text-ink"
                                     >
                                         <Mail className="h-4 w-4" strokeWidth={1.8} />
-                                        Kirim email
+                                         Send email
                                     </a>
                                 )}
                             </div>

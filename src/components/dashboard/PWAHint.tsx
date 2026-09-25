@@ -48,6 +48,7 @@ export function PWAHint({ isOpen, onClose }: PWAHintProps) {
 
                             <button
                                 onClick={onClose}
+                                aria-label="Close installation guide"
                                 className="absolute top-5 right-5 p-1.5 rounded-full hover:bg-zinc-100 text-zinc-400 transition-colors"
                             >
                                 <X className="w-5 h-5" />
@@ -60,7 +61,7 @@ export function PWAHint({ isOpen, onClose }: PWAHintProps) {
 
                                 <div className="space-y-1">
                                     <h3 className="text-xl font-bold text-zinc-900 leading-tight">Install GenHub App</h3>
-                                    <p className="text-sm text-zinc-500">Akses dashboard lebih cepat langsung dari layar utama HP-mu.</p>
+                                    <p className="text-sm text-zinc-500">Open your dashboard faster from your phone's home screen.</p>
                                 </div>
                             </div>
 
@@ -68,38 +69,38 @@ export function PWAHint({ isOpen, onClose }: PWAHintProps) {
                                 {platform === 'ios' ? (
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between text-[11px] font-bold text-zinc-400 uppercase tracking-widest">
-                                            <span>Panduan Install (iOS)</span>
+                                            <span>Installation Guide (iOS)</span>
                                             <PhoneIcon className="w-3 h-3" />
                                         </div>
                                         <div className="flex items-start gap-4">
                                             <div className="w-6 h-6 rounded-full bg-white border border-zinc-200 flex items-center justify-center text-[11px] font-bold text-zinc-400 shrink-0 mt-0.5">1</div>
                                             <p className="text-sm text-zinc-600 leading-relaxed">
-                                                Tap tombol <strong className="text-zinc-900">Share</strong> <Share className="inline-block w-4 h-4 text-blue-500 mx-1" /> di bagian bawah Safari.
+                                                Tap <strong className="text-zinc-900">Share</strong> <Share className="inline-block w-4 h-4 text-blue-500 mx-1" /> at the bottom of Safari.
                                             </p>
                                         </div>
                                         <div className="flex items-start gap-4">
                                             <div className="w-6 h-6 rounded-full bg-white border border-zinc-200 flex items-center justify-center text-[11px] font-bold text-zinc-400 shrink-0 mt-0.5">2</div>
                                             <p className="text-sm text-zinc-600 leading-relaxed">
-                                                Scroll ke bawah & pilih <strong className="text-zinc-900">Add to Home Screen</strong> <PlusSquare className="inline-block w-4 h-4 text-zinc-600 mx-1" />
+                                                Scroll down and select <strong className="text-zinc-900">Add to Home Screen</strong> <PlusSquare className="inline-block w-4 h-4 text-zinc-600 mx-1" />
                                             </p>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between text-[11px] font-bold text-zinc-400 uppercase tracking-widest">
-                                            <span>Panduan Install (Android)</span>
+                                            <span>Installation Guide (Android)</span>
                                             <PhoneIcon className="w-3 h-3" />
                                         </div>
                                         <div className="flex items-start gap-4">
                                             <div className="w-6 h-6 rounded-full bg-white border border-zinc-200 flex items-center justify-center text-[11px] font-bold text-zinc-400 shrink-0 mt-0.5">1</div>
                                             <p className="text-sm text-zinc-600 leading-relaxed">
-                                                Tap menu <strong className="text-zinc-900">Titik Tiga</strong> <MoreVertical className="inline-block w-4 h-4 text-zinc-600 mx-1" /> di pojok kanan Chrome.
+                                                Tap the <strong className="text-zinc-900">More options</strong> menu <MoreVertical className="inline-block w-4 h-4 text-zinc-600 mx-1" /> in the top-right corner of Chrome.
                                             </p>
                                         </div>
                                         <div className="flex items-start gap-4">
                                             <div className="w-6 h-6 rounded-full bg-white border border-zinc-200 flex items-center justify-center text-[11px] font-bold text-zinc-400 shrink-0 mt-0.5">2</div>
                                             <p className="text-sm text-zinc-600 leading-relaxed">
-                                                Pilih <strong className="text-zinc-900">Install App</strong> atau <strong className="text-zinc-900">Tambahkan ke Layar Utama</strong>.
+                                                Select <strong className="text-zinc-900">Install app</strong> or <strong className="text-zinc-900">Add to Home screen</strong>.
                                             </p>
                                         </div>
                                     </div>
@@ -110,7 +111,7 @@ export function PWAHint({ isOpen, onClose }: PWAHintProps) {
                                 onClick={onClose}
                                 className="mt-6 w-full py-4 bg-zinc-900 text-white text-sm font-bold rounded-2xl hover:bg-zinc-800 transition-all shadow-xl shadow-zinc-200 active:scale-[0.98]"
                             >
-                                Oke, Mengerti!
+                                Okay, got it!
                             </button>
                         </div>
                     </motion.div>

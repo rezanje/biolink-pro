@@ -28,7 +28,7 @@ type DashProfile = {
     company?: { name: string; logo_url: string | null } | null
 }
 
-const nf = new Intl.NumberFormat('id-ID')
+const nf = new Intl.NumberFormat('en-US')
 
 function Skeleton() {
     return (
@@ -160,7 +160,7 @@ export default function DashboardPage() {
     if (!profile) {
         return (
             <div className="flex min-h-screen items-center justify-center px-5 text-center">
-                <p className="text-sm text-ink-2">Profil belum ada. Klaim kartu kamu dulu.</p>
+                <p className="text-sm text-ink-2">No profile yet. Claim your card first.</p>
             </div>
         )
     }
@@ -179,8 +179,8 @@ export default function DashboardPage() {
     const quickActions = [
         {
             icon: User,
-            label: 'Edit Profil',
-            desc: 'Ubah foto, nama, dan bio',
+            label: 'Edit Profile',
+            desc: 'Update your photo, name, and bio',
             href: '/dashboard/profile',
             preview: (
                 <div className="flex items-center gap-2.5">
@@ -192,36 +192,36 @@ export default function DashboardPage() {
                         </span>
                     )}
                     <span className="min-w-0 flex-1 truncate text-[11.5px] text-ink-2">
-                        {profile.display_name || 'Belum ada nama'}
+                        {profile.display_name || 'No name yet'}
                     </span>
                 </div>
             ),
         },
         {
             icon: Link2,
-            label: 'Kelola Link',
-            desc: 'Tambah dan atur social links',
+            label: 'Manage Links',
+            desc: 'Add and organize your social links',
             href: '/dashboard/links',
             preview: links.length ? (
                 <div className="grid gap-1">
                     {links.slice(0, 3).map((l, i) => (
                         <span key={l.id ?? i} className="flex items-center gap-1.5 truncate text-[11px] text-ink-2">
                             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ink/25" />
-                            <span className="truncate">{l.title || 'Tanpa nama'}</span>
+                            <span className="truncate">{l.title || 'Untitled'}</span>
                         </span>
                     ))}
                     {links.length > 3 && (
-                        <span className="text-[11px] text-ink-3">+{links.length - 3} lainnya</span>
+                <span className="text-[11px] text-ink-3">+{links.length - 3} more</span>
                     )}
                 </div>
             ) : (
-                <span className="text-[11px] text-ink-3">Belum ada link</span>
+                <span className="text-[11px] text-ink-3">No links yet</span>
             ),
         },
         {
             icon: copied ? Check : ExternalLink,
-            label: copied ? 'Link tersalin' : 'Salin Link Profil',
-            desc: 'Bagikan URL kartu kamu',
+            label: copied ? 'Link copied' : 'Copy Profile Link',
+            desc: 'Share your card URL',
             onClick: () => {
                 navigator.clipboard.writeText(shareUrl)
                 setCopied(true)
@@ -238,8 +238,8 @@ export default function DashboardPage() {
         },
         {
             icon: Eye,
-            label: 'Lihat Profil Publik',
-            desc: 'Buka kartu seperti pengunjung',
+            label: 'View Public Profile',
+            desc: 'See your card as visitors do',
             href: `/${profile.slug}`,
             external: true,
             preview: (
@@ -262,7 +262,7 @@ export default function DashboardPage() {
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success-soft">
                         <Check className="h-[18px] w-[18px] text-success-soft-ink" strokeWidth={2} />
                     </span>
-                    <p className="text-[14px] font-medium">Klaim berhasil. Selamat datang! 🎉</p>
+        <p className="text-[14px] font-medium">Card claimed. Welcome! 🎉</p>
                 </div>
             )}
 
@@ -281,16 +281,16 @@ export default function DashboardPage() {
                             <h1 className="truncate text-[26px] font-semibold tracking-[-0.03em]">
                                 Dashboard {profile.company?.name}
                             </h1>
-                            <p className="mt-1 text-[13px] text-ink-2">Selamat datang, {profile.display_name}</p>
+                            <p className="mt-1 text-[13px] text-ink-2">Welcome, {profile.display_name}</p>
                         </div>
                     </div>
                 ) : (
                     <>
                         <h1 className="text-[26px] font-semibold tracking-[-0.03em]">
-                            Selamat datang, {profile.display_name || 'kamu'}! 👋
+                            Welcome, {profile.display_name || 'there'}! 👋
                         </h1>
                         <p className="mt-1.5 text-[13px] text-ink-2">
-                            Kelola profil kartu nama digital kamu dari sini
+                            Manage your digital business card profile here
                         </p>
                     </>
                 )}
@@ -300,18 +300,18 @@ export default function DashboardPage() {
                     className="mt-3 inline-flex items-center gap-1.5 text-[12px] text-ink-2"
                 >
                     <Smartphone className="h-3.5 w-3.5" strokeWidth={1.8} />
-                    Akses lebih cepat & praktis?
-                    <span className="font-semibold text-ink underline">Pasang di HP</span>
+                    Want faster access?
+                    <span className="font-semibold text-ink underline">Add to your phone</span>
                 </button>
             </header>
 
             {/* PROFIL ANDA */}
             <section className="mt-6">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Profil Kamu</h2>
+                    <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Your Profile</h2>
                     <Link href="/dashboard/profile" className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-2">
                         <Edit className="h-3.5 w-3.5" strokeWidth={1.8} />
-                        Edit Profil
+                        Edit Profile
                     </Link>
                 </div>
 
@@ -330,7 +330,7 @@ export default function DashboardPage() {
                         )}
                         <div className="min-w-0 flex-1">
                             <h3 className="text-[19px] font-semibold tracking-[-0.02em]">
-                                {profile.display_name || 'Belum ada nama'}
+                                {profile.display_name || 'No name yet'}
                             </h3>
                             {profile.bio && (
                                 <p className="mt-2 line-clamp-2 text-[13px] text-ink-2">{profile.bio}</p>
@@ -358,8 +358,8 @@ export default function DashboardPage() {
                         <Gift className="h-[18px] w-[18px]" strokeWidth={1.8} />
                     </span>
                     <div className="min-w-0 flex-1">
-                        <p className="text-[14.5px] font-medium leading-tight">Kenangan kado</p>
-                        <p className="mt-0.5 text-[12px] text-ink-2">Buka lagi kejutan waktu jam ini pertama datang</p>
+                        <p className="text-[14.5px] font-medium leading-tight">Gift Memory</p>
+                        <p className="mt-0.5 text-[12px] text-ink-2">Revisit the surprise that came with your watch</p>
                     </div>
                     <ArrowUpRight className="h-[18px] w-[18px] shrink-0 text-ink-3" strokeWidth={2} />
                 </Link>
@@ -381,7 +381,7 @@ export default function DashboardPage() {
                         FUNGSI UTAMA LINK
                     </p>
                     <p className="mt-1 truncate text-[15px] font-medium">
-                        {live ? live.title || 'Pintasan Link' : 'Kartu Nama Digital'}
+                        {live ? live.title || 'Link Shortcut' : 'Digital Business Card'}
                     </p>
                 </div>
                 <ArrowUpRight className="h-[18px] w-[18px] shrink-0 text-white/60" strokeWidth={2} />
@@ -430,7 +430,7 @@ export default function DashboardPage() {
                     </span>
                     <div>
                         <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Gentanala Green Impact</h2>
-                        <p className="text-[12.5px] text-ink-2">Kontribusi kamu terhadap lingkungan</p>
+                            <p className="text-[12.5px] text-ink-2">Your contribution to the environment</p>
                     </div>
                 </div>
 
@@ -439,27 +439,27 @@ export default function DashboardPage() {
                         <Impact
                             icon={BarChart3}
                             tone="bg-success-soft text-success-soft-ink"
-                            label="Kertas Terselamatkan"
+                            label="Paper Saved"
                             value={nf.format(viewCount)}
-                            unit="Lembar"
+                            unit="sheets"
                         />
                         <Impact
                             icon={Wind}
                             tone="bg-fill-subtle text-ink-2"
-                            label="Emisi Karbon Dicegah"
+                            label="Carbon Emissions Prevented"
                             value={co2 >= 1000 ? (co2 / 1000).toFixed(2) : nf.format(co2)}
                             unit={co2 >= 1000 ? 'kg' : 'gram'}
                         />
                         <Impact
                             icon={TreeDeciduous}
                             tone="bg-coral-soft text-coral-soft-ink"
-                            label="Pohon Dilindungi"
+                            label="Trees Protected"
                             value={(viewCount / 10000).toFixed(4)}
-                            unit="Pohon"
+                            unit="trees"
                         />
                     </div>
                     <p className="mt-4 border-t border-ink/[0.08] px-2 pt-3 text-[10px] italic leading-relaxed text-ink-3">
-                        *1 view profil = 1 kartu nama kertas · 10 gram CO₂ per kartu · 10.000 kartu = 1 pohon dewasa
+                        *1 profile view = 1 paper business card · 10 g CO₂ per card · 10,000 cards = 1 mature tree
                     </p>
                 </div>
             </section>
@@ -468,7 +468,7 @@ export default function DashboardPage() {
 
                 {/* AKSI CEPAT */}
                 <section>
-                    <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Aksi Cepat</h2>
+                    <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Quick Actions</h2>
                     <div className="mt-4 grid grid-cols-2 gap-2.5">
                         {quickActions.map((a) => {
                             const inner = (
@@ -505,9 +505,9 @@ export default function DashboardPage() {
                             >
                                 <PetSprite characterId={petCharacter.id} clip="idle" size={56} />
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-[14px] font-medium leading-tight">Asisten</p>
+                                    <p className="text-[14px] font-medium leading-tight">Assistant</p>
                                     <p className="mt-0.5 truncate text-[11.5px] text-ink-2">
-                                        {petDisplayName(profile)} nungguin pengunjung kartu kamu
+                                        {petDisplayName(profile)} is ready to greet your visitors
                                     </p>
                                 </div>
                                 <ArrowUpRight className="h-[18px] w-[18px] shrink-0 text-ink-3" strokeWidth={2} />
@@ -519,10 +519,10 @@ export default function DashboardPage() {
                 {/* LINK ANDA */}
                 <section>
                     <div className="flex items-center justify-between">
-                        <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Link Kamu</h2>
+                        <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Your Links</h2>
                         <Link href="/dashboard/links" className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-2">
                             <Plus className="h-3.5 w-3.5" strokeWidth={2} />
-                            Tambah Link
+                            Add Link
                         </Link>
                     </div>
 
@@ -537,28 +537,28 @@ export default function DashboardPage() {
                                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-fill-subtle">
                                             <Link2 className="h-4 w-4 text-ink-2" strokeWidth={1.8} />
                                         </span>
-                                        <span className="truncate text-[14px] font-medium">{l.title || 'Tanpa nama'}</span>
+                                <span className="truncate text-[14px] font-medium">{l.title || 'Untitled'}</span>
                                     </div>
                                     <ExternalLink className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={1.8} />
                                 </div>
                             ))}
                             {links.length > 5 && (
                                 <p className="mt-1 text-center text-[11.5px] text-ink-3">
-                                    Lihat semua link di menu Atur Link
+                                    View all links in Manage Links
                                 </p>
                             )}
                         </div>
                     ) : (
                         <div className="mt-4 rounded-card border border-dashed border-ink/15 bg-surface/60 p-10 text-center">
                             <Link2 className="mx-auto mb-3 h-10 w-10 text-ink-3" strokeWidth={1.5} />
-                            <h3 className="text-[15px] font-medium">Belum ada link</h3>
-                            <p className="mt-1.5 text-[12.5px] text-ink-2">Tambahkan social media dan link custom kamu</p>
+                            <h3 className="text-[15px] font-medium">No links yet</h3>
+                            <p className="mt-1.5 text-[12.5px] text-ink-2">Add social media and custom links to your card</p>
                             <Link
                                 href="/dashboard/links"
                                 className="mt-5 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-[13px] font-medium text-white"
                             >
                                 <Plus className="h-4 w-4" strokeWidth={2} />
-                                Tambah Link Pertama
+                                Add Your First Link
                             </Link>
                         </div>
                     )}
@@ -568,7 +568,7 @@ export default function DashboardPage() {
                 <section>
                     <div className="flex items-center gap-2">
                         <QrCode className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} />
-                        <h2 className="text-[19px] font-semibold tracking-[-0.025em]">QR Code Profil</h2>
+                        <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Profile QR Code</h2>
                     </div>
 
                     <div className="mt-4 flex flex-col items-center rounded-card bg-surface p-5 shadow-card">
@@ -576,7 +576,7 @@ export default function DashboardPage() {
                             <QRCodeSVG id="dashboard-qr" value={shareUrl} size={168} level="H" includeMargin={false} />
                         </div>
                         <p className="mt-5 px-4 text-center text-[12.5px] text-ink-2">
-                            Scan untuk melihat kartu nama digital kamu secara instan
+                            Scan to instantly view your digital business card
                         </p>
                         <button
                             onClick={downloadQr}
