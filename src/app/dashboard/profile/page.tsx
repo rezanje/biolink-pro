@@ -858,12 +858,12 @@ export default function ProfileEditor() {
                     ) : (
                         <div className="mt-4 grid gap-2.5">
                             {formData.files.map(file => (
-                                <div key={file.id} className="flex items-center justify-between gap-3 rounded-row bg-fill-subtle p-3">
-                                    <div className="flex min-w-0 items-center gap-3">
+                                <div key={file.id} className="flex w-full min-w-0 items-center justify-between gap-3 rounded-row bg-fill-subtle p-3">
+                                    <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
                                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface text-ink-2">
                                             <FileText className="h-4 w-4" strokeWidth={1.8} />
                                         </span>
-                                        <div className="min-w-0">
+                                        <div className="min-w-0 flex-1">
                                             <p className="truncate text-[13.5px] font-medium">{file.title}</p>
                                             <p className="truncate text-[11px] text-ink-3">{file.url}</p>
                                         </div>
