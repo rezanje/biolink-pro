@@ -82,6 +82,7 @@ export default function PublicProfile() {
                     files: uiTheme.files || [],
                     links: dbProfile.social_links || uiTheme.links || [],
                     welcome_word: uiTheme.welcome_word || 'hello',
+                    welcome_duration: uiTheme.welcome_duration,
                     primary_color: uiTheme.primary || '#3B82F6',
                     active_mode: uiTheme.active_mode || 'profile',
                     redirect_url: uiTheme.redirect_url || '',
@@ -153,6 +154,7 @@ export default function PublicProfile() {
 
         const word = profile.welcome_word || 'hello'
         let i = 0
+        let closeTimer: ReturnType<typeof setTimeout> | undefined
         const typeInterval = setInterval(() => {
             if (i < word.length) {
                 setWelcomeText(word.slice(0, i + 1))
@@ -160,13 +162,15 @@ export default function PublicProfile() {
             } else {
                 clearInterval(typeInterval)
                 setWelcomeComplete(true)
-                // Auto close with longer delay only when special greeting animation is enabled
                 const delay = getWelcomeCloseDelay(profile)
-                setTimeout(() => setShowWelcome(false), delay)
+                closeTimer = setTimeout(() => setShowWelcome(false), delay)
             }
         }, 150)
 
-        return () => clearInterval(typeInterval)
+        return () => {
+            clearInterval(typeInterval)
+            if (closeTimer) clearTimeout(closeTimer)
+        }
     }, [profile, showWelcome, petIntroDone])
 
     // Babak sapaan pet: pet memanjat keluar kartu (1,1 detik) lalu melambai

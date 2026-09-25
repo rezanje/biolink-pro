@@ -17,6 +17,9 @@ import {
     ArrowUpDown,
     ChevronRight,
     Building2,
+    Briefcase,
+    Linkedin,
+    MessageCircle,
     X
 } from 'lucide-react'
 import PremiumLock from '@/components/dashboard/PremiumLock'
@@ -28,7 +31,28 @@ const getStatusColor = (status: string) => {
     switch (status) {
         case 'contacted': return 'bg-coral-soft text-coral-soft-ink'
         case 'converted': return 'bg-success-soft text-success-soft-ink'
+        case 'failed': return 'bg-coral-soft text-coral-soft-ink'
         default: return 'bg-fill-subtle text-ink-2'
+    }
+}
+
+const getStatusLabel = (status: string) => {
+    switch (status) {
+        case 'contacted': return 'Contacted'
+        case 'converted': return 'Deal'
+        case 'failed': return 'Failed'
+        default: return 'New'
+    }
+}
+
+const getExternalUrl = (value: unknown) => {
+    if (typeof value !== 'string' || !value.trim()) return null
+
+    try {
+        const url = new URL(value.startsWith('http') ? value : `https://${value}`)
+        return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null
+    } catch {
+        return null
     }
 }
 
@@ -232,9 +256,9 @@ export default function AnalyticsPage() {
     const exportLeads = async () => {
         // Implementation for CSV export
         const csvContent = "data:text/csv;charset=utf-8,"
-            + "Name,Email,WhatsApp,Company,Date\n"
+            + "Name,Job Title,Company,WhatsApp,Email,LinkedIn,WeChat ID,Status,Date\n"
             + recentLeads.map(l =>
-                `"${l.name || ''}","${l.email || ''}","${l.whatsapp || ''}","${l.company || ''}","${new Date(l.created_at).toLocaleDateString()}"`
+                `"${l.name || ''}","${l.job_title || ''}","${l.company || ''}","${l.whatsapp || ''}","${l.email || ''}","${l.linkedin || ''}","${l.wechat_id || ''}","${getStatusLabel(l.status)}","${new Date(l.created_at).toLocaleDateString()}"`
             ).join("\n");
 
         const encodedUri = encodeURI(csvContent);
@@ -472,7 +496,8 @@ export default function AnalyticsPage() {
                                         <option value="all">All statuses</option>
                                         <option value="new">New</option>
                                         <option value="contacted">Contacted</option>
-                                        <option value="converted">Customer</option>
+                                        <option value="converted">Deal</option>
+                                        <option value="failed">Failed</option>
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-ink-3">
                                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -513,7 +538,7 @@ export default function AnalyticsPage() {
                                                     <div className="flex items-center gap-2">
                                                         <p className="truncate text-[14.5px] font-medium">{lead.name || 'No name'}</p>
                                                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${getStatusColor(lead.status || 'new')}`}>
-                                                            {lead.status === 'contacted' ? 'Contacted' : lead.status === 'converted' ? 'Customer' : 'New'}
+                                                            {getStatusLabel(lead.status || 'new')}
                                                         </span>
                                                     </div>
                                                     <p className="mt-0.5 truncate text-[12px] text-ink-2">
@@ -613,16 +638,52 @@ export default function AnalyticsPage() {
                                         </div>
                                     </div>
                                 )}
+
+                                {activeLead.job_title && (
+                                    <div className="flex items-center gap-3 rounded-row bg-fill-subtle px-4 py-3">
+                                        <Briefcase className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={1.8} />
+                                        <div className="min-w-0">
+                                            <p className="text-[10.5px] uppercase tracking-wider text-ink-3">Job Title</p>
+                                            <p className="truncate text-[14px]">{activeLead.job_title}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {getExternalUrl(activeLead.linkedin) && (
+                                    <a
+                                        href={getExternalUrl(activeLead.linkedin) as string}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-3 rounded-row bg-fill-subtle px-4 py-3 transition-colors hover:text-ink-2"
+                                    >
+                                        <Linkedin className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={1.8} />
+                                        <div className="min-w-0">
+                                            <p className="text-[10.5px] uppercase tracking-wider text-ink-3">LinkedIn</p>
+                                            <p className="truncate text-[14px]">{activeLead.linkedin}</p>
+                                        </div>
+                                    </a>
+                                )}
+
+                                {activeLead.wechat_id && (
+                                    <div className="flex items-center gap-3 rounded-row bg-fill-subtle px-4 py-3">
+                                        <MessageCircle className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={1.8} />
+                                        <div className="min-w-0">
+                                            <p className="text-[10.5px] uppercase tracking-wider text-ink-3">WeChat ID</p>
+                                            <p className="truncate text-[14px]">{activeLead.wechat_id}</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Status */}
                             <div className="mt-5">
                                 <p className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Status</p>
-                                <div className="mt-2 grid grid-cols-3 gap-1 rounded-full bg-fill-subtle p-1">
+                                <div className="mt-2 grid grid-cols-2 gap-1 rounded-row bg-fill-subtle p-1 sm:grid-cols-4 sm:rounded-full">
                                     {[
                                         { id: 'new', label: 'New' },
                                         { id: 'contacted', label: 'Contacted' },
-                                        { id: 'converted', label: 'Customer' },
+                                        { id: 'converted', label: 'Deal' },
+                                        { id: 'failed', label: 'Failed' },
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
