@@ -3,6 +3,8 @@ export const SPECIAL_EDITIONS = [
     { id: 'prabowo', label: 'Prabowo Series', animationLabel: 'Prabowo' },
 ]
 
+export const WELCOME_DURATIONS = [2, 3, 5, 8]
+
 const SPECIAL_EDITION_IDS = SPECIAL_EDITIONS.map((edition) => edition.id)
 
 export function normalizeSpecialEditions(value) {
@@ -48,8 +50,9 @@ export function shouldShowSpecialGreetingAnimation(profile) {
     )
 }
 
-// Jeda tutup layar sapaan. Pet punya babaknya sendiri sebelum layar ini, jadi
-// jedanya cuma soal animasi edisi spesial: kasih waktu animasinya terbaca.
+// Durasi layar sapaan setelah teksnya selesai tampil. Profil lama memakai
+// default tiga detik supaya tetap punya pembuka yang nyaman dibaca.
 export function getWelcomeCloseDelay(profile) {
-    return shouldShowSpecialGreetingAnimation(profile) ? 3500 : 800
+    const duration = Number(profile?.welcome_duration)
+    return WELCOME_DURATIONS.includes(duration) ? duration * 1000 : 3000
 }

@@ -18,9 +18,12 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
     const [isSuccess, setIsSuccess] = useState(false)
     const [formData, setFormData] = useState({
         name: '',
+        job_title: '',
         whatsapp: '',
         email: '',
-        company: ''
+        company: '',
+        linkedin: '',
+        wechat_id: ''
     })
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -39,9 +42,12 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
             console.log('Submitting Lead Payload:', {
                 profile_id: profileId,
                 name: formData.name.trim() || null,
+                job_title: formData.job_title.trim() || null,
                 whatsapp: formData.whatsapp.trim(),
                 email: formData.email.trim() || null,
-                company: formData.company.trim() || null
+                company: formData.company.trim() || null,
+                linkedin: formData.linkedin.trim() || null,
+                wechat_id: formData.wechat_id.trim() || null
             })
 
             // Insert lead to Supabase
@@ -50,9 +56,12 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                 .insert({
                     profile_id: profileId,
                     name: formData.name.trim() || null,
+                    job_title: formData.job_title.trim() || null,
                     whatsapp: formData.whatsapp.trim(),
                     email: formData.email.trim() || null,
-                    company: formData.company.trim() || null
+                    company: formData.company.trim() || null,
+                    linkedin: formData.linkedin.trim() || null,
+                    wechat_id: formData.wechat_id.trim() || null
                 })
 
             if (error) {
@@ -72,7 +81,7 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
             setTimeout(() => {
                 onClose()
                 setIsSuccess(false)
-                setFormData({ name: '', whatsapp: '', email: '', company: '' })
+                setFormData({ name: '', job_title: '', whatsapp: '', email: '', company: '', linkedin: '', wechat_id: '' })
             }, 2000)
 
         } catch (err) {
@@ -115,7 +124,7 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                                 damping: 25,
                                 mass: 1.2
                             }}
-                            className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl max-w-md w-full p-8 pointer-events-auto relative overflow-hidden ring-1 ring-black/5"
+                            className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-card border border-white/20 bg-white/80 p-6 shadow-2xl ring-1 ring-black/5 pointer-events-auto relative backdrop-blur-xl sm:p-8"
                         >
                             {/* Close button */}
                             <button
@@ -169,6 +178,21 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                                             />
                                         </div>
 
+                                        <div>
+                                            <label htmlFor="job_title" className="block text-sm font-medium text-zinc-700 mb-1.5">
+                                                Job Title <span className="text-zinc-400">(optional)</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="job_title"
+                                                name="job_title"
+                                                value={formData.job_title}
+                                                onChange={handleChange}
+                                                className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                                placeholder="Your role or position"
+                                            />
+                                        </div>
+
                                         {/* WhatsApp (required) */}
                                         <div>
                                             <label htmlFor="whatsapp" className="block text-sm font-medium text-zinc-700 mb-1.5">
@@ -183,6 +207,36 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                                                 required
                                                 className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                                                 placeholder="+62 812 3456 7890"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="linkedin" className="block text-sm font-medium text-zinc-700 mb-1.5">
+                                                LinkedIn <span className="text-zinc-400">(optional)</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="linkedin"
+                                                name="linkedin"
+                                                value={formData.linkedin}
+                                                onChange={handleChange}
+                                                className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                                placeholder="linkedin.com/in/your-name"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="wechat_id" className="block text-sm font-medium text-zinc-700 mb-1.5">
+                                                WeChat ID <span className="text-zinc-400">(optional)</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="wechat_id"
+                                                name="wechat_id"
+                                                value={formData.wechat_id}
+                                                onChange={handleChange}
+                                                className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                                placeholder="Your WeChat ID"
                                             />
                                         </div>
 

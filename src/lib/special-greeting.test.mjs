@@ -66,12 +66,14 @@ assert.equal(
 
 assert.equal(
     getWelcomeCloseDelay({ special_edition: 'aruna', enable_special_greeting_anim: false }),
-    800
+    3000
 )
 
 assert.equal(
     getWelcomeCloseDelay({ special_edition: 'aruna', enable_special_greeting_anim: true }),
-    3500
+    3000
 )
 
-assert.equal(getWelcomeCloseDelay({}), 800)
+assert.equal(getWelcomeCloseDelay({ welcome_duration: 2 }), 2000)
+assert.equal(getWelcomeCloseDelay({ welcome_duration: 5 }), 5000)
+assert.equal(getWelcomeCloseDelay({}), 3000)

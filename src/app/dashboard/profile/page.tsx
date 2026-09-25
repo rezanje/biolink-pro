@@ -29,7 +29,51 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import DesktopPreview from '@/components/dashboard/DesktopPreview'
 import { uploadAvatar, uploadGalleryImage, deleteFile } from '@/lib/storage'
-import { getAvailableSpecialEditions, SPECIAL_EDITIONS } from '@/lib/special-greeting.mjs'
+import { getAvailableSpecialEditions, SPECIAL_EDITIONS, WELCOME_DURATIONS } from '@/lib/special-greeting.mjs'
+
+const COUNTRY_CODES = [
+    { code: '+62', label: 'ID +62' },
+    { code: '+60', label: 'MY +60' },
+    { code: '+65', label: 'SG +65' },
+    { code: '+66', label: 'TH +66' },
+    { code: '+63', label: 'PH +63' },
+    { code: '+84', label: 'VN +84' },
+    { code: '+86', label: 'CN +86' },
+    { code: '+81', label: 'JP +81' },
+    { code: '+82', label: 'KR +82' },
+    { code: '+61', label: 'AU +61' },
+    { code: '+1', label: 'US +1' },
+    { code: '+44', label: 'UK +44' },
+    { code: '+971', label: 'AE +971' }
+] as const
+
+const DEFAULT_COUNTRY_CODE = '+62'
+
+function splitPhoneNumber(value: string | null | undefined) {
+    const digits = (value || '').replace(/\D/g, '')
+    const matchingCode = COUNTRY_CODES
+        .map(({ code }) => code.replace(/\D/g, ''))
+        .sort((a, b) => b.length - a.length)
+        .find((code) => digits.startsWith(code))
+
+    if (matchingCode) {
+        return {
+            countryCode: `+${matchingCode}`,
+            number: digits.slice(matchingCode.length)
+        }
+    }
+
+    return {
+        countryCode: DEFAULT_COUNTRY_CODE,
+        number: digits.replace(/^0+/, '')
+    }
+}
+
+function formatPhoneNumber(countryCode: string, number: string) {
+    const countryDigits = countryCode.replace(/\D/g, '')
+    const localDigits = number.replace(/\D/g, '').replace(/^0+/, '')
+    return localDigits ? `+${countryDigits}${localDigits}` : ''
+}
 
 export default function ProfileEditor() {
     const supabase = createClient()
@@ -50,11 +94,14 @@ export default function ProfileEditor() {
         slug: '',
         bio: '',
         phone: '',
+        phone_country_code: DEFAULT_COUNTRY_CODE,
         whatsapp: '',
+        whatsapp_country_code: DEFAULT_COUNTRY_CODE,
         email: '',
         image_filter: 'normal',
         theme_mode: 'dark',
         welcome_word: 'hello',
+        welcome_duration: 3,
         gallery: [] as { id: string; url: string; caption?: string }[],
         files: [] as { id: string; url: string; title: string; size?: string; type: 'pdf' | 'doc' }[],
         company: '',
@@ -148,7 +195,16 @@ export default function ProfileEditor() {
                 }
                 if (localProfile) {
                     const parsed = JSON.parse(localProfile)
-                    setFormData(prev => ({ ...prev, ...parsed }))
+                    const phone = splitPhoneNumber(parsed.phone)
+                    const whatsapp = splitPhoneNumber(parsed.whatsapp)
+                    setFormData(prev => ({
+                        ...prev,
+                        ...parsed,
+                        phone: phone.number,
+                        phone_country_code: COUNTRY_CODES.some(({ code }) => code === parsed.phone_country_code) ? parsed.phone_country_code : phone.countryCode,
+                        whatsapp: whatsapp.number,
+                        whatsapp_country_code: COUNTRY_CODES.some(({ code }) => code === parsed.whatsapp_country_code) ? parsed.whatsapp_country_code : whatsapp.countryCode
+                    }))
                 }
                 return
             }
@@ -173,7 +229,16 @@ export default function ProfileEditor() {
                 const localProfile = localStorage.getItem('genhub_profile')
                 if (localProfile) {
                     const parsed = JSON.parse(localProfile)
-                    setFormData(prev => ({ ...prev, ...parsed }))
+                    const phone = splitPhoneNumber(parsed.phone)
+                    const whatsapp = splitPhoneNumber(parsed.whatsapp)
+                    setFormData(prev => ({
+                        ...prev,
+                        ...parsed,
+                        phone: phone.number,
+                        phone_country_code: COUNTRY_CODES.some(({ code }) => code === parsed.phone_country_code) ? parsed.phone_country_code : phone.countryCode,
+                        whatsapp: whatsapp.number,
+                        whatsapp_country_code: COUNTRY_CODES.some(({ code }) => code === parsed.whatsapp_country_code) ? parsed.whatsapp_country_code : whatsapp.countryCode
+                    }))
                     if (parsed.tier) setUserTier(parsed.tier.toUpperCase())
                 }
                 return
@@ -181,12 +246,16 @@ export default function ProfileEditor() {
 
             if (profile) {
                 const uiTheme = profile.theme || {}
+                const phone = splitPhoneNumber(profile.phone)
+                const whatsapp = splitPhoneNumber(profile.whatsapp || uiTheme.whatsapp)
                 const loadedData = {
                     display_name: profile.display_name || '',
                     slug: profile.slug || '',
                     bio: profile.bio || '',
-                    phone: profile.phone || '',
-                    whatsapp: profile.whatsapp || (uiTheme.whatsapp || ''),
+                    phone: phone.number,
+                    phone_country_code: phone.countryCode,
+                    whatsapp: whatsapp.number,
+                    whatsapp_country_code: whatsapp.countryCode,
                     email: profile.email || '',
                     company: profile.company || '',
                     job_title: profile.job_title || '',
@@ -194,6 +263,7 @@ export default function ProfileEditor() {
                     image_filter: uiTheme.image_filter || 'normal',
                     theme_mode: uiTheme.theme_mode || 'dark',
                     welcome_word: uiTheme.welcome_word || 'hello',
+                    welcome_duration: WELCOME_DURATIONS.includes(Number(uiTheme.welcome_duration)) ? Number(uiTheme.welcome_duration) : 3,
                     // Fitur Pintasan
                     active_mode: uiTheme.active_mode || 'profile',
                     redirect_url: uiTheme.redirect_url || '',
@@ -226,7 +296,16 @@ export default function ProfileEditor() {
                 const profileStr = localStorage.getItem('genhub_profile')
                 if (profileStr) {
                     const parsed = JSON.parse(profileStr)
-                    setFormData(parsed)
+                    const phone = splitPhoneNumber(parsed.phone)
+                    const whatsapp = splitPhoneNumber(parsed.whatsapp)
+                    setFormData(prev => ({
+                        ...prev,
+                        ...parsed,
+                        phone: phone.number,
+                        phone_country_code: COUNTRY_CODES.some(({ code }) => code === parsed.phone_country_code) ? parsed.phone_country_code : phone.countryCode,
+                        whatsapp: whatsapp.number,
+                        whatsapp_country_code: COUNTRY_CODES.some(({ code }) => code === parsed.whatsapp_country_code) ? parsed.whatsapp_country_code : whatsapp.countryCode
+                    }))
                     setUserTier((parsed.tier || 'FREE').toUpperCase())
                 }
             }
@@ -238,7 +317,11 @@ export default function ProfileEditor() {
     const syncToPreview = useCallback((newFormData: typeof formData) => {
         try {
             // Updated local storage for the preview pane to pick up changes instantly
-            localStorage.setItem('genhub_profile', JSON.stringify(newFormData))
+            localStorage.setItem('genhub_profile', JSON.stringify({
+                ...newFormData,
+                phone: formatPhoneNumber(newFormData.phone_country_code, newFormData.phone),
+                whatsapp: formatPhoneNumber(newFormData.whatsapp_country_code, newFormData.whatsapp)
+            }))
         } catch (err) {
             console.error('Storage quota occurred:', err)
         }
@@ -504,7 +587,7 @@ export default function ProfileEditor() {
                 company: formData.company,
                 job_title: formData.job_title,
                 avatar_url: formData.avatar_url,
-                phone: formData.phone,
+                phone: formatPhoneNumber(formData.phone_country_code, formData.phone),
                 email: formData.email,
                 social_links: formData.social_links,
                 special_edition: formData.special_editions[0] || formData.special_edition,
@@ -514,7 +597,7 @@ export default function ProfileEditor() {
                 // Construct basic theme object if needed by DB, or flattened fields
                 // DB expects 'theme' jsonb.
                 theme: {
-                    whatsapp: formData.whatsapp,
+                    whatsapp: formatPhoneNumber(formData.whatsapp_country_code, formData.whatsapp),
                     image_filter: userTier === 'FREE' ? 'normal' : formData.image_filter,
                     theme_mode: userTier === 'FREE' ? 'light' : formData.theme_mode,
                     welcome_word: userTier === 'FREE' ? 'Hello' : formData.welcome_word,
@@ -706,6 +789,32 @@ export default function ProfileEditor() {
                     </div>
                     <p className="mt-2 text-[11px] text-ink-3">Examples: hello, welcome, nice to meet you</p>
 
+                    <div className="mt-4">
+                        <div className="flex items-baseline justify-between gap-3">
+                            <div>
+                                <h3 className="text-[13.5px] font-semibold">Greeting Duration</h3>
+                                <p className="mt-0.5 text-[12px] text-ink-2">How long the greeting stays on screen</p>
+                            </div>
+                            <span className="shrink-0 text-[12px] font-medium text-ink-2">{formData.welcome_duration} sec</span>
+                        </div>
+                        <div className="mt-3 grid grid-cols-4 gap-2">
+                            {WELCOME_DURATIONS.map((duration) => (
+                                <button
+                                    key={duration}
+                                    type="button"
+                                    onClick={() => updateField('welcome_duration', duration)}
+                                    aria-pressed={formData.welcome_duration === duration}
+                                    className={`rounded-full py-2.5 text-[12px] font-medium transition-colors ${formData.welcome_duration === duration
+                                        ? 'bg-ink text-white'
+                                        : 'bg-fill-subtle text-ink-2 hover:text-ink'
+                                        }`}
+                                >
+                                    {duration}s
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     {availableSpecialEditions.length > 0 && (
                         <div className="mt-5 border-t border-ink/[0.08] pt-5">
                             <h3 className="text-[13.5px] font-semibold">Special Edition Animation</h3>
@@ -720,7 +829,7 @@ export default function ProfileEditor() {
                                         : 'bg-fill-subtle text-ink-2'
                                         }`}
                                 >
-                                    Tanpa animasi
+                                    No animation
                                 </button>
                                 {SPECIAL_EDITIONS.filter((edition) => availableSpecialEditions.includes(edition.id)).map((edition) => (
                                     <button
@@ -1032,28 +1141,50 @@ export default function ProfileEditor() {
                     <div className="mt-4 grid gap-3">
                         <div>
                             <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Phone Number</label>
-                            <div className="relative mt-1.5">
-                                <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
+                            <div className="mt-1.5 flex overflow-hidden rounded-row bg-fill-subtle">
+                                <div className="relative shrink-0 border-r border-ink/[0.08]">
+                                    <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
+                                    <select
+                                        value={formData.phone_country_code}
+                                        onChange={(e) => updateField('phone_country_code', e.target.value)}
+                                        aria-label="Phone country code"
+                                        className="h-full w-[88px] bg-transparent py-3 pl-9 pr-1 text-[13px] font-medium text-ink outline-none"
+                                    >
+                                        {COUNTRY_CODES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
+                                    </select>
+                                </div>
                                 <input
                                     type="tel"
                                     value={formData.phone}
-                                    onChange={(e) => updateField('phone', e.target.value)}
-                                    placeholder="+62 812 3456 7890"
-                                    className="w-full rounded-row bg-fill-subtle py-3 pl-11 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-3"
+                                    onChange={(e) => updateField('phone', e.target.value.replace(/\D/g, '').replace(/^0+/, ''))}
+                                    inputMode="numeric"
+                                    placeholder="812 3456 7890"
+                                    className="min-w-0 flex-1 bg-transparent px-3 py-3 text-[14px] text-ink outline-none placeholder:text-ink-3"
                                 />
                             </div>
                         </div>
 
                         <div>
                             <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">WhatsApp Number</label>
-                            <div className="relative mt-1.5">
-                                <MessageCircle className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
+                            <div className="mt-1.5 flex overflow-hidden rounded-row bg-fill-subtle">
+                                <div className="relative shrink-0 border-r border-ink/[0.08]">
+                                    <MessageCircle className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
+                                    <select
+                                        value={formData.whatsapp_country_code}
+                                        onChange={(e) => updateField('whatsapp_country_code', e.target.value)}
+                                        aria-label="WhatsApp country code"
+                                        className="h-full w-[88px] bg-transparent py-3 pl-9 pr-1 text-[13px] font-medium text-ink outline-none"
+                                    >
+                                        {COUNTRY_CODES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
+                                    </select>
+                                </div>
                                 <input
                                     type="tel"
                                     value={formData.whatsapp}
-                                    onChange={(e) => updateField('whatsapp', e.target.value)}
-                                    placeholder="6281234567890"
-                                    className="w-full rounded-row bg-fill-subtle py-3 pl-11 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-3"
+                                    onChange={(e) => updateField('whatsapp', e.target.value.replace(/\D/g, '').replace(/^0+/, ''))}
+                                    inputMode="numeric"
+                                    placeholder="812 3456 7890"
+                                    className="min-w-0 flex-1 bg-transparent px-3 py-3 text-[14px] text-ink outline-none placeholder:text-ink-3"
                                 />
                             </div>
                         </div>
