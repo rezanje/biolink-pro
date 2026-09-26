@@ -365,7 +365,7 @@ export default function DashboardPage() {
                 </Link>
             )}
 
-            {/* FUNGSI UTAMA LINK — cerminan, diatur di /switch */}
+            {/* Shortcut aktif — diatur di /switch */}
             <Link
                 href="/switch"
                 className="mt-6 flex items-center gap-3.5 rounded-card-sm bg-ink p-4 text-white shadow-ink transition-transform active:scale-[0.99]"
@@ -378,7 +378,7 @@ export default function DashboardPage() {
                         className="text-[10px] uppercase tracking-[0.14em] text-white/55"
                         style={{ fontFamily: 'var(--font-mono)' }}
                     >
-                        FUNGSI UTAMA LINK
+                        YOUR SHORTCUT
                     </p>
                     <p className="mt-1 truncate text-[15px] font-medium">
                         {live ? live.title || 'Link Shortcut' : 'Digital Business Card'}
