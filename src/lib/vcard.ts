@@ -7,6 +7,7 @@ export interface VCardData {
     email?: string;
     phone?: string;
     whatsapp?: string;
+    wechat_id?: string;
     company?: string;
     job_title?: string;
     links?: Array<{ title: string; url: string }>;
@@ -44,6 +45,10 @@ export function generateVCard(data: VCardData): string {
     if (data.whatsapp) {
         // Add WhatsApp as a custom field
         lines.push(`X-WHATSAPP:${data.whatsapp}`);
+    }
+
+    if (data.wechat_id) {
+        lines.push(`X-WECHAT:${data.wechat_id}`);
     }
 
     // Add the GenHub URL

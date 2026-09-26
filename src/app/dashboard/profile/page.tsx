@@ -97,6 +97,7 @@ export default function ProfileEditor() {
         phone_country_code: DEFAULT_COUNTRY_CODE,
         whatsapp: '',
         whatsapp_country_code: DEFAULT_COUNTRY_CODE,
+        wechat_id: '',
         email: '',
         image_filter: 'normal',
         theme_mode: 'dark',
@@ -256,6 +257,7 @@ export default function ProfileEditor() {
                     phone_country_code: phone.countryCode,
                     whatsapp: whatsapp.number,
                     whatsapp_country_code: whatsapp.countryCode,
+                    wechat_id: uiTheme.wechat_id || '',
                     email: profile.email || '',
                     company: profile.company || '',
                     job_title: profile.job_title || '',
@@ -598,6 +600,7 @@ export default function ProfileEditor() {
                 // DB expects 'theme' jsonb.
                 theme: {
                     whatsapp: formatPhoneNumber(formData.whatsapp_country_code, formData.whatsapp),
+                    wechat_id: formData.wechat_id.trim(),
                     image_filter: userTier === 'FREE' ? 'normal' : formData.image_filter,
                     theme_mode: userTier === 'FREE' ? 'light' : formData.theme_mode,
                     welcome_word: userTier === 'FREE' ? 'Hello' : formData.welcome_word,
@@ -1185,6 +1188,20 @@ export default function ProfileEditor() {
                                     inputMode="numeric"
                                     placeholder="812 3456 7890"
                                     className="min-w-0 flex-1 bg-transparent px-3 py-3 text-[14px] text-ink outline-none placeholder:text-ink-3"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">WeChat ID</label>
+                            <div className="relative mt-1.5">
+                                <MessageCircle className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
+                                <input
+                                    type="text"
+                                    value={formData.wechat_id}
+                                    onChange={(e) => updateField('wechat_id', e.target.value)}
+                                    placeholder="Your WeChat ID"
+                                    className="w-full rounded-row bg-fill-subtle py-3 pl-11 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-3"
                                 />
                             </div>
                         </div>

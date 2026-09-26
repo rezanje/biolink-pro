@@ -76,6 +76,7 @@ export default function PublicProfile() {
                 const processedProfile = {
                     ...dbProfile,
                     whatsapp: uiTheme.whatsapp || '',
+                    wechat_id: uiTheme.wechat_id || '',
                     image_filter: uiTheme.image_filter || 'normal',
                     theme_mode: uiTheme.theme_mode || 'dark',
                     gallery: uiTheme.gallery || [],
@@ -361,6 +362,7 @@ export default function PublicProfile() {
             email: profile.email || '',
             phone: profile.phone,
             whatsapp: profile.whatsapp,
+            wechat_id: profile.wechat_id,
             company: profile.company,
             job_title: profile.job_title,
             slug: profile.slug,
