@@ -1151,7 +1151,7 @@ export default function ProfileEditor() {
                                         value={formData.phone_country_code}
                                         onChange={(e) => updateField('phone_country_code', e.target.value)}
                                         aria-label="Phone country code"
-                                        className="h-full w-[88px] bg-transparent py-3 pl-9 pr-1 text-[13px] font-medium text-ink outline-none"
+                                        className="h-full w-[108px] bg-transparent py-3 pl-9 pr-1 text-[13px] font-medium text-ink outline-none"
                                     >
                                         {COUNTRY_CODES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
                                     </select>
@@ -1176,7 +1176,7 @@ export default function ProfileEditor() {
                                         value={formData.whatsapp_country_code}
                                         onChange={(e) => updateField('whatsapp_country_code', e.target.value)}
                                         aria-label="WhatsApp country code"
-                                        className="h-full w-[88px] bg-transparent py-3 pl-9 pr-1 text-[13px] font-medium text-ink outline-none"
+                                        className="h-full w-[108px] bg-transparent py-3 pl-9 pr-1 text-[13px] font-medium text-ink outline-none"
                                     >
                                         {COUNTRY_CODES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
                                     </select>
