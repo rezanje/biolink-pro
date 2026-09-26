@@ -29,6 +29,19 @@ function WhatsAppIcon({ className = "w-5 h-5" }: { className?: string }) {
     )
 }
 
+function WeChatIcon({ className = "w-5 h-5" }: { className?: string }) {
+    return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 3.5c-4.4 0-8 2.9-8 6.5 0 1.8.9 3.5 2.5 4.7L5.7 18l3.8-1.7c.8.2 1.6.3 2.5.3" />
+            <path d="M13 14c0-2.5 2.2-4.5 5-4.5s5 2 5 4.5c0 1.1-.5 2.1-1.3 2.9l.7 2.4-2.6-1.1c-.6.2-1.2.3-1.8.3-2.8 0-5-2-5-4.5Z" />
+            <circle cx="9" cy="9.5" r=".7" fill="currentColor" stroke="none" />
+            <circle cx="13" cy="9.5" r=".7" fill="currentColor" stroke="none" />
+            <circle cx="17" cy="13.8" r=".6" fill="currentColor" stroke="none" />
+            <circle cx="20" cy="13.8" r=".6" fill="currentColor" stroke="none" />
+        </svg>
+    )
+}
+
 export default function PublicProfile() {
     const params = useParams()
     const supabase = createClient()
@@ -321,11 +334,11 @@ export default function PublicProfile() {
     const primaryColor = profile.primary_color || '#3B82F6'
 
     // Track link clicks
-    const handleLinkClick = async (linkId: string) => {
+    const handleLinkClick = async (linkId: string, trackedLink?: { id: string; url?: string; title?: string }) => {
         // Analytics: Track Click
         try {
             const allLinks = [...(profile.links || []), ...(profile.files || []), ...(profile.gallery || [])]
-            const link = allLinks.find((l: any) => l.id === linkId) || { id: linkId, url: 'unknown', title: 'Unknown Link' }
+            const link = allLinks.find((l: any) => l.id === linkId) || trackedLink || { id: linkId, url: 'unknown', title: 'Unknown Link' }
 
             if (profile?.id) {
                 trackLinkClick(profile.id, link.url || 'unknown', link.title || link.id)
@@ -403,7 +416,11 @@ export default function PublicProfile() {
     if (profile.email && !mainSocials.find((l: any) => l.icon === 'email')) {
         mainSocials.push({ id: 'synthetic-email', icon: 'email', url: `mailto:${profile.email}`, title: 'Email' })
     }
-    const filteredSocials = mainSocials.filter((l: any) => ['instagram', 'linkedin', 'twitter', 'whatsapp', 'email', 'website'].includes(l.icon))
+    const wechatId = profile.wechat_id?.trim()
+    if (wechatId && !mainSocials.some(l => l.icon === 'wechat')) {
+        mainSocials.push({ id: 'synthetic-wechat', icon: 'wechat', url: `weixin://dl/chat?username=${encodeURIComponent(wechatId)}`, title: 'WeChat' })
+    }
+    const filteredSocials = mainSocials.filter((l: any) => ['instagram', 'linkedin', 'twitter', 'whatsapp', 'email', 'website', 'wechat'].includes(l.icon))
 
     const textPrimary = isLightMode ? 'text-zinc-900' : 'text-white'
     const textSecondary = isLightMode ? 'text-zinc-700' : 'text-white/90'
@@ -577,10 +594,12 @@ export default function PublicProfile() {
                                 {filteredSocials.map((link: any) => (
                                     <a
                                         href={link.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                        target={link.icon === 'wechat' ? undefined : '_blank'}
+                                        rel={link.icon === 'wechat' ? undefined : 'noopener noreferrer'}
+                                        aria-label={link.title || 'Open social profile'}
+                                        title={link.title || undefined}
                                         key={link.id}
-                                        onClick={() => handleLinkClick(link.id)}
+                                        onClick={() => handleLinkClick(link.id, link)}
                                         className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 ${isLiquidGlass
                                             ? 'lg-social text-zinc-800'
                                             : isLightMode
@@ -847,6 +866,7 @@ function renderIcon(iconName: string, className = "w-5 h-5") {
         case 'whatsapp': return <WhatsAppIcon className={className} />
         case 'email': return <Mail className={className} />
         case 'website': return <Globe className={className} />
+        case 'wechat': return <WeChatIcon className={className} />
         case 'phone': return <Phone className={className} />
         default: return <Globe className={className} />
     }
