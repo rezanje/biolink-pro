@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-    ArrowUpRight, BarChart3, Check, Edit, ExternalLink, Eye, Gift, Leaf, Link2,
+    ArrowUpRight, BarChart3, Check, Edit, ExternalLink, Eye, Gift, Languages, Leaf, Link2,
     Plus, QrCode, Smartphone, TreeDeciduous, User, Wind, Zap,
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
@@ -386,6 +386,19 @@ export default function DashboardPage() {
                 </div>
                 <ArrowUpRight className="h-[18px] w-[18px] shrink-0 text-white/60" strokeWidth={2} />
             </Link>
+
+            {profile.tier !== 'FREE' && (
+                <Link
+                    href="/dashboard/interpreter"
+                    className="mt-3 flex items-center gap-3.5 rounded-card-sm bg-surface p-4 shadow-row transition-transform active:scale-[0.99]"
+                >
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-fill-subtle text-ink-2">
+                        <Languages className="h-[18px] w-[18px]" strokeWidth={1.8} />
+                    </span>
+                    <div className="min-w-0 flex-1"><p className="text-[14.5px] font-medium leading-tight">Live Interpreter</p><p className="mt-0.5 text-[12px] text-ink-2">Speak across languages, one sentence at a time</p></div>
+                    <ArrowUpRight className="h-[18px] w-[18px] shrink-0 text-ink-3" strokeWidth={2} />
+                </Link>
+            )}
 
             {/* TIGA ANGKA — satu kartu, tiga kolom */}
             <section className="mt-3 grid grid-cols-3 divide-x divide-ink/[0.08] rounded-card-sm bg-surface px-2 py-4 shadow-row">

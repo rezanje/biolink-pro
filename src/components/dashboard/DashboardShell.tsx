@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -37,18 +37,26 @@ const KABUT_ROUTES = [
     '/dashboard/links',
     '/dashboard/appearance',
     '/dashboard/ai-assistant',
+    '/dashboard/interpreter',
 ]
 
+type StoredProfile = { slug: string; display_name?: string | null }
+
+function getStoredProfile(): StoredProfile | null {
+    if (typeof window === 'undefined') return null
+    try {
+        const value: unknown = JSON.parse(localStorage.getItem('genhub_profile') || 'null')
+        if (!value || typeof value !== 'object' || typeof (value as { slug?: unknown }).slug !== 'string') return null
+        const profile = value as { slug: string; display_name?: unknown }
+        return { slug: profile.slug, display_name: typeof profile.display_name === 'string' ? profile.display_name : null }
+    } catch { return null }
+}
+
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
-    const [profile, setProfile] = useState<any>(null)
+    const [profile] = useState<StoredProfile | null>(getStoredProfile)
     const pathname = usePathname()
     const router = useRouter()
-    const { hasFeature, isLoading } = useTier()
-
-    useEffect(() => {
-        const profileStr = localStorage.getItem('genhub_profile')
-        if (profileStr) setProfile(JSON.parse(profileStr))
-    }, [])
+    const { hasFeature } = useTier()
 
     const handleLogout = async () => {
         const supabase = createClient()
