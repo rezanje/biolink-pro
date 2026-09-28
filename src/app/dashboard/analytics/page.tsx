@@ -20,6 +20,7 @@ import {
     Briefcase,
     Linkedin,
     MessageCircle,
+    Search,
     X
 } from 'lucide-react'
 import PremiumLock from '@/components/dashboard/PremiumLock'
@@ -80,6 +81,9 @@ export default function AnalyticsPage() {
 
     // Filtering & Sorting State
     const [statusFilter, setStatusFilter] = useState('all')
+    const [dateFrom, setDateFrom] = useState('')
+    const [dateTo, setDateTo] = useState('')
+    const [leadSearch, setLeadSearch] = useState('')
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
     const [loadingLeads, setLoadingLeads] = useState(false)
 
@@ -89,7 +93,7 @@ export default function AnalyticsPage() {
 
     useEffect(() => {
         fetchLeads()
-    }, [statusFilter, sortOrder])
+    }, [statusFilter, dateFrom, dateTo, leadSearch, sortOrder])
 
     const fetchLeads = async () => {
         try {
@@ -111,9 +115,13 @@ export default function AnalyticsPage() {
                 .select('*')
                 .eq('profile_id', profile.id)
 
-            // Apply Status Filter
-            if (statusFilter !== 'all') {
-                query = query.eq('status', statusFilter)
+            if (statusFilter !== 'all') query = query.eq('status', statusFilter)
+            if (dateFrom) query = query.gte('created_at', `${dateFrom}T00:00:00`)
+            if (dateTo) query = query.lte('created_at', `${dateTo}T23:59:59.999`)
+
+            const search = leadSearch.trim().replace(/[,%()]/g, ' ')
+            if (search) {
+                query = query.or(`name.ilike.%${search}%,company.ilike.%${search}%,email.ilike.%${search}%,whatsapp.ilike.%${search}%`)
             }
 
             // Apply Sorting
@@ -254,20 +262,60 @@ export default function AnalyticsPage() {
     }
 
     const exportLeads = async () => {
-        // Implementation for CSV export
-        const csvContent = "data:text/csv;charset=utf-8,"
-            + "Name,Job Title,Company,WhatsApp,Email,LinkedIn,WeChat ID,Status,Date\n"
-            + recentLeads.map(l =>
-                `"${l.name || ''}","${l.job_title || ''}","${l.company || ''}","${l.whatsapp || ''}","${l.email || ''}","${l.linkedin || ''}","${l.wechat_id || ''}","${getStatusLabel(l.status)}","${new Date(l.created_at).toLocaleDateString()}"`
-            ).join("\n");
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
 
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "leads_export.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('user_id', user.id)
+            .single()
+        if (!profile) return
+
+        let query = supabase
+            .from('leads')
+            .select('*')
+            .eq('profile_id', profile.id)
+        if (statusFilter !== 'all') query = query.eq('status', statusFilter)
+        if (dateFrom) query = query.gte('created_at', `${dateFrom}T00:00:00`)
+        if (dateTo) query = query.lte('created_at', `${dateTo}T23:59:59.999`)
+
+        const search = leadSearch.trim().replace(/[,%()]/g, ' ')
+        if (search) {
+            query = query.or(`name.ilike.%${search}%,company.ilike.%${search}%,email.ilike.%${search}%,whatsapp.ilike.%${search}%`)
+        }
+
+        query = query.order('created_at', { ascending: sortOrder === 'asc' }).limit(10000)
+
+        const { data: leads, error } = await query
+        if (error) {
+            console.error('Error exporting leads:', error)
+            alert('Could not export contacts. Please try again.')
+            return
+        }
+
+        const escapeCsv = (value: unknown) => `"${String(value || '').replace(/"/g, '""')}"`
+        const csvContent = [
+            'Name,Job Title,Company,WhatsApp,Email,LinkedIn,WeChat ID,Status,Date',
+            ...(leads || []).map(lead => [
+                lead.name,
+                lead.job_title,
+                lead.company,
+                lead.whatsapp,
+                lead.email,
+                lead.linkedin,
+                lead.wechat_id,
+                getStatusLabel(lead.status),
+                new Date(lead.created_at).toLocaleDateString(),
+            ].map(escapeCsv).join(',')),
+        ].join('\n')
+
+        const url = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }))
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `contacts_${dateFrom || 'all'}_to_${dateTo || 'all'}_${statusFilter}.csv`
+        link.click()
+        URL.revokeObjectURL(url)
     }
 
     const updateLeadStatus = async (leadId: string, newStatus: string) => {
@@ -486,24 +534,61 @@ export default function AnalyticsPage() {
                                 </button>
                             </div>
 
-                            <div className="mt-4 flex items-center gap-2.5">
-                                <div className="relative flex-1">
-                                    <select
-                                        value={statusFilter}
-                                        onChange={(e) => setStatusFilter(e.target.value)}
-                                        className="w-full cursor-pointer appearance-none rounded-row bg-surface py-3 pl-4 pr-9 text-[12.5px] text-ink shadow-row focus:outline-none"
-                                    >
-                                        <option value="all">All statuses</option>
-                                        <option value="new">New</option>
-                                        <option value="contacted">Contacted</option>
-                                        <option value="converted">Deal</option>
-                                        <option value="failed">Failed</option>
-                                    </select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-ink-3">
-                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                    </div>
-                                </div>
+                            <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+                                <label className="relative block">
+                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">Search</span>
+                                    <Search className="pointer-events-none absolute bottom-3 left-3 h-4 w-4 text-ink-3" strokeWidth={1.8} />
+                                    <input
+                                        value={leadSearch}
+                                        onChange={(e) => setLeadSearch(e.target.value)}
+                                        placeholder="Name, company, phone, email"
+                                        className="w-full rounded-row bg-surface py-3 pl-9 pr-3 text-[12.5px] text-ink shadow-row placeholder:text-ink-3 focus:outline-none"
+                                    />
+                                </label>
 
+                                <label className="block">
+                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">Status</span>
+                                    <div className="relative">
+                                        <select
+                                            value={statusFilter}
+                                            onChange={(e) => setStatusFilter(e.target.value)}
+                                            className="w-full cursor-pointer appearance-none rounded-row bg-surface py-3 pl-4 pr-9 text-[12.5px] text-ink shadow-row focus:outline-none"
+                                        >
+                                            <option value="all">All statuses</option>
+                                            <option value="new">New</option>
+                                            <option value="contacted">Contacted</option>
+                                            <option value="converted">Deal</option>
+                                            <option value="failed">Failed</option>
+                                        </select>
+                                        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-ink-3">
+                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </div>
+                                    </div>
+                                </label>
+
+                                <label className="block">
+                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">From</span>
+                                    <input
+                                        type="date"
+                                        value={dateFrom}
+                                        onChange={(e) => setDateFrom(e.target.value)}
+                                        className="w-full rounded-row bg-surface px-3 py-3 text-[12.5px] text-ink shadow-row focus:outline-none"
+                                    />
+                                </label>
+
+                                <label className="block">
+                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">To</span>
+                                    <input
+                                        type="date"
+                                        value={dateTo}
+                                        min={dateFrom || undefined}
+                                        onChange={(e) => setDateTo(e.target.value)}
+                                        className="w-full rounded-row bg-surface px-3 py-3 text-[12.5px] text-ink shadow-row focus:outline-none"
+                                    />
+                                </label>
+                            </div>
+
+                            <div className="mt-2.5 flex items-center gap-2.5">
                                 <button
                                     onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
                                     className="flex shrink-0 items-center gap-2 rounded-row bg-surface px-4 py-3 text-[12.5px] font-medium text-ink-2 shadow-row"
@@ -511,6 +596,19 @@ export default function AnalyticsPage() {
                                     <ArrowUpDown className="h-4 w-4" strokeWidth={1.8} />
                                     {sortOrder === 'desc' ? 'Newest' : 'Oldest'}
                                 </button>
+                                {(statusFilter !== 'all' || dateFrom || dateTo || leadSearch) && (
+                                    <button
+                                        onClick={() => {
+                                            setStatusFilter('all')
+                                            setDateFrom('')
+                                            setDateTo('')
+                                            setLeadSearch('')
+                                        }}
+                                        className="px-3 py-3 text-[12.5px] font-medium text-ink-2 transition-colors hover:text-ink"
+                                    >
+                                        Clear filters
+                                    </button>
+                                )}
                             </div>
 
                             {loadingLeads ? (
