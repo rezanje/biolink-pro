@@ -7,6 +7,7 @@ import PetSprite from '@/components/pet/PetSprite'
 import { PET_CHARACTERS } from '@/lib/pet/characters.mjs'
 import { PET_FEATURE_ENABLED } from '@/lib/pet/pet-selection.mjs'
 import { buildPetGreeting } from '@/lib/pet/pet-greeting.mjs'
+import ConciergeManager from '@/components/assistant/ConciergeManager'
 
 // Halaman Asisten: pilih karakter pet, kasih nama, nyalakan/matikan.
 // Mengikuti pola simpan dan gaya Kabut yang dipakai halaman dashboard lain.
@@ -18,7 +19,7 @@ export default function AssistantPage() {
     const [saved, setSaved] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [userId, setUserId] = useState<string | null>(null)
-    const [profile, setProfile] = useState<any>(null)
+    const [profile, setProfile] = useState<Record<string, unknown> | null>(null)
     const [form, setForm] = useState({ enabled: true, characterId: 'widodo', name: '' })
 
     useEffect(() => {
@@ -46,7 +47,7 @@ export default function AssistantPage() {
             setLoading(false)
         }
         load()
-    }, [])
+    }, [supabase])
 
     const save = async () => {
         if (!userId) return
@@ -78,6 +79,20 @@ export default function AssistantPage() {
         )
     }
 
+    if (!PET_FEATURE_ENABLED) {
+        return (
+            <div className="mx-auto max-w-[1200px] px-5 pb-[150px] pt-6">
+                <header>
+                    <h1 className="text-[26px] font-semibold tracking-[-0.03em]">AI Concierge</h1>
+                    <p className="mt-1.5 text-[13px] text-ink-2">
+                        Set up answers, visitor shortcuts, and booking handoff for your public card
+                    </p>
+                </header>
+                <ConciergeManager />
+            </div>
+        )
+    }
+
     // Contoh kalimat persis seperti yang dilihat pengunjung.
     const previewGreeting = buildPetGreeting({
         profile: {
@@ -91,18 +106,13 @@ export default function AssistantPage() {
     return (
         <div className="mx-auto max-w-[1200px] px-5 pb-[150px] pt-6">
             <header>
-                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Assistant</h1>
+                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">AI Concierge</h1>
                 <p className="mt-1.5 text-[13px] text-ink-2">
-                    Choose the character that welcomes visitors to your card
+                    Set up answers, visitor shortcuts, and booking handoff for your public card
                 </p>
             </header>
 
-            {!PET_FEATURE_ENABLED && (
-                <p className="mt-4 rounded-card bg-coral-soft px-4 py-3 text-[12.5px] leading-relaxed text-coral-soft-ink">
-                    The assistant is temporarily disabled and will not appear on your public card. Your settings
-                    are still saved and will apply when the feature is enabled again.
-                </p>
-            )}
+            <ConciergeManager />
 
             {/* Pratinjau */}
             <section className="mt-5 rounded-card bg-surface p-6 shadow-card">
