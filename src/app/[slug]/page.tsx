@@ -13,6 +13,7 @@ import { trackProfileView, trackLinkClick } from '@/lib/analytics'
 import ArunaAnimation from '@/components/special/ArunaAnimation'
 import PrabowoAnimation from '@/components/special/PrabowoAnimation'
 import AIAssistant from '@/components/profile/AIAssistant'
+import Concierge from '@/components/assistant/Concierge'
 import PetBuddy from '@/components/pet/PetBuddy'
 import PetGreeting from '@/components/pet/PetGreeting'
 import { usePetSpriteReady } from '@/components/pet/PetSprite'
@@ -612,6 +613,11 @@ export default function PublicProfile() {
                                 ))}
                             </div>
                         )}
+
+                        <Concierge
+                            profile={profile}
+                            onConnect={() => setShowLeadModal(true)}
+                        />
 
                         {/* CTA: Save Contact + QR + Share */}
                         <div className="flex gap-3 mb-6">
