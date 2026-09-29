@@ -12,7 +12,8 @@
 
 - [ ] Capture current Light/Dark/Glass output on a narrow phone and desktop; note all saved-card actions and tier behavior.
 - [ ] Inventory owner-dashboard and public-card UI text, including modals, errors, empty states, and dates. Identify product text versus user-authored content.
-- [ ] Review and approve two new template mockups and font/palette list; retain Classic as default.
+- [x] Approve both Atelier and Dial mockups alongside Classic (Reza chose option C on 2026-09-30).
+- [ ] Review initial font/palette options before Phase 2.
 - [ ] Identify every read/write of `profiles.theme`; document fields that must survive appearance saves.
 
 **Exit:** agreed visual samples and complete inventory; no user data changes.

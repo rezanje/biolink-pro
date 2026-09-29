@@ -1,7 +1,7 @@
 # Gentanala Design Studio and Language Selection — Product Design
 
 Date: 2026-09-30
-Status: proposed; approved direction from chat, not approved for implementation or deployment
+Status: visual direction approved on 2026-09-30; implementation and deployment not yet authorized
 
 ## Outcome
 
@@ -23,7 +23,7 @@ An owner can shape a digital business card in one calm **Design Studio**, see an
 
 ## Design rules
 
-- Begin with three deliberately different, developer-curated layouts, including the current card as the **Classic** default. The other two layouts require visual review before implementation. Each has a stable ID; adding a new template never changes a saved card on its own.
+- Begin with three deliberately different, developer-curated layouts: current **Classic** default plus both approved concepts, **Atelier** and **Dial**. Each has a stable ID; adding a new template never changes a saved card on its own.
 - Keep existing Light/Dark/Glass choices and tier entitlements unless separately approved. Template additions must not silently grant or revoke Premium features.
 - Offer a small compatible set of heading/body font pairs and broader palette choices, with an optional custom accent color only when text and controls remain readable. Do not expose arbitrary CSS or a drag-and-drop editor.
 - A template changes presentation, not the owner’s photo, bio, links, gallery, files, contact details, analytics, or NFC destination.
@@ -51,6 +51,6 @@ Included: `/dashboard` owner experience and its main subpages, `/[slug]` public 
 - **Translation completeness:** maintain one inventory of visible product strings and test missing-key fallback; do not silently run user content through AI.
 - **Font weight/performance:** load only approved font families and glyph subsets actually used; check mobile load and layout shift.
 
-## Open visual review before coding
+## Visual decision and remaining review
 
-Approve the two new template mockups and initial font/palette set. This is visual sign-off, not a blocker to documenting the implementation sequence. No code, migration, or production release is authorized by this document.
+Reza chose **C** on 2026-09-30: keep Classic and offer both [Atelier and Dial mockups](../../design-explorations/2026-09-30-profile-templates.png) as selectable templates. These are static concept images, not working cards. Font and broader palette options still need focused review before Phase 2. This design approval does not authorize code, migration, push, or deployment.
