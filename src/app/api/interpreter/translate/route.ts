@@ -53,7 +53,7 @@ export async function POST(req: Request) {
             signal: AbortSignal.timeout(30_000),
             body: JSON.stringify({
                 contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0, maxOutputTokens: 700 },
+                generationConfig: { temperature: 0, maxOutputTokens: 700, thinkingConfig: { thinkingBudget: 0 } },
             }),
         })
         const data = await response.json().catch(() => ({}))
