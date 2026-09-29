@@ -1,27 +1,12 @@
 
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-
-// Helper to get admin client
-const getAdminClient = () => {
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    if (!serviceRoleKey) {
-        throw new Error('SUPABASE_SERVICE_ROLE_KEY is not defined')
-    }
-    return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        serviceRoleKey,
-        {
-            auth: {
-                autoRefreshToken: false,
-                persistSession: false
-            }
-        }
-    )
-}
+import { adminSession } from '@/lib/admin-session'
+import { canManageTarget } from '@/lib/admin-authority.mjs'
 
 export async function DELETE(request: Request) {
     try {
+        const session = await adminSession()
+        if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         const { userId, serialId, action } = await request.json()
         const performAction = action || 'delete'
 
@@ -29,19 +14,10 @@ export async function DELETE(request: Request) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
         }
 
-        console.log('--- DELETE/RESET USER API ---')
-        console.log('Payload:', { userId, performAction })
-
-        // 1. Init Admin Client
-        let supabaseAdmin
-        try {
-            const hasKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
-            if (!hasKey) throw new Error('Missing Service Role Key')
-            supabaseAdmin = getAdminClient()
-        } catch (err) {
-            console.error('Server configuration error:', err)
-            return NextResponse.json({ error: 'Server misconfigured: Missing Service Role Key' }, { status: 500 })
+        if (!['unclaim', 'reset', 'delete'].includes(performAction)) {
+            return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
         }
+        const supabaseAdmin = session.admin
 
         // 2. Validate User ID & Resolve correct Auth ID
         let targetAuthId = userId
@@ -70,7 +46,16 @@ export async function DELETE(request: Request) {
             }
         }
 
-        console.log(`Targeting Auth ID: ${targetAuthId}`)
+        const { data: targetProfile } = await supabaseAdmin.from('profiles')
+            .select('company_id').eq('user_id', targetAuthId).single()
+        const { data: serial } = performAction === 'unclaim' && serialId
+            ? await supabaseAdmin.from('serial_numbers').select('owner_id, company_id').eq('id', serialId).single()
+            : { data: null }
+        if (!targetProfile || (performAction === 'unclaim' && !serial)
+            || !canManageTarget(session.actor, targetProfile.company_id, performAction, targetAuthId, serial?.owner_id || null)
+            || (performAction === 'unclaim' && serial?.owner_id !== targetAuthId)) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
 
         if (performAction === 'unclaim') {
             // ACTION: UNCLAIM A SPECIFIC SERIAL (without touching user profile)
@@ -87,6 +72,7 @@ export async function DELETE(request: Request) {
                     sync_enabled: true
                 })
                 .eq('id', serialId)
+                .eq('owner_id', targetAuthId)
 
             if (unclaimError) return NextResponse.json({ error: unclaimError.message }, { status: 500 })
 

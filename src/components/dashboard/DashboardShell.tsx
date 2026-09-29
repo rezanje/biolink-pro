@@ -18,6 +18,7 @@ import PhonePreview from '@/components/dashboard/PhonePreview'
 import { useTier } from '@/app/dashboard/tier-context'
 import KabutNav from '@/components/dashboard/KabutNav'
 import { createClient } from '@/lib/supabase/client'
+import { UiLanguageSelect, useUiLanguage } from '@/components/UiLanguageProvider'
 
 const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
@@ -58,6 +59,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     const pathname = usePathname()
     const router = useRouter()
     const { hasFeature } = useTier()
+    const { t } = useUiLanguage()
 
     const handleLogout = async () => {
         const supabase = createClient()
@@ -72,6 +74,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     if (KABUT_ROUTES.includes(pathname)) {
         return (
             <div className="min-h-screen bg-canvas font-kabut text-ink">
+                <div className="flex justify-end px-5 pt-4"><UiLanguageSelect /></div>
                 {children}
                 <KabutNav />
             </div>
@@ -105,7 +108,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                             >
                                 <div className="flex items-center gap-3">
                                     <item.icon className={`w-5 h-5 ${isActive ? 'text-blue-600' : ''}`} />
-                                    {item.label}
+                                    {t(item.label)}
                                 </div>
                                 {isLocked && (
                                     <CreditCard className="w-4 h-4 text-zinc-300" />
@@ -127,7 +130,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                                     {profile.display_name?.[0]?.toUpperCase()}
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-sm font-medium text-zinc-900 truncate">Preview Profile</p>
+                                    <p className="text-sm font-medium text-zinc-900 truncate">{t('Preview Profile')}</p>
                                     <p className="text-xs text-zinc-400 truncate">/{profile.slug}</p>
                                 </div>
                             </div>
@@ -140,7 +143,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                         className="flex items-center gap-3 w-full px-4 py-3 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                     >
                         <LogOut className="w-5 h-5" />
-                        Sign out
+                        {t('Sign out')}
                     </button>
                 </div>
             </aside>
@@ -152,7 +155,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                         <CreditCard className="w-6 h-6 text-blue-600" />
                         <span className="text-lg font-bold text-zinc-900">GenHub</span>
                     </Link>
-                    <button onClick={handleLogout} aria-label="Sign out" className="p-2 text-zinc-400 hover:text-red-500 transition-colors">
+                    <button onClick={handleLogout} aria-label={t('Sign out')} className="p-2 text-zinc-400 hover:text-red-500 transition-colors">
                         <LogOut className="w-5 h-5" />
                     </button>
                 </header>
@@ -167,7 +170,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     <aside className="hidden xl:flex flex-col w-[400px] border-l border-white/40 bg-white/30 backdrop-blur-xl items-center justify-center p-8 sticky top-0 h-full">
                         <div className="text-center mb-6">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-zinc-200/50 shadow-sm">
-                                Live Preview
+                                        {t('Live Preview')}
                             </span>
                         </div>
                         <PhonePreview />
@@ -204,7 +207,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                                     <div className="relative z-10 flex flex-col items-center">
                                         <item.icon className="w-5 h-5 mb-1 text-inherit" />
                                         <span className={`text-[9px] font-semibold text-center leading-tight truncate w-full max-w-[4.5rem] ${isActive ? 'opacity-100 drop-shadow-sm' : 'opacity-70'}`}>
-                                            {item.label}
+                                            {t(item.label)}
                                         </span>
                                     </div>
 

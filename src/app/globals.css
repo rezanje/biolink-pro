@@ -500,3 +500,200 @@ textarea:focus {
     animation: none; /* pet langsung berdiri di depan kartu */
   }
 }
+
+/* Curated business-card layouts. Classic intentionally has no overrides. */
+.public-card .card-scroll {
+  scrollbar-width: none;
+}
+
+.public-card .card-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.public-card[data-card-font='editorial'] .card-title {
+  font-family: Georgia, 'Noto Serif CJK SC', 'Songti SC', serif;
+  font-weight: 500;
+  letter-spacing: -0.045em;
+}
+
+.public-card[data-card-font='modern'] .card-title {
+  font-family: var(--font-kabut), 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  letter-spacing: -0.05em;
+}
+
+.public-card[data-card-template='atelier'] .card-scroll {
+  background: #f2efe9;
+}
+
+.public-card[data-card-template='atelier'] .card-hero {
+  height: 44vh !important;
+}
+
+.public-card[data-card-template='atelier'] .card-content {
+  margin-top: -12px;
+  border-radius: 28px 28px 0 0;
+  background: #f6f3ee;
+  box-shadow: 0 -16px 34px rgba(19, 38, 32, 0.12);
+}
+
+.public-card[data-card-template='atelier'] .card-info {
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.public-card[data-card-template='atelier'] .card-title {
+  font-size: clamp(2.5rem, 10vw, 3.6rem);
+  line-height: 0.96;
+  color: #203c33;
+}
+
+.public-card[data-card-template='atelier'] .card-info > div,
+.public-card[data-card-template='atelier'] .card-socials {
+  justify-content: flex-start;
+}
+
+.public-card[data-card-template='atelier'] .card-socials {
+  gap: 8px;
+}
+
+.public-card[data-card-template='atelier'] .card-info > div.px-2 {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.public-card[data-card-template='atelier'] .card-tabs {
+  justify-content: flex-start;
+  border-radius: 0;
+  border-bottom: 1px solid rgba(32, 60, 51, 0.22);
+  background: transparent;
+}
+
+.public-card[data-card-template='atelier'] .card-link {
+  border-radius: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(32, 60, 51, 0.16);
+  background: transparent;
+  box-shadow: none;
+}
+
+.public-card[data-card-template='atelier'] .card-actions > button {
+  border-radius: 7px;
+}
+
+.public-card[data-card-template='atelier'][data-card-mode='dark'] .card-scroll,
+.public-card[data-card-template='atelier'][data-card-mode='dark'] .card-content {
+  background: #202723;
+}
+
+.public-card[data-card-template='atelier'][data-card-mode='dark'] .card-title {
+  color: #f2efe9;
+}
+
+.public-card[data-card-template='dial'] .card-scroll,
+.public-card[data-card-template='dial'] .card-content {
+  background: #162524;
+}
+
+.public-card[data-card-template='dial'] .card-hero {
+  display: none;
+}
+
+.public-card[data-card-template='dial'] .card-content {
+  margin-top: 0;
+  border-radius: 0;
+  padding-top: 52px;
+  box-shadow: none;
+}
+
+.public-card[data-card-template='dial'] .card-content::before {
+  display: none;
+}
+
+.public-card[data-card-template='dial'] .card-info {
+  text-align: left;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(211, 196, 153, 0.28);
+}
+
+.public-card[data-card-template='dial'] .card-info::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+.public-card[data-card-template='dial'] .card-dial-portrait {
+  float: left;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 98px;
+  height: 98px;
+  margin: 0 18px 15px 0;
+  border: 5px solid #c9b68a;
+  border-radius: 50%;
+  box-shadow: 0 0 0 8px rgba(201, 182, 138, 0.09), 0 0 0 14px rgba(201, 182, 138, 0.06);
+  color: #e6d6af;
+  font-size: 2rem;
+}
+
+.public-card[data-card-template='dial'] .card-title {
+  font-size: 2rem;
+  line-height: 1.02;
+  color: #f1f0e8;
+}
+
+.public-card[data-card-template='dial'] .card-info > div {
+  justify-content: flex-start;
+}
+
+.public-card[data-card-template='dial'] .card-info > div.px-2 {
+  clear: both;
+  padding: 14px 0 0;
+}
+
+.public-card[data-card-template='dial'] .card-socials {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.public-card[data-card-template='dial'] .card-socials a {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(201, 182, 138, 0.28);
+  background: transparent;
+  box-shadow: none;
+}
+
+.public-card[data-card-template='dial'] .card-socials svg {
+  width: 19px;
+  height: 19px;
+}
+
+.public-card[data-card-template='dial'] .card-tabs {
+  justify-content: flex-start;
+  background: transparent;
+}
+
+.public-card[data-card-template='dial'] .card-link {
+  border: 1px solid rgba(201, 182, 138, 0.25);
+  background: #203735;
+  box-shadow: none;
+}
+
+.public-card[data-card-template='dial'] .card-actions > button {
+  border-radius: 12px;
+}
+
+.public-card[data-card-template='dial'][data-card-mode='light'] .card-scroll,
+.public-card[data-card-template='dial'][data-card-mode='light'] .card-content {
+  background: #e9e5d9;
+}
+
+.public-card[data-card-template='dial'][data-card-mode='light'] .card-title {
+  color: #162524;
+}
+
+.public-card[data-card-template='dial'][data-card-mode='light'] .card-link {
+  background: #f6f3e9;
+  border-color: rgba(22, 37, 36, 0.16);
+}

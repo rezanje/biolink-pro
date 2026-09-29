@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { buildProfileUpdates } from './profile-updates.mjs'
+import { buildProfileUpdates, canOwnerUpdate } from './profile-updates.mjs'
 
 assert.deepEqual(
     buildProfileUpdates({
@@ -31,3 +31,9 @@ assert.deepEqual(
         company_id: null,
     }
 )
+
+assert.equal(canOwnerUpdate({ display_name: 'Reza', theme: {} }, null), true)
+assert.equal(canOwnerUpdate({ tier: 'PREMIUM' }, null), false)
+assert.equal(canOwnerUpdate({ company_id: 'another' }, null), false)
+assert.equal(canOwnerUpdate({ special_editions: ['aruna'] }, null), false)
+assert.equal(canOwnerUpdate({ display_name: 'Reza' }, 'serial-id'), false)

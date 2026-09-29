@@ -28,6 +28,7 @@ import {
 import PremiumLock from '@/components/dashboard/PremiumLock'
 import { whatsappLink } from '@/lib/wa.mjs'
 import { useTier } from '@/app/dashboard/tier-context'
+import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 // Warna label status — memakai token hangat yang sama dengan beranda.
 const getStatusColor = (status: string) => {
@@ -64,6 +65,8 @@ type SavedCard = { profile_id: string; created_at: string; profile: SavedCardPre
 type SavedCardRow = Omit<SavedCard, 'profile'> & { profile: SavedCardPreview | SavedCardPreview[] | null }
 
 export default function AnalyticsPage() {
+    const { t, locale } = useUiLanguage()
+    const dateLocale = locale === 'id' ? 'id-ID' : locale === 'zh-CN' ? 'zh-CN' : 'en-US'
     const supabase = createClient()
     const { hasFeature } = useTier()
     const isLocked = !hasFeature('analytics_leads')
@@ -297,7 +300,7 @@ export default function AnalyticsPage() {
                     setLeadCaptureEnabled(!newValue)
                     console.error('Error updating setting:', error)
                     console.error('Error details:', error.message, error.details, error.hint)
-                    alert(`Failed to update settings: ${error.message}`)
+                    alert(t('Failed to update settings: {error}', { error: error.message }))
                 }
             }
         } catch (err) {
@@ -334,7 +337,7 @@ export default function AnalyticsPage() {
         const { data: leads, error } = await query
         if (error) {
             console.error('Error exporting leads:', error)
-            alert('Could not export contacts. Please try again.')
+            alert(t('Could not export contacts. Please try again.'))
             return
         }
 
@@ -379,7 +382,7 @@ export default function AnalyticsPage() {
                 console.error('Error updating status:', error)
                 // Revert
                 fetchAnalytics()
-                alert('Failed to update status')
+                alert(t('Failed to update status'))
             }
         } catch (err) {
             console.error('Error updating status:', err)
@@ -399,7 +402,7 @@ export default function AnalyticsPage() {
 
             if (error) {
                 console.error('Error saving delay:', error)
-                alert('Failed to save delay settings')
+                alert(t('Failed to save delay settings'))
             }
         } catch (err) {
             console.error('Error saving delay:', err)
@@ -411,13 +414,13 @@ export default function AnalyticsPage() {
     return (
         <PremiumLock
             isLocked={isLocked}
-            featureName="Analytics & Leads"
-            description="Unlock detailed visitor insights, lead capture forms, and traffic charts."
+            featureName={t('Analytics & Leads')}
+            description={t('Unlock detailed visitor insights, lead capture forms, and traffic charts.')}
         >
             <div className="mx-auto max-w-[1200px] px-5 pb-[150px] pt-6">
                 <header>
-                    <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Analytics</h1>
-                    <p className="mt-1.5 text-[13px] text-ink-2">Track your digital card performance and potential customers</p>
+                    <h1 className="text-[26px] font-semibold tracking-[-0.03em]">{t('Analytics')}</h1>
+                    <p className="mt-1.5 text-[13px] text-ink-2">{t('Track your digital card performance and potential customers')}</p>
                 </header>
 
                 {/* Rentang waktu */}
@@ -429,7 +432,7 @@ export default function AnalyticsPage() {
                             className={`rounded-full py-2.5 text-[12.5px] font-medium transition-colors ${dateRange === range ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink'
                                 }`}
                         >
-                            {range.replace('d', ' days')}
+                            {t('{count} days', { count: range.replace('d', '') })}
                         </button>
                     ))}
                 </div>
@@ -442,20 +445,20 @@ export default function AnalyticsPage() {
                         </span>
                         <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                                <h3 className="text-[15px] font-semibold">Contact Form</h3>
+                                <h3 className="text-[15px] font-semibold">{t('Contact Form')}</h3>
                                 {leadCaptureEnabled && (
                                     <span className="rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-success-soft-ink">
-                                        Active
+                                        {t('Active')}
                                     </span>
                                 )}
                             </div>
                             <p className="mt-1 text-[12.5px] leading-snug text-ink-2">
-                                Collect visitors' names, WhatsApp numbers, and email addresses from your public card
+                                {t("Collect visitors' names, WhatsApp numbers, and email addresses from your public card")}
                             </p>
                         </div>
                         <button
                             onClick={toggleLeadCapture}
-                            aria-label="Enable contact form"
+                            aria-label={t('Enable contact form')}
                             className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${leadCaptureEnabled ? 'bg-ink' : 'bg-track'}`}
                         >
                             <span className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-row transition-transform ${leadCaptureEnabled ? 'translate-x-7' : 'translate-x-1'}`} />
@@ -468,7 +471,7 @@ export default function AnalyticsPage() {
                             <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-2 text-[12.5px] font-medium text-ink-2">
                                     <Clock className="h-4 w-4 text-ink-3" strokeWidth={1.8} />
-                                    Show after
+                                    {t('Show after')}
                                 </span>
                                 <span
                                     className="rounded-full bg-surface px-2.5 py-1 text-[11px] text-ink-2"
@@ -489,8 +492,8 @@ export default function AnalyticsPage() {
                                 className="mt-3 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-track accent-ink"
                             />
                             <div className="mt-2 flex justify-between text-[10px] text-ink-3">
-                                <span>Fast (1 second)</span>
-                                <span>Slow (15 seconds)</span>
+                                <span>{t('Fast (1 second)')}</span>
+                                <span>{t('Slow (15 seconds)')}</span>
                             </div>
                         </div>
                     )}
@@ -504,9 +507,9 @@ export default function AnalyticsPage() {
                     <>
                         {/* Four summary metrics */}
                         <section className="mt-3 grid grid-cols-2 gap-y-5 divide-x divide-ink/[0.08] rounded-card-sm bg-surface px-2 py-4 shadow-row md:grid-cols-4">
-                            <Stat icon={Eye} label="Total Views" value={stats.totalViews} />
-                            <Stat icon={MousePointer2} label="Link Clicks" value={stats.totalClicks} />
-                            <Stat icon={Users} label="Total Contacts" value={stats.totalLeads} />
+                            <Stat icon={Eye} label={t('Total Views')} value={stats.totalViews} />
+                            <Stat icon={MousePointer2} label={t('Link Clicks')} value={stats.totalClicks} />
+                            <Stat icon={Users} label={t('Total Contacts')} value={stats.totalLeads} />
                             <Stat
                                 icon={TrendingUp}
                                 label="CTR"
@@ -517,15 +520,15 @@ export default function AnalyticsPage() {
                         {/* Traffic chart */}
                         <section className="mt-3 rounded-card bg-surface p-5 shadow-card">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-[15px] font-semibold">Traffic</h3>
+                                <h3 className="text-[15px] font-semibold">{t('Traffic')}</h3>
                                 <div className="flex items-center gap-4 text-[11.5px] text-ink-2">
                                     <span className="flex items-center gap-1.5">
                                         <span className="h-2.5 w-2.5 rounded-full bg-track" />
-                                        Views
+                                        {t('Views')}
                                     </span>
                                     <span className="flex items-center gap-1.5">
                                         <span className="h-2.5 w-2.5 rounded-full bg-coral" />
-                                        Clicks
+                                        {t('Clicks')}
                                     </span>
                                 </div>
                             </div>
@@ -539,7 +542,7 @@ export default function AnalyticsPage() {
                                     return (
                                         <div key={i} className="group relative flex h-full flex-1 flex-col justify-end gap-1">
                                             <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-[11px] text-white opacity-0 transition-opacity group-hover:opacity-100">
-                                                {item.date}: {item.views} views, {item.clicks} clicks
+                                                {item.date}: {item.views} {t('views')}, {item.clicks} {t('clicks')}
                                             </div>
 
                                             <motion.div
@@ -566,49 +569,49 @@ export default function AnalyticsPage() {
                         </section>
 
                         <section className="mt-7">
-                            <div role="tablist" aria-label="Relationship collections" className="grid grid-cols-2 gap-1 rounded-full bg-surface p-1 shadow-row">
-                                <button role="tab" aria-selected={collectionTab === 'contacts'} onClick={() => { setCollectionTab('contacts'); window.history.replaceState(null, '', '/dashboard/analytics') }} className={`rounded-full py-2.5 text-[12.5px] font-medium transition-colors ${collectionTab === 'contacts' ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink'}`}>Contacts <span className="ml-1 opacity-70">{stats.totalLeads}</span></button>
-                                <button role="tab" aria-selected={collectionTab === 'saved'} onClick={() => { setCollectionTab('saved'); window.history.replaceState(null, '', '#saved') }} className={`rounded-full py-2.5 text-[12.5px] font-medium transition-colors ${collectionTab === 'saved' ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink'}`}>Saved Cards</button>
+                            <div role="tablist" aria-label={t('Relationship collections')} className="grid grid-cols-2 gap-1 rounded-full bg-surface p-1 shadow-row">
+                                <button role="tab" aria-selected={collectionTab === 'contacts'} onClick={() => { setCollectionTab('contacts'); window.history.replaceState(null, '', '/dashboard/analytics') }} className={`rounded-full py-2.5 text-[12.5px] font-medium transition-colors ${collectionTab === 'contacts' ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink'}`}>{t('Contacts')} <span className="ml-1 opacity-70">{stats.totalLeads}</span></button>
+                                <button role="tab" aria-selected={collectionTab === 'saved'} onClick={() => { setCollectionTab('saved'); window.history.replaceState(null, '', '#saved') }} className={`rounded-full py-2.5 text-[12.5px] font-medium transition-colors ${collectionTab === 'saved' ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink'}`}>{t('Saved Cards')}</button>
                             </div>
 
                             <div className={collectionTab === 'contacts' ? 'mt-5' : 'hidden'}>
                         <section className="mt-7">
                             <div className="flex items-center justify-between gap-3">
-                                <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Contacts</h2>
+                                <h2 className="text-[19px] font-semibold tracking-[-0.025em]">{t('Contacts')}</h2>
                                 <button
                                     onClick={exportLeads}
                                     className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-[12.5px] font-medium text-white shadow-ink transition-transform active:scale-[0.98]"
                                 >
                                     <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
-                                    Export
+                                    {t('Export')}
                                 </button>
                             </div>
 
                             <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
                                 <label className="relative block">
-                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">Search</span>
+                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">{t('Search')}</span>
                                     <Search className="pointer-events-none absolute bottom-3 left-3 h-4 w-4 text-ink-3" strokeWidth={1.8} />
                                     <input
                                         value={leadSearch}
                                         onChange={(e) => setLeadSearch(e.target.value)}
-                                        placeholder="Name, company, phone, email"
+                                        placeholder={t('Name, company, phone, email')}
                                         className="w-full rounded-row bg-surface py-3 pl-9 pr-3 text-[12.5px] text-ink shadow-row placeholder:text-ink-3 focus:outline-none"
                                     />
                                 </label>
 
                                 <label className="block">
-                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">Status</span>
+                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">{t('Status')}</span>
                                     <div className="relative">
                                         <select
                                             value={statusFilter}
                                             onChange={(e) => setStatusFilter(e.target.value)}
                                             className="w-full cursor-pointer appearance-none rounded-row bg-surface py-3 pl-4 pr-9 text-[12.5px] text-ink shadow-row focus:outline-none"
                                         >
-                                            <option value="all">All statuses</option>
-                                            <option value="new">New</option>
-                                            <option value="contacted">Contacted</option>
-                                            <option value="converted">Deal</option>
-                                            <option value="failed">Failed</option>
+                                            <option value="all">{t('All statuses')}</option>
+                                            <option value="new">{t('New')}</option>
+                                            <option value="contacted">{t('Contacted')}</option>
+                                            <option value="converted">{t('Deal')}</option>
+                                            <option value="failed">{t('Failed')}</option>
                                         </select>
                                         <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-ink-3">
                                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -617,7 +620,7 @@ export default function AnalyticsPage() {
                                 </label>
 
                                 <label className="block">
-                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">From</span>
+                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">{t('From')}</span>
                                     <input
                                         type="date"
                                         value={dateFrom}
@@ -627,7 +630,7 @@ export default function AnalyticsPage() {
                                 </label>
 
                                 <label className="block">
-                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">To</span>
+                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">{t('To')}</span>
                                     <input
                                         type="date"
                                         value={dateTo}
@@ -644,7 +647,7 @@ export default function AnalyticsPage() {
                                     className="flex shrink-0 items-center gap-2 rounded-row bg-surface px-4 py-3 text-[12.5px] font-medium text-ink-2 shadow-row"
                                 >
                                     <ArrowUpDown className="h-4 w-4" strokeWidth={1.8} />
-                                    {sortOrder === 'desc' ? 'Newest' : 'Oldest'}
+                                    {sortOrder === 'desc' ? t('Newest') : t('Oldest')}
                                 </button>
                                 {(statusFilter !== 'all' || dateFrom || dateTo || leadSearch) && (
                                     <button
@@ -656,7 +659,7 @@ export default function AnalyticsPage() {
                                         }}
                                         className="px-3 py-3 text-[12.5px] font-medium text-ink-2 transition-colors hover:text-ink"
                                     >
-                                        Clear filters
+                                        {t('Clear filters')}
                                     </button>
                                 )}
                             </div>
@@ -684,9 +687,9 @@ export default function AnalyticsPage() {
 
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-2">
-                                                        <p className="truncate text-[14.5px] font-medium">{lead.name || 'No name'}</p>
+                                                        <p className="truncate text-[14.5px] font-medium">{lead.name || t('No name')}</p>
                                                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${getStatusColor(lead.status || 'new')}`}>
-                                                            {getStatusLabel(lead.status || 'new')}
+                                                            {t(getStatusLabel(lead.status || 'new'))}
                                                         </span>
                                                     </div>
                                                     <p className="mt-0.5 truncate text-[12px] text-ink-2">
@@ -701,7 +704,7 @@ export default function AnalyticsPage() {
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         onClick={(e) => e.stopPropagation()}
-                                                        aria-label={`Chat with ${lead.name || 'contact'} on WhatsApp`}
+                                                        aria-label={t('Chat with {name} on WhatsApp', { name: lead.name || t('Contact') })}
                                                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success-soft text-success-soft-ink transition-transform active:scale-95"
                                                     >
                                                         <MessageSquare className="h-4 w-4" strokeWidth={1.8} />
@@ -715,8 +718,8 @@ export default function AnalyticsPage() {
                             ) : (
                                 <div className="mt-4 rounded-card border border-dashed border-ink/15 bg-surface/60 p-10 text-center">
                                     <MessageSquare className="mx-auto mb-3 h-10 w-10 text-ink-3" strokeWidth={1.5} />
-                                    <h3 className="text-[15px] font-medium">No contacts yet</h3>
-                                    <p className="mt-1.5 text-[12.5px] text-ink-2">Enable the contact form so visitors can leave their details</p>
+                                    <h3 className="text-[15px] font-medium">{t('No contacts yet')}</h3>
+                                    <p className="mt-1.5 text-[12.5px] text-ink-2">{t('Enable the contact form so visitors can leave their details')}</p>
                                 </div>
                             )}
                         </section>
@@ -734,19 +737,19 @@ export default function AnalyticsPage() {
                                                         <div className="flex h-24 items-center justify-center overflow-hidden rounded-xl bg-fill-subtle text-[27px] font-semibold text-ink-2">
                                                             {card.profile.avatar_url ? <img src={card.profile.avatar_url} alt="" className="h-full w-full object-cover" /> : card.profile.display_name?.slice(0, 1).toUpperCase()}
                                                         </div>
-                                                        <p className="mt-3 truncate text-[13px] font-semibold">{card.profile.display_name || 'Gentanala member'}</p>
-                                                        <p className="mt-1 truncate text-[11px] text-ink-2">{[card.profile.job_title, card.profile.company].filter(Boolean).join(' · ') || 'Digital business card'}</p>
-                                                        <p className="mt-3 text-[10px] text-ink-3">Saved {new Date(card.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</p>
+                                                        <p className="mt-3 truncate text-[13px] font-semibold">{card.profile.display_name || t('Gentanala member')}</p>
+                                                        <p className="mt-1 truncate text-[11px] text-ink-2">{[card.profile.job_title, card.profile.company].filter(Boolean).join(' · ') || t('Digital business card')}</p>
+                                                        <p className="mt-3 text-[10px] text-ink-3">{t('Saved')} {new Date(card.created_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' })}</p>
                                                     </a>
-                                                    <button type="button" onClick={() => void removeSavedCard(card.profile_id)} aria-label={`Remove ${card.profile.display_name || 'card'} from saved cards`} className="absolute right-2 top-2 rounded-full bg-surface/95 p-2 text-ink-2 shadow-row transition-colors hover:bg-coral-soft hover:text-coral-soft-ink"><Trash2 className="h-3.5 w-3.5" /></button>
+                                                    <button type="button" onClick={() => void removeSavedCard(card.profile_id)} aria-label={t('Remove {name} from saved cards', { name: card.profile.display_name || t('Card') })} className="absolute right-2 top-2 rounded-full bg-surface/95 p-2 text-ink-2 shadow-row transition-colors hover:bg-coral-soft hover:text-coral-soft-ink"><Trash2 className="h-3.5 w-3.5" /></button>
                                                 </article>
                                             ))}
                                         </div>
                                     ) : (
                                         <div className="rounded-card border border-dashed border-ink/15 bg-surface/60 p-10 text-center">
                                             <Bookmark className="mx-auto mb-3 h-10 w-10 text-ink-3" strokeWidth={1.5} />
-                                            <h3 className="text-[15px] font-medium">No saved cards yet</h3>
-                                            <p className="mt-1.5 text-[12.5px] text-ink-2">Bookmark any Gentanala card to build your personal network collection.</p>
+                                            <h3 className="text-[15px] font-medium">{t('No saved cards yet')}</h3>
+                                            <p className="mt-1.5 text-[12.5px] text-ink-2">{t('Bookmark any Gentanala card to build your personal network collection.')}</p>
                                         </div>
                                     )}
                                 </div>
@@ -772,17 +775,17 @@ export default function AnalyticsPage() {
                                     </span>
                                     <div className="min-w-0">
                                         <h3 className="truncate text-[17px] font-semibold tracking-[-0.02em]">
-                                            {activeLead.name || 'No name'}
+                                            {activeLead.name || t('No name')}
                                         </h3>
                                         <p className="mt-0.5 text-[11.5px] text-ink-3">
-                                            Added {new Date(activeLead.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} ·{' '}
+                                            {t('Added')} {new Date(activeLead.created_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' })} ·{' '}
                                             {new Date(activeLead.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setActiveLead(null)}
-                                    aria-label="Close"
+                                    aria-label={t('Close')}
                                     className="shrink-0 text-ink-3 transition-colors hover:text-ink"
                                 >
                                     <X className="h-5 w-5" strokeWidth={1.8} />
@@ -803,7 +806,7 @@ export default function AnalyticsPage() {
                                     <div className="flex items-center gap-3 rounded-row bg-fill-subtle px-4 py-3">
                                         <Mail className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={1.8} />
                                         <div className="min-w-0">
-                                            <p className="text-[10.5px] uppercase tracking-wider text-ink-3">Email</p>
+                                            <p className="text-[10.5px] uppercase tracking-wider text-ink-3">{t('Email')}</p>
                                             <p className="truncate text-[14px]">{activeLead.email}</p>
                                         </div>
                                     </div>
@@ -813,7 +816,7 @@ export default function AnalyticsPage() {
                                     <div className="flex items-center gap-3 rounded-row bg-fill-subtle px-4 py-3">
                                         <Building2 className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={1.8} />
                                         <div className="min-w-0">
-                                            <p className="text-[10.5px] uppercase tracking-wider text-ink-3">Company</p>
+                                            <p className="text-[10.5px] uppercase tracking-wider text-ink-3">{t('Company')}</p>
                                             <p className="truncate text-[14px]">{activeLead.company}</p>
                                         </div>
                                     </div>
@@ -823,7 +826,7 @@ export default function AnalyticsPage() {
                                     <div className="flex items-center gap-3 rounded-row bg-fill-subtle px-4 py-3">
                                         <Briefcase className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={1.8} />
                                         <div className="min-w-0">
-                                            <p className="text-[10.5px] uppercase tracking-wider text-ink-3">Job Title</p>
+                                            <p className="text-[10.5px] uppercase tracking-wider text-ink-3">{t('Job Title')}</p>
                                             <p className="truncate text-[14px]">{activeLead.job_title}</p>
                                         </div>
                                     </div>
@@ -848,7 +851,7 @@ export default function AnalyticsPage() {
                                     <div className="flex items-center gap-3 rounded-row bg-fill-subtle px-4 py-3">
                                         <MessageCircle className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={1.8} />
                                         <div className="min-w-0">
-                                            <p className="text-[10.5px] uppercase tracking-wider text-ink-3">WeChat ID</p>
+                                            <p className="text-[10.5px] uppercase tracking-wider text-ink-3">{t('WeChat ID')}</p>
                                             <p className="truncate text-[14px]">{activeLead.wechat_id}</p>
                                         </div>
                                     </div>
@@ -857,7 +860,7 @@ export default function AnalyticsPage() {
 
                             {/* Status */}
                             <div className="mt-5">
-                                <p className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Status</p>
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Status')}</p>
                                 <div className="mt-2 grid grid-cols-2 gap-1 rounded-row bg-fill-subtle p-1 sm:grid-cols-4 sm:rounded-full">
                                     {[
                                         { id: 'new', label: 'New' },
@@ -871,7 +874,7 @@ export default function AnalyticsPage() {
                                             className={`rounded-full py-2.5 text-[12px] font-medium transition-colors ${(activeLead.status || 'new') === opt.id ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink'
                                                 }`}
                                         >
-                                            {opt.label}
+                                            {t(opt.label)}
                                         </button>
                                     ))}
                                 </div>
@@ -887,11 +890,11 @@ export default function AnalyticsPage() {
                                         className="flex items-center justify-center gap-2 rounded-full bg-ink py-4 text-[13px] font-medium text-white shadow-ink transition-transform active:scale-[0.99]"
                                     >
                                         <MessageSquare className="h-4 w-4" strokeWidth={1.8} />
-                                         Chat on WhatsApp
+                                         {t('Chat on WhatsApp')}
                                      </a>
                                  ) : (
                                      <p className="rounded-row bg-fill-subtle px-4 py-3 text-center text-[12px] text-ink-3">
-                                         This number cannot be used to start a chat
+                                         {t('This number cannot be used to start a chat')}
                                     </p>
                                 )}
 
@@ -901,7 +904,7 @@ export default function AnalyticsPage() {
                                         className="flex items-center justify-center gap-2 rounded-full bg-fill-subtle py-3.5 text-[13px] font-medium text-ink-2 transition-colors hover:text-ink"
                                     >
                                         <Mail className="h-4 w-4" strokeWidth={1.8} />
-                                         Send email
+                                         {t('Send email')}
                                     </a>
                                 )}
                             </div>

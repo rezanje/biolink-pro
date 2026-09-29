@@ -13,6 +13,7 @@ import { PWAHint } from '@/components/dashboard/PWAHint'
 import { activeRedirectUrl, readShortcuts } from '@/lib/redirect-mode.mjs'
 import PetSprite from '@/components/pet/PetSprite'
 import { PET_FEATURE_ENABLED, petDisplayName, selectPetCharacter } from '@/lib/pet/pet-selection.mjs'
+import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 type LinkRow = { id?: string; title?: string; url?: string; is_active?: boolean }
 type DashProfile = {
@@ -27,8 +28,6 @@ type DashProfile = {
     theme?: { links?: LinkRow[]; shortcuts?: { url?: string; title?: string }[] } | null
     company?: { name: string; logo_url: string | null } | null
 }
-
-const nf = new Intl.NumberFormat('en-US')
 
 function Skeleton() {
     return (
@@ -68,6 +67,8 @@ function Impact({
 }
 
 export default function DashboardPage() {
+    const { t, locale } = useUiLanguage()
+    const nf = new Intl.NumberFormat(locale === 'id' ? 'id-ID' : locale === 'zh-CN' ? 'zh-CN' : 'en-US')
     const router = useRouter()
     const supabase = createClient()
 
@@ -160,7 +161,7 @@ export default function DashboardPage() {
     if (!profile) {
         return (
             <div className="flex min-h-screen items-center justify-center px-5 text-center">
-                <p className="text-sm text-ink-2">No profile yet. Claim your card first.</p>
+                <p className="text-sm text-ink-2">{t('No profile yet. Claim your card first.')}</p>
             </div>
         )
     }
@@ -179,8 +180,8 @@ export default function DashboardPage() {
     const quickActions = [
         {
             icon: User,
-            label: 'Edit Profile',
-            desc: 'Update your photo, name, and bio',
+            label: t('Edit Profile'),
+            desc: t('Update your photo, name, and bio'),
             href: '/dashboard/profile',
             preview: (
                 <div className="flex items-center gap-2.5">
@@ -192,22 +193,22 @@ export default function DashboardPage() {
                         </span>
                     )}
                     <span className="min-w-0 flex-1 truncate text-[11.5px] text-ink-2">
-                        {profile.display_name || 'No name yet'}
+                        {profile.display_name || t('No name yet')}
                     </span>
                 </div>
             ),
         },
         {
             icon: Link2,
-            label: 'Manage Links',
-            desc: 'Add and organize your social links',
+            label: t('Manage Links'),
+            desc: t('Add and organize your social links'),
             href: '/dashboard/links',
             preview: links.length ? (
                 <div className="grid gap-1">
                     {links.slice(0, 3).map((l, i) => (
                         <span key={l.id ?? i} className="flex items-center gap-1.5 truncate text-[11px] text-ink-2">
                             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ink/25" />
-                            <span className="truncate">{l.title || 'Untitled'}</span>
+                            <span className="truncate">{l.title || t('Untitled')}</span>
                         </span>
                     ))}
                     {links.length > 3 && (
@@ -215,13 +216,13 @@ export default function DashboardPage() {
                     )}
                 </div>
             ) : (
-                <span className="text-[11px] text-ink-3">No links yet</span>
+                <span className="text-[11px] text-ink-3">{t('No links yet')}</span>
             ),
         },
         {
             icon: copied ? Check : ExternalLink,
-            label: copied ? 'Link copied' : 'Copy Profile Link',
-            desc: 'Share your card URL',
+            label: copied ? t('Link copied') : t('Copy Profile Link'),
+            desc: t('Share your card URL'),
             onClick: () => {
                 navigator.clipboard.writeText(shareUrl)
                 setCopied(true)
@@ -238,8 +239,8 @@ export default function DashboardPage() {
         },
         {
             icon: Eye,
-            label: 'View Public Profile',
-            desc: 'See your card as visitors do',
+            label: t('View Public Profile'),
+            desc: t('See your card as visitors do'),
             href: `/${profile.slug}`,
             external: true,
             preview: (
@@ -262,7 +263,7 @@ export default function DashboardPage() {
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success-soft">
                         <Check className="h-[18px] w-[18px] text-success-soft-ink" strokeWidth={2} />
                     </span>
-        <p className="text-[14px] font-medium">Card claimed. Welcome! 🎉</p>
+        <p className="text-[14px] font-medium">{t('Card claimed. Welcome! 🎉')}</p>
                 </div>
             )}
 
@@ -279,18 +280,18 @@ export default function DashboardPage() {
                         )}
                         <div className="min-w-0">
                             <h1 className="truncate text-[26px] font-semibold tracking-[-0.03em]">
-                                Dashboard {profile.company?.name}
+                                {t('Dashboard')} {profile.company?.name}
                             </h1>
-                            <p className="mt-1 text-[13px] text-ink-2">Welcome, {profile.display_name}</p>
+                            <p className="mt-1 text-[13px] text-ink-2">{t('Welcome, {name}', { name: profile.display_name || '' })}</p>
                         </div>
                     </div>
                 ) : (
                     <>
                         <h1 className="text-[26px] font-semibold tracking-[-0.03em]">
-                            Welcome, {profile.display_name || 'there'}! 👋
+                            {t('Welcome, {name}! 👋', { name: profile.display_name || t('there') })}
                         </h1>
                         <p className="mt-1.5 text-[13px] text-ink-2">
-                            Manage your digital business card profile here
+                            {t('Manage your digital business card profile here')}
                         </p>
                     </>
                 )}
@@ -300,18 +301,18 @@ export default function DashboardPage() {
                     className="mt-3 inline-flex items-center gap-1.5 text-[12px] text-ink-2"
                 >
                     <Smartphone className="h-3.5 w-3.5" strokeWidth={1.8} />
-                    Want faster access?
-                    <span className="font-semibold text-ink underline">Add to your phone</span>
+                    {t('Want faster access?')}{' '}
+                    <span className="font-semibold text-ink underline">{t('Add to your phone')}</span>
                 </button>
             </header>
 
             {/* PROFIL ANDA */}
             <section className="mt-6">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Your Profile</h2>
+                    <h2 className="text-[19px] font-semibold tracking-[-0.025em]">{t('Your Profile')}</h2>
                     <Link href="/dashboard/profile" className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-2">
                         <Edit className="h-3.5 w-3.5" strokeWidth={1.8} />
-                        Edit Profile
+                        {t('Edit Profile')}
                     </Link>
                 </div>
 
@@ -330,7 +331,7 @@ export default function DashboardPage() {
                         )}
                         <div className="min-w-0 flex-1">
                             <h3 className="text-[19px] font-semibold tracking-[-0.02em]">
-                                {profile.display_name || 'No name yet'}
+                                {profile.display_name || t('No name yet')}
                             </h3>
                             {profile.bio && (
                                 <p className="mt-2 line-clamp-2 text-[13px] text-ink-2">{profile.bio}</p>
@@ -358,8 +359,8 @@ export default function DashboardPage() {
                         <Gift className="h-[18px] w-[18px]" strokeWidth={1.8} />
                     </span>
                     <div className="min-w-0 flex-1">
-                        <p className="text-[14.5px] font-medium leading-tight">Gift Memory</p>
-                        <p className="mt-0.5 text-[12px] text-ink-2">Revisit the surprise that came with your watch</p>
+                        <p className="text-[14.5px] font-medium leading-tight">{t('Gift Memory')}</p>
+                        <p className="mt-0.5 text-[12px] text-ink-2">{t('Revisit the surprise that came with your watch')}</p>
                     </div>
                     <ArrowUpRight className="h-[18px] w-[18px] shrink-0 text-ink-3" strokeWidth={2} />
                 </Link>
@@ -378,10 +379,10 @@ export default function DashboardPage() {
                         className="text-[10px] uppercase tracking-[0.14em] text-white/55"
                         style={{ fontFamily: 'var(--font-mono)' }}
                     >
-                        YOUR SHORTCUT
+                        {t('YOUR SHORTCUT')}
                     </p>
                     <p className="mt-1 truncate text-[15px] font-medium">
-                        {live ? live.title || 'Link Shortcut' : 'Digital Business Card'}
+                        {live ? live.title || t('Link Shortcut') : t('Digital Business Card')}
                     </p>
                 </div>
                 <ArrowUpRight className="h-[18px] w-[18px] shrink-0 text-white/60" strokeWidth={2} />
@@ -395,7 +396,7 @@ export default function DashboardPage() {
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-fill-subtle text-ink-2">
                         <Languages className="h-[18px] w-[18px]" strokeWidth={1.8} />
                     </span>
-                    <div className="min-w-0 flex-1"><p className="text-[14.5px] font-medium leading-tight">Live Interpreter</p><p className="mt-0.5 text-[12px] text-ink-2">Speak across languages, one sentence at a time</p></div>
+                    <div className="min-w-0 flex-1"><p className="text-[14.5px] font-medium leading-tight">{t('Live Interpreter')}</p><p className="mt-0.5 text-[12px] text-ink-2">{t('Speak across languages, one sentence at a time')}</p></div>
                     <ArrowUpRight className="h-[18px] w-[18px] shrink-0 text-ink-3" strokeWidth={2} />
                 </Link>
             )}
@@ -405,13 +406,13 @@ export default function DashboardPage() {
                 <div className="flex flex-col items-center px-2">
                     <Eye className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} />
                     <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]">{nf.format(viewCount)}</p>
-                    <p className="mt-1.5 text-center text-[11.5px] text-ink-2">Profile Views</p>
+                    <p className="mt-1.5 text-center text-[11.5px] text-ink-2">{t('Profile Views')}</p>
                 </div>
 
                 <div className="flex flex-col items-center px-2">
                     <Link2 className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} />
                     <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]">{links.length}</p>
-                    <p className="mt-1.5 text-center text-[11.5px] text-ink-2">Total Links</p>
+                    <p className="mt-1.5 text-center text-[11.5px] text-ink-2">{t('Total Links')}</p>
                 </div>
 
                 <div className="flex flex-col items-center px-2">
@@ -424,12 +425,12 @@ export default function DashboardPage() {
                                     PREMIUM
                                 </span>
                             </div>
-                            <p className="mt-1.5 text-center text-[11.5px] text-ink-3">Link Clicks</p>
+                            <p className="mt-1.5 text-center text-[11.5px] text-ink-3">{t('Link Clicks')}</p>
                         </>
                     ) : (
                         <>
                             <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]">{nf.format(linkClicks)}</p>
-                            <p className="mt-1.5 text-center text-[11.5px] text-ink-2">Link Clicks</p>
+                            <p className="mt-1.5 text-center text-[11.5px] text-ink-2">{t('Link Clicks')}</p>
                         </>
                     )}
                 </div>
@@ -442,8 +443,8 @@ export default function DashboardPage() {
                         <Leaf className="h-[18px] w-[18px] text-success-soft-ink" strokeWidth={1.8} />
                     </span>
                     <div>
-                        <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Gentanala Green Impact</h2>
-                            <p className="text-[12.5px] text-ink-2">Your contribution to the environment</p>
+                        <h2 className="text-[19px] font-semibold tracking-[-0.025em]">{t('Gentanala Green Impact')}</h2>
+                            <p className="text-[12.5px] text-ink-2">{t('Your contribution to the environment')}</p>
                     </div>
                 </div>
 
@@ -452,27 +453,27 @@ export default function DashboardPage() {
                         <Impact
                             icon={BarChart3}
                             tone="bg-success-soft text-success-soft-ink"
-                            label="Paper Saved"
+                            label={t('Paper Saved')}
                             value={nf.format(viewCount)}
-                            unit="sheets"
+                            unit={t('sheets')}
                         />
                         <Impact
                             icon={Wind}
                             tone="bg-fill-subtle text-ink-2"
-                            label="Carbon Emissions Prevented"
+                            label={t('Carbon Emissions Prevented')}
                             value={co2 >= 1000 ? (co2 / 1000).toFixed(2) : nf.format(co2)}
                             unit={co2 >= 1000 ? 'kg' : 'gram'}
                         />
                         <Impact
                             icon={TreeDeciduous}
                             tone="bg-coral-soft text-coral-soft-ink"
-                            label="Trees Protected"
+                            label={t('Trees Protected')}
                             value={(viewCount / 10000).toFixed(4)}
-                            unit="trees"
+                            unit={t('trees')}
                         />
                     </div>
                     <p className="mt-4 border-t border-ink/[0.08] px-2 pt-3 text-[10px] italic leading-relaxed text-ink-3">
-                        *1 profile view = 1 paper business card · 10 g CO₂ per card · 10,000 cards = 1 mature tree
+                        {t('*1 profile view = 1 paper business card · 10 g CO₂ per card · 10,000 cards = 1 mature tree')}
                     </p>
                 </div>
             </section>
@@ -481,7 +482,7 @@ export default function DashboardPage() {
 
                 {/* AKSI CEPAT */}
                 <section>
-                    <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Quick Actions</h2>
+                    <h2 className="text-[19px] font-semibold tracking-[-0.025em]">{t('Quick Actions')}</h2>
                     <div className="mt-4 grid grid-cols-2 gap-2.5">
                         {quickActions.map((a) => {
                             const inner = (
@@ -518,9 +519,9 @@ export default function DashboardPage() {
                             >
                                 <PetSprite characterId={petCharacter.id} clip="idle" size={56} />
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-[14px] font-medium leading-tight">Assistant</p>
+                                    <p className="text-[14px] font-medium leading-tight">{t('Assistant')}</p>
                                     <p className="mt-0.5 truncate text-[11.5px] text-ink-2">
-                                        {petDisplayName(profile)} is ready to greet your visitors
+                                        {petDisplayName(profile)} {t('is ready to greet your visitors')}
                                     </p>
                                 </div>
                                 <ArrowUpRight className="h-[18px] w-[18px] shrink-0 text-ink-3" strokeWidth={2} />
@@ -532,10 +533,10 @@ export default function DashboardPage() {
                 {/* LINK ANDA */}
                 <section>
                     <div className="flex items-center justify-between">
-                        <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Your Links</h2>
+                        <h2 className="text-[19px] font-semibold tracking-[-0.025em]">{t('Your Links')}</h2>
                         <Link href="/dashboard/links" className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-2">
                             <Plus className="h-3.5 w-3.5" strokeWidth={2} />
-                            Add Link
+                            {t('Add Link')}
                         </Link>
                     </div>
 
@@ -550,28 +551,28 @@ export default function DashboardPage() {
                                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-fill-subtle">
                                             <Link2 className="h-4 w-4 text-ink-2" strokeWidth={1.8} />
                                         </span>
-                                <span className="truncate text-[14px] font-medium">{l.title || 'Untitled'}</span>
+                                <span className="truncate text-[14px] font-medium">{l.title || t('Untitled')}</span>
                                     </div>
                                     <ExternalLink className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={1.8} />
                                 </div>
                             ))}
                             {links.length > 5 && (
                                 <p className="mt-1 text-center text-[11.5px] text-ink-3">
-                                    View all links in Manage Links
+                                    {t('View all links in Manage Links')}
                                 </p>
                             )}
                         </div>
                     ) : (
                         <div className="mt-4 rounded-card border border-dashed border-ink/15 bg-surface/60 p-10 text-center">
                             <Link2 className="mx-auto mb-3 h-10 w-10 text-ink-3" strokeWidth={1.5} />
-                            <h3 className="text-[15px] font-medium">No links yet</h3>
-                            <p className="mt-1.5 text-[12.5px] text-ink-2">Add social media and custom links to your card</p>
+                            <h3 className="text-[15px] font-medium">{t('No links yet')}</h3>
+                            <p className="mt-1.5 text-[12.5px] text-ink-2">{t('Add social media and custom links to your card')}</p>
                             <Link
                                 href="/dashboard/links"
                                 className="mt-5 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-[13px] font-medium text-white"
                             >
                                 <Plus className="h-4 w-4" strokeWidth={2} />
-                                Add Your First Link
+                                {t('Add Your First Link')}
                             </Link>
                         </div>
                     )}
@@ -581,7 +582,7 @@ export default function DashboardPage() {
                 <section>
                     <div className="flex items-center gap-2">
                         <QrCode className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} />
-                        <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Profile QR Code</h2>
+                        <h2 className="text-[19px] font-semibold tracking-[-0.025em]">{t('Profile QR Code')}</h2>
                     </div>
 
                     <div className="mt-4 flex flex-col items-center rounded-card bg-surface p-5 shadow-card">
@@ -589,13 +590,13 @@ export default function DashboardPage() {
                             <QRCodeSVG id="dashboard-qr" value={shareUrl} size={168} level="H" includeMargin={false} />
                         </div>
                         <p className="mt-5 px-4 text-center text-[12.5px] text-ink-2">
-                            Scan to instantly view your digital business card
+                            {t('Scan to instantly view your digital business card')}
                         </p>
                         <button
                             onClick={downloadQr}
                             className="mt-5 w-full rounded-full bg-fill-subtle py-3 text-[13px] font-medium text-ink transition-colors hover:bg-track"
                         >
-                            Download QR Code
+                            {t('Download QR Code')}
                         </button>
                     </div>
                 </section>

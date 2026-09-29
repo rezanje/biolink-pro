@@ -2,6 +2,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { buildProfileUpdates } from '@/lib/profile-updates.mjs'
+import { canOwnerUpdate } from '@/lib/profile-updates.mjs'
+import { createClient as createSessionClient } from '@/lib/supabase/server'
 
 // Helper to get admin client
 const getAdminClient = () => {
@@ -30,10 +32,9 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'User ID or Serial ID is required' }, { status: 400 })
         }
 
-        console.log('--- UPDATE USER/SERIAL API ---')
-        console.log('Target User:', userId)
-        console.log('Target Serial:', serialId)
-        console.log('Updates:', updates)
+        const sessionClient = await createSessionClient()
+        const { data: { user } } = await sessionClient.auth.getUser()
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
         // 1. Init Admin Client
         let supabaseAdmin
@@ -42,6 +43,41 @@ export async function POST(request: Request) {
         } catch (err) {
             console.error('Server configuration error:', err)
             return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
+        }
+
+        const { data: requester, error: requesterError } = await supabaseAdmin
+            .from('profiles').select('role, company_id').eq('user_id', user.id).single()
+        if (requesterError || !requester) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+        const isSuperAdmin = requester.role === 'super_admin'
+        const isCompanyAdmin = requester.role === 'company_admin' && !!requester.company_id
+        if (!isSuperAdmin && !isCompanyAdmin) {
+            if (userId !== user.id || !canOwnerUpdate(updates, serialId)) {
+                return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+            }
+        }
+
+        if (isCompanyAdmin) {
+            if ('company_id' in updates && updates.company_id !== requester.company_id) {
+                return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+            }
+            if (userId) {
+                const { data: target } = await supabaseAdmin.from('profiles')
+                    .select('company_id').eq('user_id', userId).single()
+                if (target?.company_id !== requester.company_id) {
+                    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+                }
+            }
+            if (serialId) {
+                const { data: serial } = await supabaseAdmin.from('serial_numbers')
+                    .select('company_id, owner_id').eq('id', serialId).single()
+                if (!serial || serial.company_id !== requester.company_id) {
+                    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+                }
+                if (userId && serial.owner_id && serial.owner_id !== userId) {
+                    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+                }
+            }
         }
 
         // 2. If Serial ID is provided, update serial_numbers table
@@ -72,7 +108,14 @@ export async function POST(request: Request) {
 
         // 3. If User ID is provided, update profiles table
         if (userId) {
-            const profileUpdates = buildProfileUpdates(updates)
+            const profileUpdates = buildProfileUpdates(updates) as Record<string, unknown>
+
+            if (userId === user.id && profileUpdates.theme && typeof profileUpdates.theme === 'object') {
+                const { data: current, error: currentError } = await supabaseAdmin
+                    .from('profiles').select('theme').eq('user_id', userId).single()
+                if (currentError) return NextResponse.json({ error: 'Could not read profile' }, { status: 500 })
+                profileUpdates.theme = { ...(current?.theme || {}), ...profileUpdates.theme }
+            }
 
             if (Object.keys(profileUpdates).length > 0) {
                 const { error: profileError } = await supabaseAdmin

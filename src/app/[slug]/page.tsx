@@ -22,6 +22,8 @@ import { usePetSpriteReady } from '@/components/pet/PetSprite'
 import { PET_FEATURE_ENABLED, selectPetCharacter } from '@/lib/pet/pet-selection.mjs'
 import { getSelectedSpecialGreetingAnimation, getWelcomeCloseDelay, shouldShowSpecialGreetingAnimation } from '@/lib/special-greeting.mjs'
 import { activeRedirectUrl, normalizeUrl } from '@/lib/redirect-mode.mjs'
+import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview } from '@/lib/card-design.mjs'
+import { UiLanguageProvider, UiLanguageSelect, useUiLanguage } from '@/components/UiLanguageProvider'
 
 // WhatsApp SVG Icon
 function WhatsAppIcon({ className = "w-5 h-5" }: { className?: string }) {
@@ -46,7 +48,16 @@ function WeChatIcon({ className = "w-5 h-5" }: { className?: string }) {
 }
 
 export default function PublicProfile() {
+    return <UiLanguageProvider mode="visitor"><PublicProfileInner /></UiLanguageProvider>
+}
+
+function PublicProfileInner() {
+    const { t } = useUiLanguage()
     const params = useParams()
+    const designPreview = typeof window !== 'undefined'
+        && window.self !== window.top
+        && new URLSearchParams(window.location.search).has('design-preview')
+        && sessionStorage.getItem(`gentanala_design_preview_${params?.slug}`) !== null
     const supabase = createClient()
     const [profile, setProfile] = useState<any>(null)
     const [loading, setLoading] = useState(true)
@@ -89,19 +100,28 @@ export default function PublicProfile() {
 
             if (dbProfile) {
                 const uiTheme = dbProfile.theme || {}
+                let draftTheme: Record<string, string> = {}
+                if (designPreview) {
+                    try {
+                        draftTheme = JSON.parse(sessionStorage.getItem(`gentanala_design_preview_${slug}`) || '{}')
+                    } catch { /* Ignore malformed preview data. */ }
+                }
+                const renderedTheme = cardThemeForPreview(uiTheme, draftTheme, designPreview)
                 const processedProfile = {
                     ...dbProfile,
-                    whatsapp: uiTheme.whatsapp || '',
-                    wechat_id: uiTheme.wechat_id || '',
-                    image_filter: uiTheme.image_filter || 'normal',
-                    theme_mode: uiTheme.theme_mode || 'dark',
+                    whatsapp: renderedTheme.whatsapp || '',
+                    wechat_id: renderedTheme.wechat_id || '',
+                    image_filter: renderedTheme.image_filter || 'normal',
+                    theme_mode: renderedTheme.theme_mode || 'dark',
                     gallery: uiTheme.gallery || [],
                     files: uiTheme.files || [],
                     links: dbProfile.social_links || uiTheme.links || [],
                     welcome_word: uiTheme.welcome_word || 'hello',
                     welcome_duration: uiTheme.welcome_duration,
-                    primary_color: uiTheme.primary || '#3B82F6',
-                    active_mode: uiTheme.active_mode || 'profile',
+                    primary_color: cardAccent(renderedTheme.primary),
+                    template_id: canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until) ? cardTemplate(renderedTheme.template_id) : 'classic',
+                    font_pair: canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until) ? cardFont(renderedTheme.font_pair) : 'classic',
+                    active_mode: designPreview ? 'profile' : uiTheme.active_mode || 'profile',
                     redirect_url: uiTheme.redirect_url || '',
                     redirect_type: uiTheme.redirect_type || 'direct',
                     redirect_message: uiTheme.redirect_message || '',
@@ -109,6 +129,12 @@ export default function PublicProfile() {
                 }
                 setProfile(processedProfile)
                 setLoading(false)
+
+                if (designPreview) {
+                    setShowWelcome(false)
+                    setPetIntroDone(true)
+                    return
+                }
 
                 // Analytics: Track Page View
                 trackProfileView(dbProfile.id)
@@ -138,11 +164,11 @@ export default function PublicProfile() {
         }
 
         fetchProfile()
-    }, [params?.slug])
+    }, [params?.slug, designPreview])
 
     // Check if we should show the lead capture modal
     useEffect(() => {
-        if (!profile) return
+        if (!profile || designPreview) return
 
         // Check if lead capture is enabled for this profile
         const leadCaptureEnabled = profile.lead_capture_enabled || false
@@ -163,7 +189,7 @@ export default function PublicProfile() {
 
             return () => clearTimeout(timer)
         }
-    }, [profile])
+    }, [profile, designPreview])
 
     // Handwriting animation — letter by letter typewriter
     useEffect(() => {
@@ -221,7 +247,7 @@ export default function PublicProfile() {
 
     // Logika Redirect Pintasan Fungsi (Auto Redirect / Intro Effect)
     useEffect(() => {
-        if (!profile) return;
+        if (!profile || designPreview) return;
 
         const redirectUrl = activeRedirectUrl(profile);
         if (redirectUrl) {
@@ -254,7 +280,7 @@ export default function PublicProfile() {
                 return () => clearInterval(typeInterval);
             }
         }
-    }, [profile]);
+    }, [profile, designPreview]);
 
     if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white"><div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" /></div>
     if (!profile) return notFound()
@@ -319,7 +345,7 @@ export default function PublicProfile() {
                                     href={finalUrl}
                                     className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 transition-all text-white text-base font-bold rounded-2xl shadow-[0_8px_30px_rgb(37,99,235,0.2)] hover:shadow-[0_8px_30px_rgb(37,99,235,0.4)] active:scale-95 group"
                                 >
-                                    <span>Lanjutkan ke Link</span>
+                                    <span>{t('Continue to Link')}</span>
                                     <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </a>
                             </motion.div>
@@ -334,7 +360,9 @@ export default function PublicProfile() {
     const isLightMode = profile.theme_mode === 'light' || profile.theme_mode === 'liquid_glass'
     const isLiquidGlass = profile.theme_mode === 'liquid_glass'
     const isGrayscale = profile.image_filter === 'grayscale'
-    const primaryColor = profile.primary_color || '#3B82F6'
+    const primaryColor = cardAccent(profile.primary_color)
+    const templateId = cardTemplate(profile.template_id)
+    const fontPair = cardFont(profile.font_pair)
 
     // Track link clicks
     const handleLinkClick = async (linkId: string, trackedLink?: { id: string; url?: string; title?: string }) => {
@@ -469,7 +497,25 @@ export default function PublicProfile() {
             {/* Desktop background */}
             <div className="hidden md:block fixed inset-0 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 -z-10" />
 
-            <div className={`relative font-sans selection:bg-purple-500/30 md:max-w-[430px] md:mx-auto md:my-8 md:rounded-[40px] md:overflow-hidden md:shadow-2xl md:border ${isLiquidGlass ? 'md:border-white/30' : isLightMode ? 'md:border-zinc-200' : 'md:border-transparent'}`}>
+            <div
+                data-card-template={templateId}
+                data-card-font={fontPair}
+                data-card-mode={profile.theme_mode}
+                onClickCapture={designPreview ? event => {
+                    const target = event.target as Element
+                    if (target.closest('a, button, input, select, [role="button"]') && !target.closest('.card-tabs')) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                } : undefined}
+                onKeyDownCapture={designPreview ? event => {
+                    if ((event.key === 'Enter' || event.key === ' ') && (event.target as Element).closest('a, button, input, select, [role="button"]') && !(event.target as Element).closest('.card-tabs')) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                } : undefined}
+                className={`public-card relative font-sans selection:bg-purple-500/30 md:max-w-[430px] md:mx-auto md:my-8 md:rounded-[40px] md:overflow-hidden md:shadow-2xl md:border ${isLiquidGlass ? 'md:border-white/30' : isLightMode ? 'md:border-zinc-200' : 'md:border-transparent'}`}
+            >
 
                 {/* Welcome Animation — Frosted Glass Background, Handwriting */}
                 <AnimatePresence>
@@ -528,10 +574,10 @@ export default function PublicProfile() {
                 </AnimatePresence>
 
                 {/* Scrollable container */}
-                <div className={`h-screen md:h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden relative ${isLiquidGlass ? 'bg-[radial-gradient(circle_at_20%_0%,rgba(125,211,252,0.24),transparent_34%),radial-gradient(circle_at_85%_22%,rgba(216,180,254,0.20),transparent_30%),linear-gradient(180deg,#edf7ff_0%,#f7fbff_48%,#eaf1f8_100%)]' : isLightMode ? 'bg-zinc-100' : 'bg-zinc-950'}`}>
+                <div className={`card-scroll h-screen md:h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden relative ${isLiquidGlass ? 'bg-[radial-gradient(circle_at_20%_0%,rgba(125,211,252,0.24),transparent_34%),radial-gradient(circle_at_85%_22%,rgba(216,180,254,0.20),transparent_30%),linear-gradient(180deg,#edf7ff_0%,#f7fbff_48%,#eaf1f8_100%)]' : isLightMode ? 'bg-zinc-100' : 'bg-zinc-950'}`}>
 
                     {/* Hero Photo — STICKY, stays fixed while card scrolls over it */}
-                    <div className="sticky top-0 w-full z-0" style={{ height: '55vh' }}>
+                    <div className="card-hero sticky top-0 w-full z-0" style={{ height: '55vh' }}>
                         {profile.avatar_url ? (
                             <div className="relative w-full h-full">
                                 <img
@@ -554,7 +600,7 @@ export default function PublicProfile() {
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, ease: "easeOut" }}
-                        className={`relative z-10 -mt-8 rounded-t-[32px] px-6 py-8 min-h-screen transition-colors duration-300 ${isLiquidGlass
+                        className={`card-content relative z-10 -mt-8 rounded-t-[32px] px-6 py-8 min-h-screen transition-colors duration-300 ${isLiquidGlass
                             ? 'lg-content-card'
                             : isLightMode
                                 ? 'bg-white/40 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.04)] border-t border-white/40'
@@ -566,10 +612,17 @@ export default function PublicProfile() {
                             <div className={`w-10 h-1 rounded-full ${isLightMode ? 'bg-zinc-300' : 'bg-white/20'}`} />
                         </div>
 
+                        <div className="mb-5 flex justify-end"><UiLanguageSelect /></div>
+
                         {/* Profile Info */}
-                        <div className="text-center mb-8">
-                            <h1 className={`text-3xl font-bold mb-2 ${textPrimary}`}>{profile.display_name}</h1>
-                            <p className={`text-sm font-medium tracking-widest uppercase mb-4 ${textMuted}`}>@{profile.slug}</p>
+                        <div className="card-info text-center mb-8">
+                            {templateId === 'dial' && (
+                                <div className="card-dial-portrait" aria-hidden="true">
+                                    {profile.avatar_url ? <img src={profile.avatar_url} alt="" className={`h-full w-full rounded-full object-cover ${isGrayscale ? 'grayscale' : ''}`} /> : <span>{profile.display_name?.[0]?.toUpperCase() || 'G'}</span>}
+                                </div>
+                            )}
+                            <h1 className={`card-title text-3xl font-bold mb-2 ${textPrimary}`}>{profile.display_name}</h1>
+                            <p className={`card-handle text-sm font-medium tracking-widest uppercase mb-4 ${textMuted}`}>@{profile.slug}</p>
 
                             {(profile.job_title || profile.company) && (
                                 <div className={`flex items-center justify-center gap-2 text-sm mb-4 ${textSecondary}`}>
@@ -584,7 +637,7 @@ export default function PublicProfile() {
                                     <p className={`text-base leading-relaxed ${textSecondary} ${!bioExpanded ? 'line-clamp-3' : ''}`}>{profile.bio}</p>
                                     {profile.bio.length > 150 && (
                                         <button onClick={() => setBioExpanded(!bioExpanded)} className={`mt-2 text-sm font-medium ${textMuted} underline underline-offset-2`}>
-                                            {bioExpanded ? 'Show Less' : 'Read More'}
+                                            {bioExpanded ? t('Show Less') : t('Read More')}
                                         </button>
                                     )}
                                 </div>
@@ -593,13 +646,13 @@ export default function PublicProfile() {
 
                         {/* Social Icons Row */}
                         {filteredSocials.length > 0 && (
-                            <div className="flex justify-center flex-wrap gap-4 mb-8">
+                            <div className="card-socials flex justify-center flex-wrap gap-4 mb-8">
                                 {filteredSocials.map((link: any) => (
                                     <a
                                         href={link.url}
                                         target={link.icon === 'wechat' ? undefined : '_blank'}
                                         rel={link.icon === 'wechat' ? undefined : 'noopener noreferrer'}
-                                        aria-label={link.title || 'Open social profile'}
+                                        aria-label={link.title || t('Open social profile')}
                                         title={link.title || undefined}
                                         key={link.id}
                                         onClick={() => handleLinkClick(link.id, link)}
@@ -626,12 +679,13 @@ export default function PublicProfile() {
                         )}
 
                         {/* CTA: Save Contact + QR + Share */}
-                        <div className="flex gap-2 mb-6">
+                        <div className="card-actions flex gap-2 mb-6">
                             <button
                                 onClick={handleSaveContact}
                                 className={`flex-1 py-4 rounded-2xl font-bold text-base tracking-wide flex items-center justify-center gap-3 active:scale-[0.98] transition-all text-white ${isLiquidGlass ? 'lg-cta' : ''}`}
                                 style={{
                                     background: `linear-gradient(135deg, ${primaryColor}dd, ${primaryColor}99)`,
+                                    color: accentTextColor(primaryColor),
                                     ...(!isLiquidGlass ? {
                                         border: `1px solid ${primaryColor}40`,
                                         boxShadow: `0 8px 32px ${primaryColor}30`,
@@ -640,7 +694,7 @@ export default function PublicProfile() {
                                 }}
                             >
                                 <Download className="w-5 h-5" style={{ position: 'relative', zIndex: 2 }} />
-                                <span style={{ position: 'relative', zIndex: 2 }}>SAVE CONTACT</span>
+                                <span style={{ position: 'relative', zIndex: 2 }}>{t('SAVE CONTACT')}</span>
                             </button>
                             <button
                                 onClick={() => setShowQR(!showQR)}
@@ -650,7 +704,8 @@ export default function PublicProfile() {
                                         ? 'bg-white/50 text-zinc-700 border border-white/50 hover:bg-white/70 backdrop-blur-md'
                                         : 'bg-zinc-900/75 text-white hover:bg-zinc-800/90 backdrop-blur-md shadow-[0_10px_24px_rgba(0,0,0,0.24)]'
                                     }`}
-                                title="Show QR Code"
+                                title={t('Show QR Code')}
+                                aria-label={t('Show QR Code')}
                             >
                                 <QrCode className="w-5 h-5" />
                             </button>
@@ -666,6 +721,7 @@ export default function PublicProfile() {
                             />
                             <button
                                 onClick={handleShare}
+                                aria-label={t('Share Profile')}
                                 className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 active:scale-95 transition-all ${isLiquidGlass
                                     ? 'lg-social text-zinc-700'
                                     : isLightMode
@@ -690,21 +746,21 @@ export default function PublicProfile() {
                                         <div className="bg-white p-4 rounded-xl inline-block shadow-sm">
                                             <QRCodeSVG value={typeof window !== 'undefined' ? window.location.href : ''} size={160} level="M" />
                                         </div>
-                                        <p className={`text-sm mt-3 ${textMuted}`}>Scan untuk buka profil</p>
+                                        <p className={`text-sm mt-3 ${textMuted}`}>{t('Scan to open profile')}</p>
                                     </div>
                                 </motion.div>
                             )}
                         </AnimatePresence>
 
                         {/* Tabs — Liquid Glass Indicator */}
-                        <div className={`flex items-center justify-center gap-2 mb-8 rounded-2xl p-1.5 ${isLiquidGlass ? 'lg-tabs' : isLightMode ? 'bg-zinc-100/80' : 'bg-zinc-900/70'}`}>
+                        <div className={`card-tabs flex items-center justify-center gap-2 mb-8 rounded-2xl p-1.5 ${isLiquidGlass ? 'lg-tabs' : isLightMode ? 'bg-zinc-100/80' : 'bg-zinc-900/70'}`}>
                             {['links', 'gallery', 'files'].map(tab => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     className={`text-sm font-bold uppercase tracking-widest transition-all duration-300 rounded-xl px-4 py-2.5 ${getTabStyle(tab)}`}
                                 >
-                                    {tab}
+                                    {t(tab === 'links' ? 'Links' : tab === 'gallery' ? 'Gallery' : 'Files')}
                                 </button>
                             ))}
                         </div>
@@ -719,15 +775,15 @@ export default function PublicProfile() {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         onClick={() => handleLinkClick(link.id)}
-                                        className={`block w-full p-5 rounded-2xl flex items-center justify-between group transition-all active:scale-[0.99] ${glassItem}`}
+                                        className={`card-link block w-full p-5 rounded-2xl flex items-center justify-between group transition-all active:scale-[0.99] ${glassItem}`}
                                     >
                                         <div className="flex items-center gap-4">
                                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isLiquidGlass ? 'bg-white/30 text-zinc-700' : isLightMode ? 'bg-zinc-100/80 text-zinc-700' : 'bg-white/10 text-white/90'}`} style={{ position: 'relative', zIndex: 2 }}>
                                                 {renderIcon(link.icon, "w-6 h-6")}
                                             </div>
                                             <div className="text-left" style={{ position: 'relative', zIndex: 2 }}>
-                                                <h4 className={`font-bold text-base ${isLightMode ? 'text-zinc-900' : 'text-white'}`}>{link.title || 'Untitled Link'}</h4>
-                                                <p className={`text-xs font-medium uppercase tracking-wider mt-1 ${isLightMode ? 'text-zinc-400' : 'text-white/40'}`}>{getLinkSubtitle(link)}</p>
+                                                <h4 className={`font-bold text-base ${isLightMode ? 'text-zinc-900' : 'text-white'}`}>{link.title || t('Untitled Link')}</h4>
+                                                <p className={`text-xs font-medium uppercase tracking-wider mt-1 ${isLightMode ? 'text-zinc-400' : 'text-white/40'}`}>{t(getLinkSubtitle(link))}</p>
                                             </div>
                                         </div>
                                         <ChevronRight className={`w-5 h-5 transition-all group-hover:translate-x-1 ${isLightMode ? 'text-zinc-300' : 'text-white/20'}`} />
@@ -748,7 +804,7 @@ export default function PublicProfile() {
                                 ) : (
                                     <div className={`col-span-2 text-center py-12 ${textMuted}`}>
                                         <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                                        <p className="text-sm">No photos available</p>
+                                        <p className="text-sm">{t('No photos available')}</p>
                                     </div>
                                 )}
                             </div>
@@ -768,7 +824,7 @@ export default function PublicProfile() {
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <h4 className={`font-bold text-base ${isLightMode ? 'text-zinc-900' : 'text-white'}`}>{file.title}</h4>
-                                                <p className={`text-xs mt-1 ${isLightMode ? 'text-zinc-400' : 'text-white/40'}`}>Open Link</p>
+                                                <p className={`text-xs mt-1 ${isLightMode ? 'text-zinc-400' : 'text-white/40'}`}>{t('Open Link')}</p>
                                             </div>
                                             <ExternalLink className={`w-5 h-5 ${isLightMode ? 'text-zinc-300' : 'text-white/20'}`} />
                                         </a>
@@ -776,7 +832,7 @@ export default function PublicProfile() {
                                 ) : (
                                     <div className={`text-center py-12 ${textMuted}`}>
                                         <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                                        <p className="text-sm">No documents available</p>
+                                        <p className="text-sm">{t('No documents available')}</p>
                                     </div>
                                 )}
                             </div>
@@ -784,7 +840,7 @@ export default function PublicProfile() {
 
                         {/* Footer */}
                         <div className="mt-12 pb-8 text-center">
-                            <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isLightMode ? 'text-zinc-300' : 'text-white/15'}`}>Powered by Gentanala</p>
+                            <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isLightMode ? 'text-zinc-300' : 'text-white/15'}`}>{t('Powered by Gentanala')}</p>
                         </div>
                     </motion.div>
                 </div>
@@ -799,8 +855,8 @@ export default function PublicProfile() {
                                 }`}
                             onClick={e => e.stopPropagation()}>
                             <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-lg font-bold">Share Profile</h3>
-                                <button onClick={() => setShowShare(false)} className={`p-2 rounded-full backdrop-blur-sm ${isLightMode ? 'bg-zinc-100/80 hover:bg-zinc-200' : 'bg-white/10 hover:bg-white/20'}`}>
+                                <h3 className="text-lg font-bold">{t('Share Profile')}</h3>
+                                <button onClick={() => setShowShare(false)} aria-label={t('Close')} className={`p-2 rounded-full backdrop-blur-sm ${isLightMode ? 'bg-zinc-100/80 hover:bg-zinc-200' : 'bg-white/10 hover:bg-white/20'}`}>
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
@@ -839,11 +895,11 @@ export default function PublicProfile() {
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 cursor-zoom-out"
                             onClick={() => setSelectedImage(null)}>
-                            <button onClick={() => setSelectedImage(null)} className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white">
+                            <button onClick={() => setSelectedImage(null)} aria-label={t('Close')} className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white">
                                 <X className="w-8 h-8" />
                             </button>
                             <motion.img initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                                src={selectedImage} alt="Gallery" className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl object-contain" onClick={e => e.stopPropagation()} />
+                                src={selectedImage} alt={t('Gallery')} className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl object-contain" onClick={e => e.stopPropagation()} />
                         </motion.div>
                     )}
                 </AnimatePresence>

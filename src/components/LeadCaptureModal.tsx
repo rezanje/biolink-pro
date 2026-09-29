@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Loader2, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 interface LeadCaptureModalProps {
     isOpen: boolean
@@ -13,6 +14,7 @@ interface LeadCaptureModalProps {
 }
 
 export default function LeadCaptureModal({ isOpen, onClose, profileId, profileName }: LeadCaptureModalProps) {
+    const { t } = useUiLanguage()
     const supabase = createClient()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
@@ -31,7 +33,7 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
 
         // Validate WhatsApp (required)
         if (!formData.whatsapp.trim()) {
-            alert('WhatsApp number is required')
+            alert(t('WhatsApp number is required'))
             return
         }
 
@@ -66,7 +68,7 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
 
             if (error) {
                 console.error('Error submitting lead:', error)
-                alert(`Failed to submit: ${error.message} (Details: ${error.details || 'none'})`)
+                alert(t('Could not send your details. Please try again.'))
                 setIsSubmitting(false)
                 return
             }
@@ -86,7 +88,7 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
 
         } catch (err) {
             console.error('Unexpected error:', err)
-            alert('Something went wrong. Please try again.')
+            alert(t('Something went wrong. Please try again.'))
         } finally {
             setIsSubmitting(false)
         }
@@ -129,6 +131,7 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                             {/* Close button */}
                             <button
                                 onClick={onClose}
+                                aria-label={t('Close')}
                                 className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600 transition-colors"
                             >
                                 <X className="w-5 h-5" />
@@ -144,9 +147,9 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                                     >
                                         <Check className="w-8 h-8 text-emerald-600" />
                                     </motion.div>
-                                    <h3 className="text-2xl font-bold text-zinc-900 mb-2">Thank You!</h3>
+                                    <h3 className="text-2xl font-bold text-zinc-900 mb-2">{t('Thank You!')}</h3>
                                     <p className="text-zinc-600">
-                                        {profileName} will get back to you soon.
+                                        {t('{name} will get back to you soon.', { name: profileName })}
                                     </p>
                                 </div>
                             ) : (
@@ -154,10 +157,10 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                                 <>
                                     <div className="mb-6">
                                         <h2 className="text-2xl font-bold text-zinc-900 mb-2">
-                                            Connect with {profileName}
+                                            {t('Connect with {name}', { name: profileName })}
                                         </h2>
                                         <p className="text-zinc-600 text-sm">
-                                            Leave your contact info and they'll reach out to you.
+                                            {t("Leave your contact info and they'll reach out to you.")}
                                         </p>
                                     </div>
 
@@ -165,7 +168,7 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                                         {/* Name (optional) */}
                                         <div>
                                             <label htmlFor="name" className="block text-sm font-medium text-zinc-700 mb-1.5">
-                                                Name <span className="text-zinc-400">(optional)</span>
+                                                {t('Name')} <span className="text-zinc-400">{t('(optional)')}</span>
                                             </label>
                                             <input
                                                 type="text"
@@ -174,13 +177,13 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                                                 value={formData.name}
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                                                placeholder="Your name"
+                                                placeholder={t('Your name')}
                                             />
                                         </div>
 
                                         <div>
                                             <label htmlFor="job_title" className="block text-sm font-medium text-zinc-700 mb-1.5">
-                                                Job Title <span className="text-zinc-400">(optional)</span>
+                                                {t('Job Title')} <span className="text-zinc-400">{t('(optional)')}</span>
                                             </label>
                                             <input
                                                 type="text"
@@ -189,7 +192,7 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                                                 value={formData.job_title}
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                                                placeholder="Your role or position"
+                                                placeholder={t('Your role or position')}
                                             />
                                         </div>
 
@@ -212,7 +215,7 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
 
                                         <div>
                                             <label htmlFor="linkedin" className="block text-sm font-medium text-zinc-700 mb-1.5">
-                                                LinkedIn <span className="text-zinc-400">(optional)</span>
+                                                LinkedIn <span className="text-zinc-400">{t('(optional)')}</span>
                                             </label>
                                             <input
                                                 type="text"
@@ -227,7 +230,7 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
 
                                         <div>
                                             <label htmlFor="wechat_id" className="block text-sm font-medium text-zinc-700 mb-1.5">
-                                                WeChat ID <span className="text-zinc-400">(optional)</span>
+                                                {t('WeChat ID')} <span className="text-zinc-400">{t('(optional)')}</span>
                                             </label>
                                             <input
                                                 type="text"
@@ -236,14 +239,14 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                                                 value={formData.wechat_id}
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                                                placeholder="Your WeChat ID"
+                                                placeholder={t('Your WeChat ID')}
                                             />
                                         </div>
 
                                         {/* Email (optional) */}
                                         <div>
                                             <label htmlFor="email" className="block text-sm font-medium text-zinc-700 mb-1.5">
-                                                Email <span className="text-zinc-400">(optional)</span>
+                                                {t('Email')} <span className="text-zinc-400">{t('(optional)')}</span>
                                             </label>
                                             <input
                                                 type="email"
@@ -259,7 +262,7 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                                         {/* Company (optional) */}
                                         <div>
                                             <label htmlFor="company" className="block text-sm font-medium text-zinc-700 mb-1.5">
-                                                Company <span className="text-zinc-400">(optional)</span>
+                                                {t('Company')} <span className="text-zinc-400">{t('(optional)')}</span>
                                             </label>
                                             <input
                                                 type="text"
@@ -268,7 +271,7 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                                                 value={formData.company}
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                                                placeholder="Your company"
+                                                placeholder={t('Your company')}
                                             />
                                         </div>
 
@@ -281,10 +284,10 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                                             {isSubmitting ? (
                                                 <>
                                                     <Loader2 className="w-5 h-5 animate-spin" />
-                                                    Submitting...
+                                                    {t('Submitting...')}
                                                 </>
                                             ) : (
-                                                'Submit'
+                                                t('Submit')
                                             )}
                                         </button>
                                     </form>

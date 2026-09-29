@@ -30,6 +30,7 @@ import { createClient } from '@/lib/supabase/client'
 import DesktopPreview from '@/components/dashboard/DesktopPreview'
 import { uploadAvatar, uploadGalleryImage, deleteFile } from '@/lib/storage'
 import { getAvailableSpecialEditions, SPECIAL_EDITIONS, WELCOME_DURATIONS } from '@/lib/special-greeting.mjs'
+import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 const COUNTRY_CODES = [
     { code: '+62', label: 'ID +62' },
@@ -76,6 +77,7 @@ function formatPhoneNumber(countryCode: string, number: string) {
 }
 
 export default function ProfileEditor() {
+    const { t, locale } = useUiLanguage()
     const supabase = createClient()
     const [isLoading, setIsLoading] = useState(false)
     const [isSaved, setIsSaved] = useState(false)
@@ -131,7 +133,7 @@ export default function ProfileEditor() {
         if (!file) return
 
         if (file.size > 5 * 1024 * 1024) {
-            alert('Maximum file size is 5 MB.')
+            alert(t('Maximum file size is 5 MB.'))
             return
         }
 
@@ -151,11 +153,11 @@ export default function ProfileEditor() {
                 setGeneratedAvatarUrl(data.generated_url)
                 setOriginalAvatarUrl(data.original_url)
             } else {
-                alert(data.error || 'Could not generate avatar.')
+                alert(data.error || t('Could not generate avatar.'))
             }
         } catch (err) {
             console.error(err)
-            alert('Error connecting to AI')
+            alert(t('Error connecting to AI'))
         } finally {
             setIsAvatarGenerating(false)
             if (avatarInputRef.current) avatarInputRef.current.value = ''
@@ -351,17 +353,17 @@ export default function ProfileEditor() {
         if (!file) return
 
         if (!file.type.startsWith('image/')) {
-            setError('File must be an image (JPG, PNG, etc.).')
+            setError(t('File must be an image (JPG, PNG, etc.).'))
             return
         }
 
         if (file.size > 5 * 1024 * 1024) {
-            setError('Maximum file size is 5 MB.')
+            setError(t('Maximum file size is 5 MB.'))
             return
         }
 
         if (!userId) {
-            setError('Please sign in first.')
+            setError(t('Please sign in first.'))
             return
         }
 
@@ -378,7 +380,7 @@ export default function ProfileEditor() {
             await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('user_id', userId)
         } catch (err) {
             console.error(err)
-            setError('Could not upload image. Please try again.')
+            setError(t('Could not upload image. Please try again.'))
         } finally {
             setIsUploading(false)
         }
@@ -409,17 +411,17 @@ export default function ProfileEditor() {
 
         // Free Tier Limit: Max 2 Photos
         if (userTier === 'FREE' && (formData.gallery?.length || 0) >= 2) {
-            alert('The Free plan allows up to 2 gallery photos. Upgrade to Premium for unlimited photos.')
+            alert(t('The Free plan allows up to 2 gallery photos. Upgrade to Premium for unlimited photos.'))
             return
         }
 
         if (file.size > 5 * 1024 * 1024) {
-            alert('Gallery photos must be 5 MB or smaller.')
+            alert(t('Gallery photos must be 5 MB or smaller.'))
             return
         }
 
         if (!userId) {
-            alert('Please sign in first.')
+            alert(t('Please sign in first.'))
             return
         }
 
@@ -429,7 +431,7 @@ export default function ProfileEditor() {
         const isFree = profileData?.tier === 'FREE'
 
         if (isFree && formData.gallery.length >= 3) {
-            alert('Free plan users can upload up to 3 photos. Upgrade for unlimited uploads.')
+            alert(t('Free plan users can upload up to 3 photos. Upgrade for unlimited uploads.'))
             return
         }
 
@@ -444,7 +446,7 @@ export default function ProfileEditor() {
             updateField('gallery', newGallery)
         } catch (err) {
             console.error(err)
-            alert('Could not upload gallery photo.')
+            alert(t('Could not upload gallery photo.'))
         }
     }
 
@@ -460,12 +462,12 @@ export default function ProfileEditor() {
     const addFileLink = () => {
         // Free Tier Limit: Max 1 Document
         if (userTier === 'FREE' && formData.files.length >= 1) {
-            alert('The Free plan allows 1 document or link. Upgrade to Premium to add more.')
+            alert(t('The Free plan allows 1 document or link. Upgrade to Premium to add more.'))
             return
         }
 
         if (!newFileTitle.trim() || !newFileUrl.trim()) {
-            alert('Please enter a title and URL.')
+            alert(t('Please enter a title and URL.'))
             return
         }
 
@@ -495,7 +497,7 @@ export default function ProfileEditor() {
 
     const generateAIBio = async () => {
         if (!aiKeywords.trim()) {
-            alert('Enter a few keywords first.')
+            alert(t('Enter a few keywords first.'))
             return
         }
 
@@ -519,7 +521,7 @@ export default function ProfileEditor() {
             }
         } catch (err) {
             console.error(err)
-            alert('There was a problem connecting to AI.')
+            alert(t('There was a problem connecting to AI.'))
         } finally {
             setIsGenerating(false)
         }
@@ -544,13 +546,13 @@ export default function ProfileEditor() {
         }
 
         if (!formData.slug) {
-            setError('A custom profile URL is required.')
+            setError(t('A custom profile URL is required.'))
             setIsLoading(false)
             return
         }
 
         if (!/^[a-z0-9-]+$/.test(formData.slug)) {
-            setError('Your profile URL can only contain lowercase letters, numbers, and hyphens (-).')
+            setError(t('Your profile URL can only contain lowercase letters, numbers, and hyphens (-).'))
             setIsLoading(false)
             return
         }
@@ -577,7 +579,7 @@ export default function ProfileEditor() {
                 .single()
 
             if (existingUser) {
-                setError('This custom profile URL is already in use. Choose another one.')
+                setError(t('This custom profile URL is already in use. Choose another one.'))
                 setIsLoading(false)
                 return
             }
@@ -592,8 +594,6 @@ export default function ProfileEditor() {
                 phone: formatPhoneNumber(formData.phone_country_code, formData.phone),
                 email: formData.email,
                 social_links: formData.social_links,
-                special_edition: formData.special_editions[0] || formData.special_edition,
-                special_editions: formData.special_editions,
                 selected_special_greeting_anim: formData.selected_special_greeting_anim,
                 enable_special_greeting_anim: formData.enable_special_greeting_anim,
                 // Construct basic theme object if needed by DB, or flattened fields
@@ -601,8 +601,6 @@ export default function ProfileEditor() {
                 theme: {
                     whatsapp: formatPhoneNumber(formData.whatsapp_country_code, formData.whatsapp),
                     wechat_id: formData.wechat_id.trim(),
-                    image_filter: userTier === 'FREE' ? 'normal' : formData.image_filter,
-                    theme_mode: userTier === 'FREE' ? 'light' : formData.theme_mode,
                     welcome_word: userTier === 'FREE' ? 'Hello' : formData.welcome_word,
                     gallery: formData.gallery,
                     files: formData.files,
@@ -667,13 +665,13 @@ export default function ProfileEditor() {
         <div className="mx-auto flex max-w-[1200px] gap-8 px-5 pb-[150px] pt-6">
           <div className="min-w-0 flex-1">
             <header>
-                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Edit Profile</h1>
-                <p className="mt-1.5 text-[13px] text-ink-2">Add the information shown on your digital card</p>
+                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">{t('Edit Profile')}</h1>
+                <p className="mt-1.5 text-[13px] text-ink-2">{t('Add the information shown on your digital card')}</p>
                 <span
                     className="mt-3 inline-block rounded-full bg-fill-subtle px-2.5 py-1 text-[10px] uppercase tracking-wider text-ink-2"
                     style={{ fontFamily: 'var(--font-mono)' }}
                 >
-                    {userTier} plan
+                    {t('{tier} plan', { tier: userTier })}
                 </span>
             </header>
 
@@ -685,8 +683,8 @@ export default function ProfileEditor() {
                             <Camera className="h-[18px] w-[18px]" strokeWidth={1.8} />
                         </span>
                         <div>
-                            <h2 className="text-[15px] font-semibold">Profile Photo</h2>
-                            <p className="text-[12px] text-ink-2">Your main image on the public profile</p>
+                            <h2 className="text-[15px] font-semibold">{t('Profile Photo')}</h2>
+                            <p className="text-[12px] text-ink-2">{t('Your main image on the public profile')}</p>
                         </div>
                     </div>
 
@@ -705,7 +703,7 @@ export default function ProfileEditor() {
                                     <button
                                         type="button"
                                         onClick={handleRemovePhoto}
-                                        aria-label="Remove photo"
+                                        aria-label={t('Remove photo')}
                                         className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-coral-soft text-coral-soft-ink shadow-row"
                                     >
                                         <X className="h-3.5 w-3.5" strokeWidth={2} />
@@ -730,7 +728,7 @@ export default function ProfileEditor() {
                                     ) : (
                                         <>
                                             <Upload className="h-6 w-6 text-ink-3" strokeWidth={1.6} />
-                                            <span className="text-[11px] text-ink-2">Upload</span>
+                                            <span className="text-[11px] text-ink-2">{t('Upload')}</span>
                                         </>
                                     )}
                                 </button>
@@ -748,14 +746,14 @@ export default function ProfileEditor() {
                         <div className="min-w-0 flex-1 text-[12px] text-ink-2">
                             <p className="flex items-center gap-2">
                                 <ImageIcon className="h-3.5 w-3.5 text-ink-3" strokeWidth={1.8} />
-                                JPG, PNG, atau WebP
+                                JPG, PNG, {t('or')} WebP
                             </p>
                             <p className="mt-1.5 flex items-center gap-2">
                                 <Upload className="h-3.5 w-3.5 text-ink-3" strokeWidth={1.8} />
-                                Maximum 5 MB
+                                {t('Maximum 5 MB')}
                             </p>
                             <p className="mt-3 text-[11px] leading-relaxed text-ink-3">
-                                Use a portrait photo with a 3:4 ratio for the best fit.
+                                {t('Use a portrait photo with a 3:4 ratio for the best fit.')}
                             </p>
                         </div>
                     </div>
@@ -768,8 +766,8 @@ export default function ProfileEditor() {
                             <Sparkles className="h-[18px] w-[18px]" strokeWidth={1.8} />
                         </span>
                         <div>
-                            <h2 className="text-[15px] font-semibold">Greeting</h2>
-                            <p className="text-[12px] text-ink-2">Shown when someone first opens your card</p>
+                            <h2 className="text-[15px] font-semibold">{t('Greeting')}</h2>
+                            <p className="text-[12px] text-ink-2">{t('Shown when someone first opens your card')}</p>
                         </div>
                     </div>
 
@@ -790,15 +788,15 @@ export default function ProfileEditor() {
                             </span>
                         )}
                     </div>
-                    <p className="mt-2 text-[11px] text-ink-3">Examples: hello, welcome, nice to meet you</p>
+                    <p className="mt-2 text-[11px] text-ink-3">{t('Examples: hello, welcome, nice to meet you')}</p>
 
                     <div className="mt-4">
                         <div className="flex items-baseline justify-between gap-3">
                             <div>
-                                <h3 className="text-[13.5px] font-semibold">Greeting Duration</h3>
-                                <p className="mt-0.5 text-[12px] text-ink-2">How long the greeting stays on screen</p>
+                                <h3 className="text-[13.5px] font-semibold">{t('Greeting Duration')}</h3>
+                                <p className="mt-0.5 text-[12px] text-ink-2">{t('How long the greeting stays on screen')}</p>
                             </div>
-                            <span className="shrink-0 text-[12px] font-medium text-ink-2">{formData.welcome_duration} sec</span>
+                            <span className="shrink-0 text-[12px] font-medium text-ink-2">{formData.welcome_duration} {t('sec')}</span>
                         </div>
                         <div className="mt-3 grid grid-cols-4 gap-2">
                             {WELCOME_DURATIONS.map((duration) => (
@@ -820,8 +818,8 @@ export default function ProfileEditor() {
 
                     {availableSpecialEditions.length > 0 && (
                         <div className="mt-5 border-t border-ink/[0.08] pt-5">
-                            <h3 className="text-[13.5px] font-semibold">Special Edition Animation</h3>
-                            <p className="mt-0.5 text-[12px] text-ink-2">Choose an animation for the greeting screen</p>
+                            <h3 className="text-[13.5px] font-semibold">{t('Special Edition Animation')}</h3>
+                            <p className="mt-0.5 text-[12px] text-ink-2">{t('Choose an animation for the greeting screen')}</p>
 
                             <div className="mt-3 grid gap-2">
                                 <button
@@ -832,7 +830,7 @@ export default function ProfileEditor() {
                                         : 'bg-fill-subtle text-ink-2'
                                         }`}
                                 >
-                                    No animation
+                                    {t('No animation')}
                                 </button>
                                 {SPECIAL_EDITIONS.filter((edition) => availableSpecialEditions.includes(edition.id)).map((edition) => (
                                     <button
@@ -844,23 +842,23 @@ export default function ProfileEditor() {
                                             : 'bg-fill-subtle text-ink-2'
                                             }`}
                                     >
-                                        {edition.label}
+                                        {t(edition.label)}
                                     </button>
                                 ))}
                             </div>
 
                             <div className="mt-4 flex items-center justify-between gap-4">
                                 <div className="min-w-0">
-                            <h4 className="text-[13.5px] font-semibold">Enable Animation</h4>
+                            <h4 className="text-[13.5px] font-semibold">{t('Enable Animation')}</h4>
                                     <p className="mt-0.5 text-[12px] text-ink-2">
-                                        {selectedSpecialEdition ? `Repeat ${selectedSpecialEdition.animationLabel} on the greeting screen.` : 'Choose an animation first.'}
+                                        {selectedSpecialEdition ? t('Repeat {animation} on the greeting screen.', { animation: selectedSpecialEdition.animationLabel }) : t('Choose an animation first.')}
                                     </p>
                                 </div>
                                 <button
                                     type="button"
                                     disabled={!formData.selected_special_greeting_anim}
                                     onClick={() => updateField('enable_special_greeting_anim', !formData.enable_special_greeting_anim)}
-                                    aria-label="Enable special edition animation"
+                                    aria-label={t('Enable special edition animation')}
                                     className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${formData.enable_special_greeting_anim ? 'bg-ink' : 'bg-track'
                                         }`}
                                 >
@@ -877,17 +875,17 @@ export default function ProfileEditor() {
                 {/* Photo gallery */}
                 <section className="mt-3 rounded-card bg-surface p-5 shadow-card">
                     <div className="flex items-center justify-between gap-3">
-                        <h2 className="text-[15px] font-semibold">Photo Gallery</h2>
+                        <h2 className="text-[15px] font-semibold">{t('Photo Gallery')}</h2>
                         <label className="flex cursor-pointer items-center gap-1.5 rounded-full bg-fill-subtle px-3.5 py-2 text-[12px] font-medium text-ink-2">
                             <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.8} />
-                            Upload
+                            {t('Upload')}
                             <input type="file" className="hidden" accept="image/*" onChange={handleGalleryUpload} />
                         </label>
                     </div>
 
                     {formData.gallery.length === 0 ? (
                         <div className="mt-4 rounded-row border border-dashed border-ink/15 p-8 text-center text-[12.5px] text-ink-3">
-                            No gallery photos yet
+                            {t('No gallery photos yet')}
                         </div>
                     ) : (
                         <div className="mt-4 grid grid-cols-3 gap-2.5">
@@ -897,7 +895,7 @@ export default function ProfileEditor() {
                                     <button
                                         type="button"
                                         onClick={() => removeGalleryItem(item.id)}
-                                        aria-label="Remove gallery photo"
+                                        aria-label={t('Remove gallery photo')}
                                         className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-ink/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
                                     >
                                         <X className="h-3 w-3" strokeWidth={2} />
@@ -911,31 +909,31 @@ export default function ProfileEditor() {
                 {/* Documents and links */}
                 <section className="mt-3 rounded-card bg-surface p-5 shadow-card">
                     <div className="flex items-center justify-between gap-3">
-                        <h2 className="text-[15px] font-semibold">Documents & Links</h2>
+                        <h2 className="text-[15px] font-semibold">{t('Documents & Links')}</h2>
                         <button
                             type="button"
                             onClick={() => setShowAddFile(!showAddFile)}
                             className="flex items-center gap-1.5 rounded-full bg-fill-subtle px-3.5 py-2 text-[12px] font-medium text-ink-2"
                         >
                             <FileText className="h-3.5 w-3.5" strokeWidth={1.8} />
-                            Add
+                            {t('Add')}
                         </button>
                     </div>
 
                     {showAddFile && (
                         <div className="mt-4 rounded-row bg-fill-subtle p-4">
                             <div>
-                                <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Document title</label>
+                                <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Document title')}</label>
                                 <input
                                     type="text"
                                     value={newFileTitle}
                                     onChange={(e) => setNewFileTitle(e.target.value)}
-                                    placeholder="Example: Certificate of Authenticity"
+                                    placeholder={t('Example: Certificate of Authenticity')}
                                     className="mt-1.5 w-full rounded-row bg-surface px-4 py-2.5 text-[13.5px] text-ink outline-none placeholder:text-ink-3"
                                 />
                             </div>
                             <div className="mt-3">
-                                    <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Link URL</label>
+                                    <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Link URL')}</label>
                                 <input
                                     type="text"
                                     value={newFileUrl}
@@ -950,14 +948,14 @@ export default function ProfileEditor() {
                                     onClick={addFileLink}
                                     className="flex-1 rounded-full bg-ink py-2.5 text-[12.5px] font-medium text-white"
                                 >
-                                    Save
+                                    {t('Save')}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => { setShowAddFile(false); setNewFileTitle(''); setNewFileUrl('') }}
                                     className="rounded-full bg-surface px-5 py-2.5 text-[12.5px] font-medium text-ink-2"
                                 >
-                                        Cancel
+                                        {t('Cancel')}
                                 </button>
                             </div>
                         </div>
@@ -965,7 +963,7 @@ export default function ProfileEditor() {
 
                     {formData.files.length === 0 ? (
                         <div className="mt-4 rounded-row border border-dashed border-ink/15 p-8 text-center text-[12.5px] text-ink-3">
-                            No documents yet. Add a Google Drive link, PDF, or another file.
+                            {t('No documents yet. Add a Google Drive link, PDF, or another file.')}
                         </div>
                     ) : (
                         <div className="mt-4 grid gap-2.5">
@@ -983,7 +981,7 @@ export default function ProfileEditor() {
                                     <button
                                         type="button"
                                         onClick={() => removeFileItem(file.id)}
-                                        aria-label="Delete document"
+                                        aria-label={t('Delete document')}
                                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-coral-soft hover:text-coral-soft-ink"
                                     >
                                         <Trash2 className="h-4 w-4" strokeWidth={1.8} />
@@ -1000,23 +998,23 @@ export default function ProfileEditor() {
                         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fill-subtle text-ink-2">
                             <User className="h-[18px] w-[18px]" strokeWidth={1.8} />
                         </span>
-                        <h2 className="text-[15px] font-semibold">Basic Information</h2>
+                        <h2 className="text-[15px] font-semibold">{t('Basic Information')}</h2>
                     </div>
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Display name</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Display name')}</label>
                             <input
                                 type="text"
                                 value={formData.display_name}
                                 onChange={(e) => updateField('display_name', e.target.value)}
-                                placeholder="Your full name"
+                                placeholder={t('Your full name')}
                                 className="mt-1.5 w-full rounded-row bg-fill-subtle px-4 py-3 text-[14px] text-ink outline-none placeholder:text-ink-3"
                             />
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Card URL</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Card URL')}</label>
                             <div className="relative mt-1.5">
                                 <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[13px] text-ink-3">
                                     my.gentanala.com/
@@ -1026,7 +1024,7 @@ export default function ProfileEditor() {
                                     value={formData.slug}
                                     onChange={(e) => updateField('slug', e.target.value.toLowerCase().replace(/\s+/g, '-'))}
                                     disabled={userTier === 'FREE'}
-                                    placeholder="yourname"
+                                    placeholder={t('yourname')}
                                     className={`w-full rounded-row bg-fill-subtle py-3 pl-[8.6rem] pr-4 text-[14px] text-ink outline-none placeholder:text-ink-3 ${userTier === 'FREE' ? 'cursor-not-allowed opacity-70' : ''}`}
                                 />
                                 {userTier === 'FREE' && (
@@ -1038,28 +1036,28 @@ export default function ProfileEditor() {
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Company</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Company')}</label>
                             <div className="relative mt-1.5">
                                 <Building2 className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
                                 <input
                                     type="text"
                                     value={formData.company}
                                     onChange={(e) => updateField('company', e.target.value)}
-                                    placeholder="Company name"
+                                    placeholder={t('Company name')}
                                     className="w-full rounded-row bg-fill-subtle py-3 pl-11 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-3"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Job title</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Job title')}</label>
                             <div className="relative mt-1.5">
                                 <Briefcase className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
                                 <input
                                     type="text"
                                     value={formData.job_title}
                                     onChange={(e) => updateField('job_title', e.target.value)}
-                                    placeholder="CEO, Manager, etc."
+                                    placeholder={t('CEO, Manager, etc.')}
                                     className="w-full rounded-row bg-fill-subtle py-3 pl-11 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-3"
                                 />
                             </div>
@@ -1068,7 +1066,7 @@ export default function ProfileEditor() {
 
                     <div className="mt-3">
                         <div className="flex items-center justify-between gap-3">
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Short bio</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Short bio')}</label>
                             {userTier !== 'FREE' && (
                                 <button
                                     type="button"
@@ -1076,19 +1074,19 @@ export default function ProfileEditor() {
                                     className="flex items-center gap-1.5 rounded-full bg-fill-subtle px-3 py-1.5 text-[11px] font-medium text-ink-2"
                                 >
                                     <Sparkles className="h-3 w-3" strokeWidth={1.8} />
-                                    Write with AI
+                                    {t('Write with AI')}
                                 </button>
                             )}
                         </div>
 
                         {showAIModal && (
                             <div className="mt-3 rounded-row bg-fill-subtle p-4">
-                                <p className="text-[11px] font-medium uppercase tracking-wider text-ink-2">What would you like to highlight?</p>
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('What would you like to highlight?')}</p>
                                 <input
                                     type="text"
                                     value={aiKeywords}
                                     onChange={(e) => setAiKeywords(e.target.value)}
-                                    placeholder="Example: architect, watch founder, golf enthusiast"
+                                    placeholder={t('Example: architect, watch founder, golf enthusiast')}
                                     className="mt-2 w-full rounded-row bg-surface px-4 py-2.5 text-[13.5px] text-ink outline-none placeholder:text-ink-3"
                                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), generateAIBio())}
                                 />
@@ -1100,14 +1098,14 @@ export default function ProfileEditor() {
                                         className="flex flex-1 items-center justify-center gap-2 rounded-full bg-ink py-2.5 text-[12.5px] font-medium text-white disabled:opacity-50"
                                     >
                                         {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" strokeWidth={1.8} />}
-                                        {isGenerating ? 'Generating…' : 'Generate Bio'}
+                                        {isGenerating ? t('Generating…') : t('Generate Bio')}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setShowAIModal(false)}
                                         className="rounded-full bg-surface px-5 py-2.5 text-[12.5px] font-medium text-ink-2"
                                     >
-                                        Cancel
+                                        {t('Cancel')}
                                     </button>
                                 </div>
                             </div>
@@ -1117,7 +1115,7 @@ export default function ProfileEditor() {
                             <textarea
                                 value={formData.bio}
                                 onChange={(e) => updateField('bio', e.target.value)}
-                                placeholder="Write a short bio..."
+                                placeholder={t('Write a short bio...')}
                                 rows={3}
                                 maxLength={200}
                                 className="w-full resize-none rounded-row bg-fill-subtle px-4 py-3 text-[14px] text-ink outline-none placeholder:text-ink-3"
@@ -1138,19 +1136,19 @@ export default function ProfileEditor() {
                         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fill-subtle text-ink-2">
                             <Phone className="h-[18px] w-[18px]" strokeWidth={1.8} />
                         </span>
-                        <h2 className="text-[15px] font-semibold">Direct Contact</h2>
+                        <h2 className="text-[15px] font-semibold">{t('Direct Contact')}</h2>
                     </div>
 
                     <div className="mt-4 grid gap-3">
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Phone Number</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Phone Number')}</label>
                             <div className="mt-1.5 flex overflow-hidden rounded-row bg-fill-subtle">
                                 <div className="relative shrink-0 border-r border-ink/[0.08]">
                                     <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
                                     <select
                                         value={formData.phone_country_code}
                                         onChange={(e) => updateField('phone_country_code', e.target.value)}
-                                        aria-label="Phone country code"
+                                        aria-label={t('Phone country code')}
                                         className="h-full w-[108px] bg-transparent py-3 pl-9 pr-1 text-[13px] font-medium text-ink outline-none"
                                     >
                                         {COUNTRY_CODES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
@@ -1168,14 +1166,14 @@ export default function ProfileEditor() {
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">WhatsApp Number</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('WhatsApp Number')}</label>
                             <div className="mt-1.5 flex overflow-hidden rounded-row bg-fill-subtle">
                                 <div className="relative shrink-0 border-r border-ink/[0.08]">
                                     <MessageCircle className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
                                     <select
                                         value={formData.whatsapp_country_code}
                                         onChange={(e) => updateField('whatsapp_country_code', e.target.value)}
-                                        aria-label="WhatsApp country code"
+                                        aria-label={t('WhatsApp country code')}
                                         className="h-full w-[108px] bg-transparent py-3 pl-9 pr-1 text-[13px] font-medium text-ink outline-none"
                                     >
                                         {COUNTRY_CODES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
@@ -1193,21 +1191,21 @@ export default function ProfileEditor() {
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">WeChat ID</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('WeChat ID')}</label>
                             <div className="relative mt-1.5">
                                 <MessageCircle className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
                                 <input
                                     type="text"
                                     value={formData.wechat_id}
                                     onChange={(e) => updateField('wechat_id', e.target.value)}
-                                    placeholder="Your WeChat ID"
+                                    placeholder={t('Your WeChat ID')}
                                     className="w-full rounded-row bg-fill-subtle py-3 pl-11 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-3"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Email</label>
+                            <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Email')}</label>
                             <div className="relative mt-1.5">
                                 <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
                                 <input
@@ -1233,7 +1231,7 @@ export default function ProfileEditor() {
                     {isSaved && (
                         <p className="flex items-center gap-2 text-[12.5px] text-success-soft-ink">
                             <CheckCircle className="h-4 w-4" strokeWidth={1.8} />
-                            Saved
+                            {t('Saved')}
                         </p>
                     )}
                 </div>
@@ -1248,7 +1246,7 @@ export default function ProfileEditor() {
                     ) : (
                         <>
                             <Save className="h-4 w-4" strokeWidth={1.8} />
-                            Save Changes
+                            {t('Save Changes')}
                         </>
                     )}
                 </button>
@@ -1256,14 +1254,14 @@ export default function ProfileEditor() {
 
             {/* Connected NFC cards */}
             <section className="mt-7">
-                <h2 className="text-[19px] font-semibold tracking-[-0.025em]">My NFC Cards</h2>
+                <h2 className="text-[19px] font-semibold tracking-[-0.025em]">{t('My NFC Cards')}</h2>
                 <p className="mt-1.5 text-[12.5px] text-ink-2">
-                    All cards connected to your account. You can unlink them one at a time without affecting other cards.
+                    {t('All cards connected to your account. You can unlink them one at a time without affecting other cards.')}
                 </p>
 
                 {mySerials.length === 0 ? (
                     <div className="mt-4 rounded-card border border-dashed border-ink/15 bg-surface/60 p-8 text-center text-[12.5px] text-ink-3">
-                        No cards connected yet
+                        {t('No cards connected yet')}
                     </div>
                 ) : (
                     <div className="mt-4 grid gap-2.5">
@@ -1280,13 +1278,13 @@ export default function ProfileEditor() {
                                         </span>
                                     </div>
                                     <p className="mt-1 text-[11px] text-ink-3">
-                                        Claimed {new Date(serial.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        {t('Claimed')} {new Date(serial.created_at).toLocaleDateString(locale === 'id' ? 'id-ID' : locale === 'zh-CN' ? 'zh-CN' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </p>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={async () => {
-                                        if (!confirm(`Unlink card #${idx + 1} (${serial.serial_uuid.substring(0, 8)}...) from your account?\n\nThis card will be unclaimed and can be claimed by someone else.\nYour profile and other cards will NOT be affected.`)) return
+                                        if (!confirm(t('Unlink card #{number} ({serial}...) from your account?\n\nThis card will be unclaimed and can be claimed by someone else.\nYour profile and other cards will NOT be affected.', { number: idx + 1, serial: serial.serial_uuid.substring(0, 8) }))) return
 
                                         try {
                                             const res = await fetch('/api/admin/users/delete', {
@@ -1296,18 +1294,18 @@ export default function ProfileEditor() {
                                             })
                                             const data = await res.json()
                                             if (data.error) {
-                                                alert('Could not unlink card: ' + data.error)
+                                                alert(t('Could not unlink card: {error}', { error: data.error }))
                                             } else {
-                                                alert('Card unlinked. Your profile is safe.')
+                                                alert(t('Card unlinked. Your profile is safe.'))
                                                 setMySerials(prev => prev.filter(s => s.id !== serial.id))
                                             }
                                         } catch (err) {
-                                            alert('Could not unlink card. Please try again later.')
+                                            alert(t('Could not unlink card. Please try again later.'))
                                         }
                                     }}
                                     className="shrink-0 whitespace-nowrap rounded-full bg-coral-soft px-3.5 py-2 text-[11.5px] font-semibold text-coral-soft-ink transition-transform active:scale-[0.98]"
                                 >
-                                    Unlink
+                                    {t('Unlink')}
                                 </button>
                             </div>
                         ))}
@@ -1315,8 +1313,7 @@ export default function ProfileEditor() {
                 )}
 
                 <p className="mt-3 text-[11px] leading-relaxed text-ink-3">
-                    Unlinking removes that card from your account. Your profile and other cards stay as they are;
-                    the unlinked card becomes available for someone else to claim.
+                    {t('Unlinking removes that card from your account. Your profile and other cards stay as they are; the unlinked card becomes available for someone else to claim.')}
                 </p>
             </section>
 
@@ -1327,7 +1324,7 @@ export default function ProfileEditor() {
                 className="mt-7 flex w-full items-center justify-center gap-2 rounded-full bg-surface py-3.5 text-[13px] font-medium text-ink-2 shadow-row transition-transform active:scale-[0.99]"
             >
                 <LogOut className="h-4 w-4" strokeWidth={1.8} />
-                Sign out
+                {t('Sign out')}
             </button>
           </div>
 

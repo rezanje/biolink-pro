@@ -19,6 +19,7 @@ import {
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 
 import { createClient } from '@/lib/supabase/client'
+import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 interface Link {
     id: string
@@ -36,6 +37,7 @@ const ICON_OPTIONS = [
 ]
 
 export default function LinkManager() {
+    const { t } = useUiLanguage()
     const supabase = createClient()
     const [links, setLinks] = useState<Link[]>([])
     const [isAdding, setIsAdding] = useState(false)
@@ -101,7 +103,7 @@ export default function LinkManager() {
         if (!newLink.title || !newLink.url) return
 
         if (tier === 'FREE' && links.length >= 3) {
-            alert('The Free plan allows up to 3 links. Upgrade to add more.')
+            alert(t('The Free plan allows up to 3 links. Upgrade to add more.'))
             return
         }
 
@@ -136,17 +138,17 @@ export default function LinkManager() {
         <div className="mx-auto max-w-[1200px] px-5 pb-[150px] pt-6">
             <header className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                    <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Manage Links</h1>
-                    <p className="mt-1.5 text-[13px] text-ink-2">Add and arrange links on your digital card</p>
+                    <h1 className="text-[26px] font-semibold tracking-[-0.03em]">{t('Manage Links')}</h1>
+                    <p className="mt-1.5 text-[13px] text-ink-2">{t('Add and arrange links on your digital card')}</p>
                     {tier === 'FREE' && (
                         <p className="mt-3 inline-block rounded-full bg-coral-soft px-2.5 py-1 text-[11px] font-semibold text-coral-soft-ink">
-                            Free plan · {links.length}/3 links used
+                            {t('Free plan · {count}/3 links used', { count: links.length })}
                         </p>
                     )}
                 </div>
                 <button
                     onClick={() => setIsAdding(true)}
-                    aria-label="Add link"
+                    aria-label={t('Add link')}
                     className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-ink text-white shadow-ink transition-transform active:scale-95"
                 >
                     <Plus className="h-5 w-5" strokeWidth={2} />
@@ -164,26 +166,26 @@ export default function LinkManager() {
                         <div className="mt-5 rounded-card bg-surface p-5 shadow-card">
                             <form onSubmit={handleAddLink}>
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-[15px] font-semibold">New Link</h3>
-                                    <button type="button" onClick={() => setIsAdding(false)} aria-label="Close" className="text-ink-3 hover:text-ink">
+                                    <h3 className="text-[15px] font-semibold">{t('New Link')}</h3>
+                                    <button type="button" onClick={() => setIsAdding(false)} aria-label={t('Close')} className="text-ink-3 hover:text-ink">
                                         <X className="h-5 w-5" strokeWidth={1.8} />
                                     </button>
                                 </div>
 
                                 <div className="mt-4 grid gap-3">
                                     <div>
-                                        <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Title</label>
+                                        <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Title')}</label>
                                         <input
                                             type="text"
                                             value={newLink.title}
                                             onChange={e => setNewLink({ ...newLink, title: e.target.value })}
-                                            placeholder="Example: My Instagram"
+                                            placeholder={t('Example: My Instagram')}
                                             className="mt-1.5 w-full rounded-row bg-fill-subtle px-4 py-3 text-[14px] text-ink outline-none placeholder:text-ink-3"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Icon</label>
+                                        <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Icon')}</label>
                                         <select
                                             value={newLink.icon}
                                             onChange={e => setNewLink({ ...newLink, icon: e.target.value })}
@@ -196,7 +198,7 @@ export default function LinkManager() {
                                     </div>
 
                                     <div>
-                                        <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Link URL</label>
+                                        <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Link URL')}</label>
                                         <input
                                             type="text"
                                             value={newLink.url}
@@ -211,7 +213,7 @@ export default function LinkManager() {
                                     type="submit"
                                     className="mt-5 w-full rounded-full bg-ink py-3.5 text-[13px] font-medium text-white shadow-ink transition-transform active:scale-[0.99]"
                                 >
-                                    Add Link
+                                    {t('Add Link')}
                                 </button>
                             </form>
                         </div>
@@ -252,14 +254,14 @@ export default function LinkManager() {
                                             <div className="flex shrink-0 items-center gap-1">
                                                 <button
                                                     onClick={() => window.open(link.url, '_blank')}
-                                                    aria-label="Open link"
+                                                    aria-label={t('Open link')}
                                                     className="flex h-9 w-9 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-fill-subtle hover:text-ink"
                                                 >
                                                     <ExternalLink className="h-4 w-4" strokeWidth={1.8} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteLink(link.id)}
-                                                    aria-label="Delete link"
+                                                    aria-label={t('Delete link')}
                                                     className="flex h-9 w-9 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-coral-soft hover:text-coral-soft-ink"
                                                 >
                                                     <Trash2 className="h-4 w-4" strokeWidth={1.8} />
@@ -278,8 +280,8 @@ export default function LinkManager() {
             {links.length === 0 && !isAdding && (
                 <div className="mt-5 rounded-card border border-dashed border-ink/15 bg-surface/60 p-10 text-center">
                     <PlusCircle className="mx-auto mb-3 h-10 w-10 text-ink-3" strokeWidth={1.5} />
-                    <h3 className="text-[15px] font-medium">No links yet</h3>
-                    <p className="mt-1.5 text-[12.5px] text-ink-2">Select the add button above to get started</p>
+                    <h3 className="text-[15px] font-medium">{t('No links yet')}</h3>
+                    <p className="mt-1.5 text-[12.5px] text-ink-2">{t('Select the add button above to get started')}</p>
                 </div>
             )}
         </div>

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Send, Mic, Volume2, VolumeX, Bot, Loader2 } from 'lucide-react'
+import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 interface AIAssistantProps {
     profile: any
@@ -20,6 +21,7 @@ interface Message {
 }
 
 export default function AIAssistant({ profile, open, onOpenChange, showFallbackTrigger = false }: AIAssistantProps) {
+    const { t } = useUiLanguage()
     const [internalOpen, setInternalOpen] = useState(false)
     // Terkendali kalau prop `open` dikirim; kalau tidak, pakai state sendiri.
     const isOpen = open ?? internalOpen
@@ -200,11 +202,11 @@ export default function AIAssistant({ profile, open, onOpenChange, showFallbackT
                                         <Bot className="w-6 h-6 text-white" />
                                     </div>
                                     <div>
-                                        <h3 className="text-white font-bold text-sm">GenHub Assistant</h3>
-                                        <p className="text-white/50 text-[10px]">AI powered • Voice enabled</p>
+                                        <h3 className="text-white font-bold text-sm">{t('GenHub Assistant')}</h3>
+                                        <p className="text-white/50 text-[10px]">{t('AI powered • Voice enabled')}</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setIsOpen(false)} className="p-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors">
+                                <button onClick={() => setIsOpen(false)} aria-label={t('Close')} className="p-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
@@ -256,7 +258,7 @@ export default function AIAssistant({ profile, open, onOpenChange, showFallbackT
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                    placeholder="Type or speak..."
+                                    placeholder={t('Type or speak...')}
                                     className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500/50 focus:bg-white/10 transition-colors"
                                 />
                                 <button
