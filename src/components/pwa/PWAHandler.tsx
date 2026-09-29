@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useOptionalUiLanguage } from '@/components/UiLanguageProvider'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, X, Share, Smartphone, Download, CheckCircle } from 'lucide-react'
 
 export default function PWAHandler() {
+    const language = useOptionalUiLanguage()
+    const t = (message: string) => language?.t(message) ?? message
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
     const [showInstallBanner, setShowInstallBanner] = useState(false)
     const [platform, setPlatform] = useState<'ios' | 'android' | 'other' | null>(null)
@@ -95,6 +98,7 @@ export default function PWAHandler() {
 
                         <button
                             onClick={dismissBanner}
+                            aria-label={t('Close')}
                             className="absolute top-4 right-4 text-zinc-500 hover:text-white p-1"
                         >
                             <X className="w-4 h-4" />
@@ -105,11 +109,11 @@ export default function PWAHandler() {
                                 <img src="/logo.png" alt="Gentanala" className="w-8 h-8 object-contain" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <h3 className="text-white font-bold text-lg">Install GenHub App</h3>
+                                <h3 className="text-white font-bold text-lg">{t('Install GenHub App')}</h3>
                                 <p className="text-zinc-400 text-sm mt-1 leading-relaxed">
                                     {platform === 'ios'
-                                        ? "Add GenHub to your home screen for the best experience."
-                                        : "Get our app for faster access to your luxury watches ecosystem."}
+                                        ? t('Add GenHub to your home screen for the best experience.')
+                                        : t('Get our app for faster access to your luxury watches ecosystem.')}
                                 </p>
                             </div>
                         </div>
@@ -121,13 +125,13 @@ export default function PWAHandler() {
                                         <div className="w-8 h-8 rounded-lg bg-zinc-700 flex items-center justify-center">
                                             <Share className="w-4 h-4 text-zinc-300" />
                                         </div>
-                                        <p className="text-xs text-white">1. Tap the <span className="font-bold text-blue-400">Share</span> icon</p>
+                                        <p className="text-xs text-white">{t('1. Tap the Share icon')}</p>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-zinc-700 flex items-center justify-center">
                                             <Plus className="w-4 h-4 text-zinc-300 border border-zinc-500 rounded-sm p-0.5" />
                                         </div>
-                                        <p className="text-xs text-white">2. Select <span className="font-bold text-blue-400">Add to Home Screen</span></p>
+                                        <p className="text-xs text-white">{t('2. Select Add to Home Screen')}</p>
                                     </div>
                                 </div>
                             ) : platform === 'android' ? (
@@ -136,7 +140,7 @@ export default function PWAHandler() {
                                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20 active:scale-95"
                                 >
                                     <Download className="w-5 h-5" />
-                                    Install Now
+                                    {t('Install Now')}
                                 </button>
                             ) : (
                                 <button
@@ -144,13 +148,13 @@ export default function PWAHandler() {
                                     className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95"
                                 >
                                     <Smartphone className="w-5 h-5" />
-                                    Launch App
+                                    {t('Launch App')}
                                 </button>
                             )}
 
                             <div className="flex items-center justify-center gap-2 text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-1">
                                 <CheckCircle className="w-3 h-3 text-blue-500" />
-                                Offline Access Enabled
+                                {t('Offline Access Enabled')}
                             </div>
                         </div>
                     </div>

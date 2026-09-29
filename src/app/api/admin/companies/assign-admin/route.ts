@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { adminSession } from '@/lib/admin-session'
 
 export async function POST(req: Request) {
     try {
+        const session = await adminSession()
+        if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        if (session.actor.role !== 'super_admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         const { company_id, admin_email } = await req.json()
 
         if (!company_id || !admin_email) {
@@ -10,10 +13,7 @@ export async function POST(req: Request) {
         }
 
         // Use service role key to bypass RLS and update any user's profile
-        const supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        )
+        const supabaseAdmin = session.admin
 
         // Find profile by email
         const { data: profile, error: searchError } = await supabaseAdmin

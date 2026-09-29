@@ -19,6 +19,14 @@ const PROFILE_UPDATE_FIELDS = [
     'updated_at',
 ]
 
+const OWNER_UPDATE_FIELDS = new Set(PROFILE_UPDATE_FIELDS.filter(field =>
+    !['tier', 'user_tag', 'company_id', 'special_edition', 'special_editions'].includes(field)
+))
+
+export function canOwnerUpdate(updates, serialId) {
+    return !serialId && Object.keys(updates).every(field => OWNER_UPDATE_FIELDS.has(field))
+}
+
 export function buildProfileUpdates(updates) {
     return PROFILE_UPDATE_FIELDS.reduce((profileUpdates, field) => {
         if (Object.prototype.hasOwnProperty.call(updates, field)) {

@@ -1,31 +1,25 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { adminSession } from '@/lib/admin-session'
+import { canManageTarget } from '@/lib/admin-authority.mjs'
 
 export async function POST(req: Request) {
     try {
-        const { userId, requestorCompanyId, requestorRole } = await req.json()
+        const session = await adminSession()
+        if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        const { userId } = await req.json()
 
         if (!userId) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
         }
 
         // Use service role key to bypass RLS
-        const supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        )
+        const supabaseAdmin = session.admin
 
         // Verify if requester is allowed
-        if (requestorRole === 'company_admin') {
-            const { data: targetProfile } = await supabaseAdmin
-                .from('profiles')
-                .select('company_id')
-                .eq('user_id', userId)
-                .single()
-
-            if (!targetProfile || targetProfile.company_id !== requestorCompanyId) {
-                return NextResponse.json({ error: 'Unauthorized to reset this user' }, { status: 403 })
-            }
+        const { data: targetProfile } = await supabaseAdmin.from('profiles')
+            .select('company_id').eq('user_id', userId).single()
+        if (!targetProfile || !canManageTarget(session.actor, targetProfile.company_id, 'reset', userId, null)) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 
         // 1. Clear Profile Data

@@ -2,6 +2,7 @@
 
 import { Lock } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 interface PremiumLockProps {
     children: React.ReactNode
@@ -11,6 +12,7 @@ interface PremiumLockProps {
 }
 
 export default function PremiumLock({ children, isLocked, featureName, description }: PremiumLockProps) {
+    const { t } = useUiLanguage()
     if (!isLocked) return <>{children}</>
 
     return (
@@ -31,9 +33,9 @@ export default function PremiumLock({ children, isLocked, featureName, descripti
                         <Lock className="h-6 w-6 text-coral-soft-ink" strokeWidth={1.8} />
                     </div>
 
-                    <h3 className="text-[19px] font-semibold tracking-[-0.025em]">Premium feature</h3>
+                    <h3 className="text-[19px] font-semibold tracking-[-0.025em]">{t('Premium feature')}</h3>
                     <p className="mt-2 text-[13px] text-ink-2">
-                        <span className="font-medium text-ink">{featureName}</span> is available to Premium members only.
+                        <span className="font-medium text-ink">{featureName}</span> {t('is available to Premium members only.')}
                     </p>
 
                     {description && (
@@ -41,7 +43,7 @@ export default function PremiumLock({ children, isLocked, featureName, descripti
                     )}
 
                     <button className="mt-6 w-full rounded-full bg-ink py-3 text-[13px] font-medium text-white shadow-ink transition-transform active:scale-[0.98]">
-                        Upgrade Sekarang
+                        {t('Upgrade Now')}
                     </button>
                 </motion.div>
             </div>

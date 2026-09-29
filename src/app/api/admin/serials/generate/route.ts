@@ -1,20 +1,25 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
+import { adminSession } from '@/lib/admin-session'
 
 export async function POST(req: Request) {
     try {
+        const session = await adminSession()
+        if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        if (session.actor.role !== 'super_admin' && session.actor.role !== 'company_admin') {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
         const { count, company_id, special_edition } = await req.json()
 
-        if (!count || count < 1 || count > 100) {
+        if (!Number.isInteger(count) || count < 1 || count > 100) {
             return NextResponse.json({ error: 'Count must be between 1 and 100' }, { status: 400 })
+        }
+        if (session.actor.role === 'company_admin' && (!session.actor.companyId || (company_id && company_id !== session.actor.companyId))) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 
         // Use service role to bypass RLS
-        const supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        )
+        const supabaseAdmin = session.admin
 
         // 1. Find or create a master product
         let { data: product } = await supabaseAdmin
@@ -51,7 +56,7 @@ export async function POST(req: Request) {
             product_id: product!.id,
             is_claimed: false,
             nfc_tap_count: 0,
-            company_id: company_id || null,
+            company_id: session.actor.role === 'company_admin' ? session.actor.companyId : company_id || null,
             special_edition: special_edition || null,
             special_editions: special_edition ? [special_edition] : []
         }))
