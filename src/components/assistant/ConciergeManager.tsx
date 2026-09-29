@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Check, CircleAlert, FileText, Loader2, MessageSquareText, Save, Sparkles } from 'lucide-react'
+import { Check, CircleAlert, FileText, Loader2, LockKeyhole, MessageSquareText, Save, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 type Knowledge = { about: string; services: string; portfolio: string; faq: string }
@@ -14,6 +14,7 @@ export default function ConciergeManager() {
     const [profileId, setProfileId] = useState('')
     const [settings, setSettings] = useState<Settings>(initial)
     const [messages, setMessages] = useState<InboxMessage[]>([])
+    const [eligible, setEligible] = useState(false)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [notice, setNotice] = useState('')
@@ -23,9 +24,12 @@ export default function ConciergeManager() {
         const load = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) { setLoading(false); return }
-            const { data: profile } = await supabase.from('profiles').select('id,bio,company,job_title').eq('user_id', user.id).maybeSingle()
+            const { data: profile } = await supabase.from('profiles').select('id,bio,company,job_title,tier').eq('user_id', user.id).maybeSingle()
             if (!profile) { setLoading(false); return }
             setProfileId(profile.id)
+            const canUseConcierge = profile.tier === 'PREMIUM' || profile.tier === 'B2B'
+            setEligible(canUseConcierge)
+            if (!canUseConcierge) { setLoading(false); return }
             const [{ data: stored, error: settingsError }, { data: inbox }] = await Promise.all([
                 supabase.from('ai_concierge_settings').select('*').eq('profile_id', profile.id).maybeSingle(),
                 supabase.from('ai_concierge_messages').select('*').eq('profile_id', profile.id).order('created_at', { ascending: false }).limit(60),
@@ -60,6 +64,7 @@ export default function ConciergeManager() {
     }
 
     if (loading) return <div className="flex min-h-[40vh] items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-ink-3" /></div>
+    if (!eligible) return <section className="mt-5 rounded-card bg-surface p-5 shadow-card md:p-6"><div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-fill-subtle"><LockKeyhole className="h-5 w-5 text-ink-2" /></span><div><h2 className="text-[17px] font-semibold">AI Concierge</h2><p className="mt-1 text-[12.5px] leading-relaxed text-ink-2">AI Concierge is available on Premium and B2B plans.</p></div></div></section>
     return <>
         <section className="mt-5 rounded-card bg-surface p-5 shadow-card md:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex items-center gap-2"><Sparkles className="h-5 w-5" /><h2 className="text-[17px] font-semibold">AI Concierge</h2></div><p className="mt-1 text-[12.5px] text-ink-2">Turns card visits into useful answers, qualified leads, and next steps.</p></div><button type="button" onClick={() => setSettings(current => ({ ...current, enabled: !current.enabled }))} className={`relative inline-flex h-8 w-14 items-center rounded-full ${settings.enabled ? 'bg-ink' : 'bg-track'}`} aria-label="Show concierge on public card"><span className={`h-6 w-6 rounded-full bg-white shadow-row transition-transform ${settings.enabled ? 'translate-x-7' : 'translate-x-1'}`} /></button></div>
