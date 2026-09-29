@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gentanala — two profile template directions</title>
+  <style>
+    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Avenir Next", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e9e8e4; color: #202624; }
+    button, a { font: inherit; }
+    .page { max-width: 1220px; margin: 0 auto; padding: 30px 28px 72px; }
+    .intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; padding: 0 2px 25px; }
+    .intro h1 { margin: 5px 0 4px; font: 500 clamp(25px, 3vw, 38px)/1.05 Georgia, serif; letter-spacing: -.04em; }
+    .intro p { margin: 0; color: #6c726c; font-size: 13px; }
+    .eyebrow { text-transform: uppercase; letter-spacing: .2em; font: 700 10px/1.4 -apple-system, BlinkMacSystemFont, sans-serif; }
+    .intro .eyebrow { color: #6c726c; }
+    .stamp { border: 1px solid #b8bcb5; border-radius: 100px; padding: 8px 13px; white-space: nowrap; font: 700 10px/1.2 -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: .07em; color: #69736d; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: start; }
+    .direction { min-width: 0; }
+    .direction-head { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; margin: 0 0 11px; padding: 0 3px; }
+    .direction-head h2 { margin: 0; font: 600 17px/1.2 -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -.03em; }
+    .direction-head p { margin: 0; font-size: 11px; color: #737b74; text-align: right; }
+    .phone { width: min(100%, 446px); height: 900px; margin: 0 auto; overflow: hidden; border: 8px solid #fdfdfb; border-radius: 38px; box-shadow: 0 22px 52px #282e292b, 0 3px 9px #252a2714; }
+    .screen { height: 100%; overflow: auto; scrollbar-width: none; }
+    .screen::-webkit-scrollbar { display: none; }
+    .svg { display: inline-block; width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+    .lang { display: flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 700; letter-spacing: .05em; }
+    .lang b { font-weight: 800; }
+    .lang i { opacity: .35; font-style: normal; padding: 0 3px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip { padding: 7px 10px; border-radius: 999px; white-space: nowrap; font-size: 11px; font-weight: 600; }
+    .socials { display: flex; gap: 7px; margin: 0 0 16px; }
+    .social { display: grid; place-items: center; min-width: 31px; height: 31px; padding: 0 5px; border-radius: 50%; font-size: 9px; font-weight: 800; }
+    .actions { display: flex; gap: 8px; }
+    .primary-action { display: flex; align-items: center; justify-content: center; gap: 9px; height: 46px; flex: 1; border: 0; font-size: 12px; font-weight: 800; letter-spacing: .055em; text-transform: uppercase; }
+    .icon-action { display: grid; place-items: center; width: 46px; height: 46px; flex: none; border: 0; }
+    .tabs { display: flex; align-items: center; gap: 21px; text-transform: uppercase; letter-spacing: .12em; font-size: 10px; font-weight: 800; }
+    .link-row { display: flex; align-items: center; min-width: 0; gap: 13px; }
+    .link-row .copy { min-width: 0; flex: 1; }
+    .link-row strong { display: block; font-size: 13px; line-height: 1.2; }
+    .link-row small { display: block; margin-top: 4px; font-size: 10px; }
+    .link-row .arrow { margin-left: auto; font-size: 18px; font-weight: 300; }
+    .note { max-width: 446px; margin: 13px auto 0; padding: 0 5px; color: #5d665e; font-size: 12px; line-height: 1.45; }
+
+    /* A — ATELIER. Reference: fine watch catalog, portrait and paper. */
+    .atelier { background: #f6f4ef; color: #22342d; }
+    .atelier .hero { height: 280px; position: relative; overflow: hidden; background: radial-gradient(circle at 60% 36%, #bdc8ba, #667f6b 64%, #304e3c); }
+    .atelier .hero::after { content: ""; position: absolute; inset: 55% 0 0; background: linear-gradient(transparent, #182d2096); }
+    .atelier .hero img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 27%; }
+    .atelier .hero-fallback { position: absolute; inset: 0; display: grid; place-items: center; color: #e6e2d6; font: 400 110px/.8 Georgia, serif; letter-spacing: -.1em; }
+    .atelier .hero img { position: relative; z-index: 1; }
+    .atelier .hero-top { position: absolute; top: 17px; left: 20px; right: 20px; z-index: 2; display: flex; justify-content: space-between; align-items: center; color: #fff; text-shadow: 0 1px 5px #1c271f77; }
+    .atelier .brand { font: 700 10px/1.1 Georgia, serif; letter-spacing: .17em; }
+    .atelier .hero-bottom { position: absolute; z-index: 2; left: 23px; bottom: 18px; color: #fdfaf2; font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+    .atelier .body { padding: 27px 25px 33px; position: relative; }
+    .atelier .seal { position: absolute; top: -34px; right: 24px; width: 67px; height: 67px; display: grid; place-items: center; border-radius: 50%; border: 4px solid #f6f4ef; background: #ad805b; color: #fffaf0; font: 700 10px/1.1 Georgia, serif; letter-spacing: .06em; box-shadow: 0 5px 15px #322e281f; }
+    .atelier .pretitle { color: #94765a; }
+    .atelier h3 { max-width: 315px; margin: 6px 0 7px; font: 400 39px/.98 Georgia, "Baskerville", serif; letter-spacing: -.047em; }
+    .atelier .role { margin: 0 0 13px; color: #5c705e; font-size: 12px; font-weight: 650; }
+    .atelier .bio { margin: 0 0 19px; max-width: 355px; color: #54615a; font: 400 12px/1.55 -apple-system, BlinkMacSystemFont, sans-serif; }
+    .atelier .chip { background: #e9e6de; color: #3e5445; }
+    .atelier .social { background: #e8ebe4; color: #355b49; }
+    .atelier .actions { margin-top: 21px; }
+    .atelier .primary-action { border-radius: 4px; background: #355b49; color: #fffaf1; }
+    .atelier .icon-action { border-radius: 4px; border: 1px solid #cbcfc4; background: transparent; color: #355b49; }
+    .atelier .tabs { margin: 22px 0 11px; padding: 0 0 12px; border-bottom: 1px solid #c9cbc2; color: #8a9188; }
+    .atelier .tabs .active { color: #254332; position: relative; }
+    .atelier .tabs .active::after { content: ""; height: 2px; background: #ad805b; position: absolute; left: 0; right: 0; bottom: -13px; }
+    .atelier .link-row { min-height: 57px; padding: 10px 0; border-bottom: 1px solid #ddddd4; }
+    .atelier .link-mark { display: grid; place-items: center; height: 34px; width: 34px; border-radius: 50%; background: #e8ebe4; color: #355b49; }
+    .atelier .link-row small { color: #858d83; text-transform: uppercase; letter-spacing: .09em; }
+    .atelier .link-row .arrow { color: #ab815e; }
+
+    /* B — DIAL. Reference: instrument face, metallic precision and modular links. */
+    .dial { position: relative; background: #172324; color: #edf0e8; }
+    .dial::before { content: ""; position: absolute; left: -80px; top: -220px; width: 570px; height: 570px; border-radius: 50%; border: 1px solid #c3b48d27; box-shadow: 0 0 0 35px #c3b48d08, 0 0 0 80px #c3b48d06, 0 0 0 125px #c3b48d05; pointer-events: none; }
+    .dial .top { padding: 20px 23px 0; display: flex; justify-content: space-between; align-items: center; color: #bdcbbf; position: relative; }
+    .dial .brand { font: 700 10px/1.1 -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: .26em; }
+    .dial .hero { position: relative; padding: 29px 23px 23px; }
+    .dial .hero-inner { display: flex; align-items: center; gap: 19px; }
+    .dial .portrait-ring { position: relative; width: 137px; height: 137px; flex: none; display: grid; place-items: center; border-radius: 50%; background: repeating-conic-gradient(from 0deg, #b1a581 0deg 1deg, transparent 1deg 10deg); }
+    .dial .portrait-ring::before { content: ""; position: absolute; inset: 8px; border-radius: 50%; background: #172324; }
+    .dial .portrait { position: relative; overflow: hidden; display: grid; place-items: center; width: 105px; height: 105px; border-radius: 50%; background: #70857a; color: #fff7da; font: 600 38px/1 Georgia, serif; }
+    .dial .portrait img { width: 100%; height: 100%; object-fit: cover; object-position: center 24%; position: absolute; inset: 0; }
+    .dial .identity { min-width: 0; }
+    .dial .identity .eyebrow { color: #bdac7c; font-size: 9px; }
+    .dial h3 { margin: 7px 0 10px; font: 600 30px/.98 "Avenir Next", -apple-system, sans-serif; letter-spacing: -.055em; }
+    .dial .role { margin: 0; color: #bfcdc2; font-size: 11px; line-height: 1.4; }
+    .dial .rule { height: 1px; background: linear-gradient(90deg, #b5aa88, #75857c55); margin: 21px 0 14px; }
+    .dial .bio { max-width: 340px; margin: 0; color: #bbc9bc; font-size: 12px; line-height: 1.55; }
+    .dial .body { padding: 0 23px 32px; position: relative; }
+    .dial .chips { margin: 3px 0 17px; }
+    .dial .chip { background: #29383a; color: #d8dfd5; border: 1px solid #425656; }
+    .dial .social { border: 1px solid #425656; color: #d8dfd5; }
+    .dial .primary-action { border-radius: 13px; color: #172324; background: #c9b98f; }
+    .dial .icon-action { border-radius: 13px; color: #e6e9dc; background: #253638; border: 1px solid #49605e; }
+    .dial .tabs { margin: 22px 0 11px; color: #829990; }
+    .dial .tabs .active { color: #e8e4d6; }
+    .dial .tabs .active::before { content: ""; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #c9b98f; margin-right: 6px; vertical-align: 2px; }
+    .dial .link-row { min-height: 62px; margin-bottom: 7px; padding: 10px 14px; border: 1px solid #425857; border-radius: 13px; background: #203133; }
+    .dial .link-mark { width: 30px; color: #c9b98f; font: 700 10px/1 "Avenir Next", sans-serif; }
+    .dial .link-row strong { font-weight: 650; }
+    .dial .link-row small { color: #90a59b; text-transform: uppercase; letter-spacing: .075em; }
+    .dial .link-row .arrow { color: #c9b98f; }
+    .dial .end { margin-top: 15px; padding-top: 11px; border-top: 1px solid #425857; color: #708a80; font-size: 9px; text-transform: uppercase; letter-spacing: .12em; text-align: center; }
+
+    @media (max-width: 850px) {
+      .page { padding: 24px 15px 55px; }
+      .intro { align-items: start; }
+      .grid { grid-template-columns: minmax(0, 1fr); gap: 37px; }
+      .stamp { display: none; }
+      .phone { height: 900px; }
+    }
+    @media (max-width: 420px) {
+      .phone { border-width: 5px; border-radius: 31px; }
+      .atelier .hero { height: 245px; }
+      .atelier .body, .dial .body { padding-left: 19px; padding-right: 19px; }
+      .dial .hero { padding-left: 19px; padding-right: 19px; }
+      .dial .portrait-ring { width: 116px; height: 116px; }
+      .dial .portrait { width: 89px; height: 89px; }
+      .dial h3 { font-size: 27px; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="download" viewBox="0 0 24 24"><path d="M12 3v11m0 0 4-4m-4 4-4-4M4 16v4h16v-4"/></symbol>
+    <symbol id="bookmark" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></symbol>
+    <symbol id="qr" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h3v3h-3zM20 14v3m-3 3h4m-7 0v1"/></symbol>
+    <symbol id="share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="19" r="2"/><path d="m8 11 8-5M8 13l8 5"/></symbol>
+    <symbol id="spark" viewBox="0 0 24 24"><path d="m12 2 1.9 7.1L21 11l-7.1 1.9L12 20l-1.9-7.1L3 11l7.1-1.9z"/></symbol>
+    <symbol id="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+  </svg>
+  <main class="page">
+    <header class="intro">
+      <div><div class="eyebrow">Gentanala / visual study</div><h1>Two ways to wear your identity.</h1><p>Concept only. Same Reza card, two different design personalities.</p></div>
+      <span class="stamp">NOT LIVE · DESIGN REVIEW</span>
+    </header>
+    <div class="grid">
+      <section class="direction" aria-labelledby="atelier-title">
+        <div class="direction-head"><h2 id="atelier-title">A · Atelier</h2><p>Warm · portrait-led · editorial</p></div>
+        <div class="phone"><div class="screen atelier">
+          <div class="hero">
+            <div class="hero-fallback">RR</div>
+            <img src="https://damgyhadhnirwabekbvs.supabase.co/storage/v1/object/public/avatars/47a89ca1-a84b-429d-a7d4-cabb92b5508e/avatar-1779294487734.jpg" alt="Reza Rahman portrait">
+            <div class="hero-top"><span class="brand">GENTANALA</span><span class="lang"><b>EN</b><i>/</i>ID<i>/</i>中文</span></div>
+            <div class="hero-bottom">A living business card</div>
+          </div>
+          <div class="body">
+            <div class="seal">G / R</div>
+            <div class="eyebrow pretitle">Founder & CEO · Gentanala</div>
+            <h3>Reza<br>Rahman.</h3>
+            <p class="role">Crafting meaningful connections.</p>
+            <p class="bio">Building Gentanala at the intersection of considered design, technology, and new ways to connect.</p>
+            <div class="socials" aria-label="Social contacts"><span class="social">IG</span><span class="social">in</span><span class="social">WA</span><span class="social">✉</span><span class="social">微信</span></div>
+            <div class="chips"><span class="chip">✧ Ask Reza</span><span class="chip">◎ Live Translate</span></div>
+            <div class="actions"><button class="primary-action"><svg class="svg"><use href="#download"/></svg> Save contact</button><button class="icon-action" aria-label="Bookmark"><svg class="svg"><use href="#bookmark"/></svg></button><button class="icon-action" aria-label="QR code"><svg class="svg"><use href="#qr"/></svg></button><button class="icon-action" aria-label="Share"><svg class="svg"><use href="#share"/></svg></button></div>
+            <div class="tabs"><span class="active">Links</span><span>Gallery</span><span>Files</span></div>
+            <div class="link-row"><span class="link-mark">IG</span><span class="copy"><strong>Instagram personal</strong><small>Open Instagram</small></span><span class="arrow">↗</span></div>
+            <div class="link-row"><span class="link-mark"><svg class="svg"><use href="#globe"/></svg></span><span class="copy"><strong>Web Gentanala</strong><small>Visit website</small></span><span class="arrow">↗</span></div>
+            <div class="link-row"><span class="link-mark">PDF</span><span class="copy"><strong>Price List Gentanala</strong><small>Open document</small></span><span class="arrow">↗</span></div>
+          </div>
+        </div></div>
+        <p class="note">Full portrait and catalog-style typography. Best when personal photo and premium storytelling lead.</p>
+      </section>
+      <section class="direction" aria-labelledby="dial-title">
+        <div class="direction-head"><h2 id="dial-title">B · Dial</h2><p>Precise · watch-inspired · structured</p></div>
+        <div class="phone"><div class="screen dial">
+          <div class="top"><span class="brand">GENTANALA / HUB</span><span class="lang"><b>EN</b><i>/</i>ID<i>/</i>中文</span></div>
+          <div class="hero">
+            <div class="hero-inner"><div class="portrait-ring"><div class="portrait">RR<img src="https://damgyhadhnirwabekbvs.supabase.co/storage/v1/object/public/avatars/47a89ca1-a84b-429d-a7d4-cabb92b5508e/avatar-1779294487734.jpg" alt="Reza Rahman portrait"></div></div><div class="identity"><div class="eyebrow">Identity / Reza</div><h3>Reza<br>Rahman</h3><p class="role">Founder & CEO<br>Gentanala</p></div></div>
+            <div class="rule"></div><p class="bio">Building Gentanala at the intersection of considered design, technology, and new ways to connect.</p>
+          </div>
+          <div class="body">
+            <div class="socials" aria-label="Social contacts"><span class="social">IG</span><span class="social">in</span><span class="social">WA</span><span class="social">✉</span><span class="social">微信</span></div>
+            <div class="chips"><span class="chip">✧ Ask Reza</span><span class="chip">◎ Live Translate</span></div>
+            <div class="actions"><button class="primary-action"><svg class="svg"><use href="#download"/></svg> Save contact</button><button class="icon-action" aria-label="Bookmark"><svg class="svg"><use href="#bookmark"/></svg></button><button class="icon-action" aria-label="QR code"><svg class="svg"><use href="#qr"/></svg></button><button class="icon-action" aria-label="Share"><svg class="svg"><use href="#share"/></svg></button></div>
+            <div class="tabs"><span class="active">Links</span><span>Gallery</span><span>Files</span></div>
+            <div class="link-row"><span class="link-mark">01</span><span class="copy"><strong>Instagram personal</strong><small>Open Instagram</small></span><span class="arrow">↗</span></div>
+            <div class="link-row"><span class="link-mark">02</span><span class="copy"><strong>Web Gentanala</strong><small>Visit website</small></span><span class="arrow">↗</span></div>
+            <div class="link-row"><span class="link-mark">03</span><span class="copy"><strong>Price List Gentanala</strong><small>Open document</small></span><span class="arrow">↗</span></div>
+            <div class="end">Made to connect · powered by Gentanala</div>
+          </div>
+        </div></div>
+        <p class="note">Portrait inside a watch-dial motif. Best when quick access and the watch identity matter most.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
