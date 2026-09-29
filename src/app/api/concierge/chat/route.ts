@@ -46,9 +46,9 @@ export async function POST(req: Request) {
 
         const supabase = await createClient()
         const { data: profile } = await supabase.from('profiles')
-            .select('id,display_name,bio,company,job_title,social_links,is_public')
+            .select('id,display_name,bio,company,job_title,social_links,is_public,tier')
             .eq('slug', slug).eq('is_public', true).maybeSingle()
-        if (!profile) return NextResponse.json({ error: 'This card is unavailable.' }, { status: 404 })
+        if (!profile || (profile.tier !== 'PREMIUM' && profile.tier !== 'B2B')) return NextResponse.json({ error: 'This card is unavailable.' }, { status: 404 })
         const { data: settings } = await supabase.from('ai_concierge_settings')
             .select('persona,instructions,knowledge,booking_url,enabled')
             .eq('profile_id', profile.id).eq('enabled', true).maybeSingle()
