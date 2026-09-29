@@ -38,6 +38,7 @@ const KABUT_ROUTES = [
     '/dashboard/appearance',
     '/dashboard/ai-assistant',
     '/dashboard/interpreter',
+    '/dashboard/saved',
 ]
 
 type StoredProfile = { slug: string; display_name?: string | null }
