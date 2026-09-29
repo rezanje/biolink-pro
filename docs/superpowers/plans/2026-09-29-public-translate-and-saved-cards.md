@@ -15,10 +15,10 @@
 **Files:**
 - Create: `supabase/migrations/019_public_translate_and_saved_cards.sql`
 
-- [ ] Create `saved_profiles` with unique member/profile pairs and owner-only read, create, and delete permissions.
-- [ ] Create `public_interpreter_usage` with a per-profile, per-browser, per-hour counter.
-- [ ] Add `consume_public_interpreter_quota` to verify an eligible public profile and atomically allow at most five translations per hour.
-- [ ] Notify the API layer to reload its schema.
+- [x] Create `saved_profiles` with unique member/profile pairs and owner-only read, create, and delete permissions.
+- [x] Create `public_interpreter_usage` with a per-profile, per-browser, per-hour counter.
+- [x] Add `consume_public_interpreter_quota` to verify an eligible public profile and atomically allow at most five translations per hour.
+- [x] Notify the API layer to reload its schema.
 
 ### Task 2: Reuse translation interface on public cards
 
@@ -29,11 +29,11 @@
 - Modify: `src/app/api/interpreter/translate/route.ts`
 - Modify: `src/app/[slug]/page.tsx`
 
-- [ ] Move recording, language selection, translation display, and playback into `InterpreterPanel`.
-- [ ] Keep the dashboard page's paid-owner gate and render that panel.
-- [ ] Add a compact public-card entry that opens the same panel in a modal.
-- [ ] Extend the endpoint to consume quota for a public Premium/B2B owner card while preserving authenticated owner use.
-- [ ] Validate short recordings, origin, browser ID, tier, and quota before contacting the translation provider.
+- [x] Move recording, language selection, translation display, and playback into `InterpreterPanel`.
+- [x] Keep the dashboard page's paid-owner gate and render that panel.
+- [x] Add a compact public-card entry that opens the same panel in a modal.
+- [x] Extend the endpoint to consume quota for a public Premium/B2B owner card while preserving authenticated owner use.
+- [x] Validate short recordings, origin, browser ID, tier, and quota before contacting the translation provider.
 
 ### Task 3: Save and open public-card collections
 
@@ -43,18 +43,18 @@
 - Modify: `src/app/[slug]/page.tsx`
 - Modify: `src/components/dashboard/DashboardShell.tsx`
 
-- [ ] Add a bookmark control that saves/removes the viewed card for the signed-in member.
-- [ ] Route signed-out visitors to sign in with the return URL preserved.
-- [ ] Add a saved-cards dashboard page and include it in the dashboard shell styling.
-- [ ] Render only the signed-in member's saved cards and provide each card's public link.
+- [x] Add a bookmark control that saves/removes the viewed card for the signed-in member.
+- [x] Route signed-out visitors to sign in with the return URL preserved.
+- [x] Add a saved-cards dashboard page and include it in the dashboard shell styling.
+- [x] Render only the signed-in member's saved cards and provide each card's public link.
 
 ### Task 4: Verify and release readiness
 
 **Files:**
 - Modify: affected files above only if verification finds an issue.
 
-- [ ] Run TypeScript validation.
-- [ ] Run focused lint for new and modified source.
-- [ ] Run production build with placeholder local public configuration.
+- [x] Run TypeScript validation.
+- [x] Run focused lint for new and modified source.
+- [x] Run production build with placeholder local public configuration.
 - [ ] Inspect the public card and saved-card UI at mobile width.
 - [ ] Commit source and migration separately from deployment.

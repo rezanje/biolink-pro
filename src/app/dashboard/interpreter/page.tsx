@@ -1,91 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ArrowLeftRight, Loader2, LockKeyhole, Mic, Square, Volume2 } from 'lucide-react'
+import { ArrowLeft, Loader2, LockKeyhole } from 'lucide-react'
 import { useTier } from '@/app/dashboard/tier-context'
-
-const LANGUAGES = [
-    { label: 'Indonesian', speech: 'id-ID' },
-    { label: 'English', speech: 'en-US' },
-    { label: 'Mandarin Chinese', speech: 'zh-CN' },
-    { label: 'Japanese', speech: 'ja-JP' },
-    { label: 'Korean', speech: 'ko-KR' },
-]
-
-function audioBase64(blob: Blob) {
-    return new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onerror = () => reject(new Error('Could not read recording.'))
-        reader.onload = () => resolve(String(reader.result).split(',')[1] || '')
-        reader.readAsDataURL(blob)
-    })
-}
+import InterpreterPanel from '@/components/interpreter/InterpreterPanel'
 
 export default function InterpreterPage() {
     const { hasFeature, isLoading } = useTier()
-    const [source, setSource] = useState(LANGUAGES[0])
-    const [target, setTarget] = useState(LANGUAGES[1])
-    const [recording, setRecording] = useState(false)
-    const [processing, setProcessing] = useState(false)
-    const [sourceText, setSourceText] = useState('')
-    const [translatedText, setTranslatedText] = useState('')
-    const [notice, setNotice] = useState('')
-    const recorder = useRef<MediaRecorder | null>(null)
-    const stream = useRef<MediaStream | null>(null)
-    const stopTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-    useEffect(() => () => {
-        if (stopTimer.current) clearTimeout(stopTimer.current)
-        stream.current?.getTracks().forEach(track => track.stop())
-    }, [])
-
-    const translate = async (blob: Blob) => {
-        setProcessing(true); setNotice('')
-        try {
-            const response = await fetch('/api/interpreter/translate', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ audio: await audioBase64(blob), mimeType: blob.type || 'audio/webm', sourceLanguage: source.label, targetLanguage: target.label }),
-            })
-            const data = await response.json().catch(() => ({}))
-            if (!response.ok || typeof data.sourceText !== 'string' || typeof data.translatedText !== 'string') throw new Error(data.error || 'Could not translate that recording.')
-            setSourceText(data.sourceText); setTranslatedText(data.translatedText)
-        } catch (error) { setNotice((error as Error).message) } finally { setProcessing(false) }
-    }
-
-    const stopRecording = () => recorder.current?.state === 'recording' && recorder.current.stop()
-    const startRecording = async () => {
-        if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') { setNotice('Microphone recording is not supported in this browser.'); return }
-        try {
-            setNotice(''); setSourceText(''); setTranslatedText('')
-            const nextStream = await navigator.mediaDevices.getUserMedia({ audio: true })
-            stream.current = nextStream
-            const type = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find(value => MediaRecorder.isTypeSupported(value))
-            const nextRecorder = type ? new MediaRecorder(nextStream, { mimeType: type }) : new MediaRecorder(nextStream)
-            const chunks: BlobPart[] = []
-            nextRecorder.ondataavailable = event => event.data.size && chunks.push(event.data)
-            nextRecorder.onstop = () => {
-                if (stopTimer.current) clearTimeout(stopTimer.current)
-                nextStream.getTracks().forEach(track => track.stop())
-                setRecording(false)
-                const blob = new Blob(chunks, { type: nextRecorder.mimeType || type || 'audio/webm' })
-                if (blob.size) void translate(blob)
-            }
-            recorder.current = nextRecorder
-            nextRecorder.start()
-            setRecording(true)
-            stopTimer.current = setTimeout(stopRecording, 15_000)
-        } catch { setNotice('Microphone access was not allowed.') }
-    }
-
-    const swapLanguages = () => { setSource(target); setTarget(source); setSourceText(''); setTranslatedText('') }
-    const speak = () => {
-        if (!translatedText || !('speechSynthesis' in window)) return
-        window.speechSynthesis.cancel()
-        const utterance = new SpeechSynthesisUtterance(translatedText)
-        utterance.lang = target.speech
-        window.speechSynthesis.speak(utterance)
-    }
 
     if (isLoading) return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-ink-3" /></div>
     if (!hasFeature('ai_bot')) return <div className="mx-auto max-w-md px-5 pb-[150px] pt-6"><Link href="/dashboard" className="inline-flex items-center gap-2 text-[12px] text-ink-2"><ArrowLeft className="h-4 w-4" />Back to dashboard</Link><section className="mt-5 rounded-card bg-surface p-5 text-center shadow-card"><span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-fill-subtle"><LockKeyhole className="h-5 w-5 text-ink-2" /></span><h1 className="mt-4 text-[20px] font-semibold">Live Interpreter</h1><p className="mt-2 text-[13px] leading-relaxed text-ink-2">Available on Premium and B2B plans.</p></section></div>
@@ -93,23 +14,6 @@ export default function InterpreterPage() {
     return <div className="mx-auto max-w-md px-5 pb-[150px] pt-6">
         <Link href="/dashboard" className="inline-flex items-center gap-2 text-[12px] text-ink-2"><ArrowLeft className="h-4 w-4" />Back to dashboard</Link>
         <header className="mt-5"><h1 className="text-[26px] font-semibold tracking-[-0.03em]">Live Interpreter</h1><p className="mt-1.5 text-[13px] text-ink-2">Speak one sentence, then pass the phone.</p></header>
-        <section className="mt-5 rounded-card bg-surface p-5 shadow-card">
-            <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2"><Language label="They speak" value={source.label} onChange={label => setSource(LANGUAGES.find(item => item.label === label) || LANGUAGES[0])} /><button type="button" onClick={swapLanguages} aria-label="Swap languages" className="mb-1.5 rounded-full bg-fill-subtle p-3 text-ink-2"><ArrowLeftRight className="h-4 w-4" /></button><Language label="They hear" value={target.label} onChange={label => setTarget(LANGUAGES.find(item => item.label === label) || LANGUAGES[1])} /></div>
-            <button type="button" onClick={recording ? stopRecording : startRecording} disabled={processing} className={`mt-7 flex w-full items-center justify-center gap-3 rounded-full py-4 text-[14px] font-medium transition ${recording ? 'bg-coral-soft text-coral-soft-ink' : 'bg-ink text-white'} disabled:opacity-50`}>{recording ? <><Square className="h-4 w-4 fill-current" />Stop recording</> : processing ? <><Loader2 className="h-4 w-4 animate-spin" />Translating…</> : <><Mic className="h-4 w-4" />Tap, speak, tap again</>}</button>
-            <p className="mt-3 text-center text-[11px] text-ink-3">Up to 15 seconds per sentence. Your recording is not saved.</p>
-            {notice && <p className="mt-4 rounded-row bg-coral-soft px-3 py-2 text-[12px] text-coral-soft-ink">{notice}</p>}
-        </section>
-        <section className="mt-3 space-y-3">
-            <Result label="Original" value={sourceText} placeholder="Your spoken sentence will appear here." />
-            <div className="rounded-card bg-ink p-5 text-white shadow-ink"><div className="flex items-center justify-between gap-3"><p className="text-[11px] font-medium uppercase tracking-wider text-white/55">Translation</p>{translatedText && <button type="button" onClick={speak} className="rounded-full bg-white/12 p-2" aria-label="Play translation"><Volume2 className="h-4 w-4" /></button>}</div><p className="mt-3 text-[22px] font-semibold leading-snug tracking-[-0.02em]">{translatedText || 'Translation will appear here.'}</p></div>
-        </section>
+        <section className="mt-5 rounded-card bg-surface p-5 shadow-card"><InterpreterPanel /></section>
     </div>
-}
-
-function Language({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-    return <label><span className="text-[10px] font-medium uppercase tracking-wider text-ink-2">{label}</span><select value={value} onChange={event => onChange(event.target.value)} className="mt-1.5 w-full appearance-none rounded-row bg-fill-subtle px-3 py-3 text-[12px] font-medium outline-none">{LANGUAGES.map(language => <option key={language.label}>{language.label}</option>)}</select></label>
-}
-
-function Result({ label, value, placeholder }: { label: string; value: string; placeholder: string }) {
-    return <div className="rounded-card bg-surface p-5 shadow-row"><p className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{label}</p><p className={`mt-3 text-[16px] leading-relaxed ${value ? 'text-ink' : 'text-ink-3'}`}>{value || placeholder}</p></div>
 }

@@ -14,6 +14,8 @@ import ArunaAnimation from '@/components/special/ArunaAnimation'
 import PrabowoAnimation from '@/components/special/PrabowoAnimation'
 import AIAssistant from '@/components/profile/AIAssistant'
 import Concierge from '@/components/assistant/Concierge'
+import PublicInterpreter from '@/components/interpreter/PublicInterpreter'
+import SaveCardButton from '@/components/profile/SaveCardButton'
 import PetBuddy from '@/components/pet/PetBuddy'
 import PetGreeting from '@/components/pet/PetGreeting'
 import { usePetSpriteReady } from '@/components/pet/PetSprite'
@@ -619,8 +621,12 @@ export default function PublicProfile() {
                             onConnect={() => setShowLeadModal(true)}
                         />
 
+                        {(profile.tier === 'PREMIUM' || profile.tier === 'B2B') && (
+                            <PublicInterpreter profileSlug={profile.slug} displayName={profile.display_name} />
+                        )}
+
                         {/* CTA: Save Contact + QR + Share */}
-                        <div className="flex gap-3 mb-6">
+                        <div className="flex gap-2 mb-6">
                             <button
                                 onClick={handleSaveContact}
                                 className={`flex-1 py-4 rounded-2xl font-bold text-base tracking-wide flex items-center justify-center gap-3 active:scale-[0.98] transition-all text-white ${isLiquidGlass ? 'lg-cta' : ''}`}
@@ -638,7 +644,7 @@ export default function PublicProfile() {
                             </button>
                             <button
                                 onClick={() => setShowQR(!showQR)}
-                                className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 active:scale-95 transition-all ${isLiquidGlass
+                                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 active:scale-95 transition-all ${isLiquidGlass
                                     ? 'lg-social text-zinc-700'
                                     : isLightMode
                                         ? 'bg-white/50 text-zinc-700 border border-white/50 hover:bg-white/70 backdrop-blur-md'
@@ -648,9 +654,19 @@ export default function PublicProfile() {
                             >
                                 <QrCode className="w-5 h-5" />
                             </button>
+                            <SaveCardButton
+                                profileId={profile.id}
+                                profileSlug={profile.slug}
+                                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 active:scale-95 transition-all ${isLiquidGlass
+                                    ? 'lg-social text-zinc-700'
+                                    : isLightMode
+                                        ? 'bg-white/50 text-zinc-700 border border-white/50 hover:bg-white/70 backdrop-blur-md'
+                                        : 'bg-zinc-900/75 text-white hover:bg-zinc-800/90 backdrop-blur-md shadow-[0_10px_24px_rgba(0,0,0,0.24)]'
+                                    }`}
+                            />
                             <button
                                 onClick={handleShare}
-                                className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 active:scale-95 transition-all ${isLiquidGlass
+                                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 active:scale-95 transition-all ${isLiquidGlass
                                     ? 'lg-social text-zinc-700'
                                     : isLightMode
                                         ? 'bg-white/50 text-zinc-700 border border-white/50 hover:bg-white/70 backdrop-blur-md'
