@@ -5,8 +5,6 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const clean = (value: unknown, max: number) => typeof value === 'string' ? value.trim().slice(0, max) : ''
-const visitorIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-
 function allowed(req: Request) {
     const origin = req.headers.get('origin')
     if (!origin) return true
@@ -30,7 +28,6 @@ export async function POST(req: Request) {
         const sourceLanguage = clean(body.sourceLanguage, 60)
         const targetLanguage = clean(body.targetLanguage, 60)
         const slug = clean(body.slug, 100)
-        const visitorId = clean(body.visitorId, 36)
         if (!audio || audio.length > 3_500_000 || !sourceLanguage || !targetLanguage) return NextResponse.json({ error: 'Recording is incomplete.' }, { status: 400 })
         if (!['audio/webm', 'audio/webm;codecs=opus', 'audio/mp4', 'audio/ogg'].includes(mimeType)) return NextResponse.json({ error: 'Unsupported recording format.' }, { status: 400 })
 
@@ -42,11 +39,8 @@ export async function POST(req: Request) {
         const ownerCanTranslate = ownerProfile?.tier === 'PREMIUM' || ownerProfile?.tier === 'B2B'
 
         if (slug) {
-            if (!slug || !visitorIdPattern.test(visitorId)) return NextResponse.json({ error: 'Open a public Premium or B2B card to use Live Translate.' }, { status: 401 })
-            const { data: profile } = await supabase.from('profiles').select('id,tier,is_public').eq('slug', slug).maybeSingle()
+            const { data: profile } = await supabase.from('profiles').select('tier,is_public').eq('slug', slug).maybeSingle()
             if (!profile || profile.is_public === false || (profile.tier !== 'PREMIUM' && profile.tier !== 'B2B')) return NextResponse.json({ error: 'Live Translate is not available on this card.' }, { status: 403 })
-            const { data: allowedByQuota } = await supabase.rpc('consume_public_interpreter_quota', { p_profile_id: profile.id, p_visitor_id: visitorId })
-            if (!allowedByQuota) return NextResponse.json({ error: 'Live Translate limit reached. Please try again in the next hour.' }, { status: 429 })
         } else if (!ownerCanTranslate) {
             return NextResponse.json({ error: 'Live Interpreter is available on Premium and B2B plans.' }, { status: 403 })
         }

@@ -21,7 +21,9 @@ import {
     Linkedin,
     MessageCircle,
     Search,
-    X
+    X,
+    Bookmark,
+    Trash2,
 } from 'lucide-react'
 import PremiumLock from '@/components/dashboard/PremiumLock'
 import { whatsappLink } from '@/lib/wa.mjs'
@@ -57,6 +59,10 @@ const getExternalUrl = (value: unknown) => {
     }
 }
 
+type SavedCardPreview = { slug: string; display_name: string | null; company: string | null; job_title: string | null; avatar_url: string | null }
+type SavedCard = { profile_id: string; created_at: string; profile: SavedCardPreview | null }
+type SavedCardRow = Omit<SavedCard, 'profile'> & { profile: SavedCardPreview | SavedCardPreview[] | null }
+
 export default function AnalyticsPage() {
     const supabase = createClient()
     const { hasFeature } = useTier()
@@ -86,6 +92,9 @@ export default function AnalyticsPage() {
     const [leadSearch, setLeadSearch] = useState('')
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
     const [loadingLeads, setLoadingLeads] = useState(false)
+    const [collectionTab, setCollectionTab] = useState<'contacts' | 'saved'>(() => typeof window !== 'undefined' && window.location.hash === '#saved' ? 'saved' : 'contacts')
+    const [savedCards, setSavedCards] = useState<SavedCard[]>([])
+    const [loadingSavedCards, setLoadingSavedCards] = useState(false)
 
     useEffect(() => {
         fetchAnalytics()
@@ -94,6 +103,14 @@ export default function AnalyticsPage() {
     useEffect(() => {
         fetchLeads()
     }, [statusFilter, dateFrom, dateTo, leadSearch, sortOrder])
+
+    useEffect(() => {
+        if (collectionTab === 'saved') void fetchSavedCards()
+    }, [collectionTab])
+
+    useEffect(() => {
+        if (window.location.hash === '#saved') setCollectionTab('saved')
+    }, [])
 
     const fetchLeads = async () => {
         try {
@@ -142,6 +159,33 @@ export default function AnalyticsPage() {
         } finally {
             setLoadingLeads(false)
         }
+    }
+
+    const fetchSavedCards = async () => {
+        try {
+            setLoadingSavedCards(true)
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+            const { data, error } = await supabase
+                .from('saved_profiles')
+                .select('profile_id,created_at,profile:profiles(slug,display_name,company,job_title,avatar_url)')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+            if (error) { console.error('Error fetching saved cards:', error); return }
+            const rows = (data || []) as unknown as SavedCardRow[]
+            setSavedCards(rows.map(({ profile, ...card }) => ({ ...card, profile: Array.isArray(profile) ? profile[0] || null : profile })))
+        } catch (err) {
+            console.error('Error in fetchSavedCards:', err)
+        } finally {
+            setLoadingSavedCards(false)
+        }
+    }
+
+    const removeSavedCard = async (profileId: string) => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        const { error } = await supabase.from('saved_profiles').delete().eq('user_id', user.id).eq('profile_id', profileId)
+        if (!error) setSavedCards(current => current.filter(card => card.profile_id !== profileId))
     }
 
     const fetchAnalytics = async () => {
@@ -521,7 +565,13 @@ export default function AnalyticsPage() {
                             </div>
                         </section>
 
-                        {/* Contact list */}
+                        <section className="mt-7">
+                            <div role="tablist" aria-label="Relationship collections" className="grid grid-cols-2 gap-1 rounded-full bg-surface p-1 shadow-row">
+                                <button role="tab" aria-selected={collectionTab === 'contacts'} onClick={() => { setCollectionTab('contacts'); window.history.replaceState(null, '', '/dashboard/analytics') }} className={`rounded-full py-2.5 text-[12.5px] font-medium transition-colors ${collectionTab === 'contacts' ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink'}`}>Contacts <span className="ml-1 opacity-70">{stats.totalLeads}</span></button>
+                                <button role="tab" aria-selected={collectionTab === 'saved'} onClick={() => { setCollectionTab('saved'); window.history.replaceState(null, '', '#saved') }} className={`rounded-full py-2.5 text-[12.5px] font-medium transition-colors ${collectionTab === 'saved' ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink'}`}>Saved Cards</button>
+                            </div>
+
+                            <div className={collectionTab === 'contacts' ? 'mt-5' : 'hidden'}>
                         <section className="mt-7">
                             <div className="flex items-center justify-between gap-3">
                                 <h2 className="text-[19px] font-semibold tracking-[-0.025em]">Contacts</h2>
@@ -667,6 +717,38 @@ export default function AnalyticsPage() {
                                     <MessageSquare className="mx-auto mb-3 h-10 w-10 text-ink-3" strokeWidth={1.5} />
                                     <h3 className="text-[15px] font-medium">No contacts yet</h3>
                                     <p className="mt-1.5 text-[12.5px] text-ink-2">Enable the contact form so visitors can leave their details</p>
+                                </div>
+                            )}
+                        </section>
+                            </div>
+
+                            {collectionTab === 'saved' && (
+                                <div className="mt-5">
+                                    {loadingSavedCards ? (
+                                        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-ink-3" /></div>
+                                    ) : savedCards.length > 0 ? (
+                                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                                            {savedCards.map(card => card.profile && (
+                                                <article key={card.profile_id} className="group relative overflow-hidden rounded-card-sm bg-surface p-3 shadow-row transition-transform active:scale-[0.99]">
+                                                    <a href={`/${card.profile.slug}`} target="_blank" rel="noopener noreferrer" className="block">
+                                                        <div className="flex h-24 items-center justify-center overflow-hidden rounded-xl bg-fill-subtle text-[27px] font-semibold text-ink-2">
+                                                            {card.profile.avatar_url ? <img src={card.profile.avatar_url} alt="" className="h-full w-full object-cover" /> : card.profile.display_name?.slice(0, 1).toUpperCase()}
+                                                        </div>
+                                                        <p className="mt-3 truncate text-[13px] font-semibold">{card.profile.display_name || 'Gentanala member'}</p>
+                                                        <p className="mt-1 truncate text-[11px] text-ink-2">{[card.profile.job_title, card.profile.company].filter(Boolean).join(' · ') || 'Digital business card'}</p>
+                                                        <p className="mt-3 text-[10px] text-ink-3">Saved {new Date(card.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</p>
+                                                    </a>
+                                                    <button type="button" onClick={() => void removeSavedCard(card.profile_id)} aria-label={`Remove ${card.profile.display_name || 'card'} from saved cards`} className="absolute right-2 top-2 rounded-full bg-surface/95 p-2 text-ink-2 shadow-row transition-colors hover:bg-coral-soft hover:text-coral-soft-ink"><Trash2 className="h-3.5 w-3.5" /></button>
+                                                </article>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-card border border-dashed border-ink/15 bg-surface/60 p-10 text-center">
+                                            <Bookmark className="mx-auto mb-3 h-10 w-10 text-ink-3" strokeWidth={1.5} />
+                                            <h3 className="text-[15px] font-medium">No saved cards yet</h3>
+                                            <p className="mt-1.5 text-[12.5px] text-ink-2">Bookmark any Gentanala card to build your personal network collection.</p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </section>
