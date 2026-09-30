@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -412,6 +413,12 @@ export default function AnalyticsPage() {
     }
 
     return (
+        <>
+        <div className="mx-auto max-w-[1200px] px-5 pt-6">
+            <Link href="/dashboard/saved" className="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2 text-[12.5px] font-medium text-ink shadow-row">
+                <Bookmark className="h-4 w-4" strokeWidth={1.8} />{t('Saved Cards')}
+            </Link>
+        </div>
         <PremiumLock
             isLocked={isLocked}
             featureName={t('Analytics & Leads')}
@@ -913,6 +920,7 @@ export default function AnalyticsPage() {
                 )}
             </div>
         </PremiumLock>
+        </>
     )
 }
 
