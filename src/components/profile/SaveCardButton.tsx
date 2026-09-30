@@ -48,6 +48,6 @@ export default function SaveCardButton({ profileId, profileSlug, className }: { 
         <button onClick={() => void toggleSave()} disabled={loading || saving} className={className} title={saved ? t('Remove from saved cards') : t('Save this card')} aria-label={saved ? t('Remove from saved cards') : t('Save this card')}>
             {loading || saving ? <Loader2 className="h-5 w-5 animate-spin" /> : saved ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
         </button>
-        {showCollectionLink && <Link href="/dashboard/analytics#saved" className="absolute right-0 top-[calc(100%+0.5rem)] z-20 whitespace-nowrap rounded-full bg-ink px-3 py-1.5 text-[11px] font-medium text-white shadow-ink">{t('Saved — view collection')}</Link>}
+        {showCollectionLink && <Link href="/dashboard/saved" className="absolute right-0 top-[calc(100%+0.5rem)] z-20 whitespace-nowrap rounded-full bg-ink px-3 py-1.5 text-[11px] font-medium text-white shadow-ink">{t('Saved — view collection')}</Link>}
     </div>
 }
