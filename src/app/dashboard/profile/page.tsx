@@ -1143,7 +1143,7 @@ export default function ProfileEditor() {
                         <h2 className="text-[15px] font-semibold">{t('Direct Contact')}</h2>
                     </div>
 
-                    <div className="mt-4 grid gap-3">
+                    <div className="mt-4 grid min-w-0 grid-cols-1 gap-3">
                         <div>
                             <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">{t('Phone Number')}</label>
                             <div className="mt-1.5 flex overflow-hidden rounded-row bg-fill-subtle">

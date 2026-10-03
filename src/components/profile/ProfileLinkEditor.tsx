@@ -174,7 +174,7 @@ export default function ProfileLinkEditor({ links, tier, onChange }: {
             <DragDropContext onDragEnd={onDragEnd}>
                 <Droppable droppableId="links-list">
                     {(provided) => (
-                        <div {...provided.droppableProps} ref={provided.innerRef} className="mt-5 grid gap-2.5">
+                        <div {...provided.droppableProps} ref={provided.innerRef} className="mt-5 grid min-w-0 grid-cols-1 gap-2.5">
                             {links.map((link, index) => (
                                 <Draggable key={link.id} draggableId={link.id} index={index}>
                                     {(provided, snapshot) => (
@@ -184,7 +184,7 @@ export default function ProfileLinkEditor({ links, tier, onChange }: {
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: index * 0.05 }}
-                                            className={`flex items-center gap-3 rounded-row bg-surface p-3.5 shadow-row ${snapshot.isDragging ? 'z-50 shadow-card' : ''
+                                            className={`flex min-w-0 items-center gap-2 rounded-row bg-surface p-3 shadow-row sm:gap-3 sm:p-3.5 ${snapshot.isDragging ? 'z-50 shadow-card' : ''
                                                 }`}
                                         >
                                             <div {...provided.dragHandleProps} className="shrink-0 text-ink-3">
@@ -196,7 +196,7 @@ export default function ProfileLinkEditor({ links, tier, onChange }: {
                                             </span>
 
                                             <div className="min-w-0 flex-1">
-                                                <h3 className="truncate text-[14px] font-medium">{link.title}</h3>
+                                                <h3 className="line-clamp-2 break-words text-[14px] font-medium leading-snug">{link.title}</h3>
                                                 <p className="truncate text-[11.5px] text-ink-3">{link.url}</p>
                                             </div>
 
