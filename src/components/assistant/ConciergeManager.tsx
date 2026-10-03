@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { Check, CircleAlert, FileText, Loader2, LockKeyhole, MessageSquareText, Save, Sparkles } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Check, CircleAlert, Loader2, LockKeyhole, Save, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import ConversationInbox from './ConversationInbox'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 type Knowledge = { about: string; services: string; portfolio: string; faq: string }
@@ -11,7 +12,7 @@ type InboxMessage = { id: string; visitor_id: string; visitor_name: string | nul
 const initial: Settings = { enabled: false, persona: 'Professional concierge', instructions: '', greeting: '', knowledge: { about: '', services: '', portfolio: '', faq: '' }, suggested_actions: ['Explore services', 'View portfolio', 'Ask about pricing', 'Book a meeting'], booking_url: '' }
 
 export default function ConciergeManager() {
-    const { t, locale } = useUiLanguage()
+    const { t } = useUiLanguage()
     const supabase = createClient()
     const [profileId, setProfileId] = useState('')
     const [settings, setSettings] = useState<Settings>(initial)
@@ -48,11 +49,6 @@ export default function ConciergeManager() {
         void load()
     }, [supabase])
 
-    const conversations = useMemo(() => {
-        const groups = new Map<string, InboxMessage[]>()
-        messages.slice().reverse().forEach(message => groups.set(message.visitor_id, [...(groups.get(message.visitor_id) || []), message]))
-        return [...groups.entries()].reverse().slice(0, 12)
-    }, [messages])
     const setKnowledge = (key: keyof Knowledge, value: string) => setSettings(current => ({ ...current, knowledge: { ...current.knowledge, [key]: value } }))
     const save = async () => {
         if (!profileId) return
@@ -77,7 +73,7 @@ export default function ConciergeManager() {
             {error && <p className="mt-4 flex items-center gap-2 rounded-row bg-coral-soft px-3 py-2 text-[12px] text-coral-soft-ink"><CircleAlert className="h-4 w-4" />{error}</p>}{notice && <p className="mt-4 flex items-center gap-2 rounded-row bg-success-soft px-3 py-2 text-[12px] text-success-soft-ink"><Check className="h-4 w-4" />{notice}</p>}
             <button onClick={save} disabled={saving} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3.5 text-[13px] font-medium text-white disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{saving ? t('Saving…') : t('Save concierge')}</button>
         </section>
-        <section className="mt-3 rounded-card bg-surface p-5 shadow-card md:p-6"><div className="flex items-center gap-2"><MessageSquareText className="h-5 w-5" /><div><h2 className="text-[16px] font-semibold">{t('Visitor conversations')}</h2><p className="mt-0.5 text-[12px] text-ink-2">{t('Recent questions help you learn what visitors need.')}</p></div></div>{conversations.length ? <div className="mt-4 grid gap-2">{conversations.map(([visitor, thread]) => { const first = thread[0]; const latest = thread[thread.length - 1]; return <div key={visitor} className="rounded-row bg-fill-subtle p-3"><div className="flex items-center justify-between gap-3"><p className="truncate text-[13px] font-medium">{first.visitor_name || t('Anonymous visitor')}</p><span className="text-[11px] text-ink-3">{new Date(latest.created_at).toLocaleDateString(locale === 'id' ? 'id-ID' : locale === 'zh-CN' ? 'zh-CN' : 'en-US')}</span></div>{first.intent && <p className="mt-1 text-[11px] text-ink-2">{t('Interest: {intent}', { intent: first.intent })}</p>}<p className="mt-2 line-clamp-2 text-[12px] text-ink">{latest.content}</p></div> })}</div> : <div className="mt-4 rounded-row bg-fill-subtle px-4 py-8 text-center"><FileText className="mx-auto h-5 w-5 text-ink-3" /><p className="mt-2 text-[12px] text-ink-2">{t('Conversations will appear after visitors use the concierge.')}</p></div>}</section>
+        <ConversationInbox profileId={profileId} messages={messages} />
     </>
 }
 

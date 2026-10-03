@@ -7,6 +7,7 @@ import PetSprite from '@/components/pet/PetSprite'
 import { PET_CHARACTERS } from '@/lib/pet/characters.mjs'
 import { PET_FEATURE_ENABLED } from '@/lib/pet/pet-selection.mjs'
 import { buildPetGreeting } from '@/lib/pet/pet-greeting.mjs'
+import MeetingManager from '@/components/meetings/MeetingManager'
 import ConciergeManager from '@/components/assistant/ConciergeManager'
 import TranslateManager from '@/components/interpreter/TranslateManager'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
@@ -93,6 +94,7 @@ export default function AssistantPage() {
                 </header>
                 <TranslateManager eligible={profile?.tier === 'PREMIUM' || profile?.tier === 'B2B'} />
                 <ConciergeManager />
+                <MeetingManager eligible={profile?.tier === 'PREMIUM' || profile?.tier === 'B2B'} />
             </div>
         )
     }
@@ -118,6 +120,7 @@ export default function AssistantPage() {
 
             <TranslateManager eligible={profile?.tier === 'PREMIUM' || profile?.tier === 'B2B'} />
             <ConciergeManager />
+                <MeetingManager eligible={profile?.tier === 'PREMIUM' || profile?.tier === 'B2B'} />
 
             {/* Pratinjau */}
             <section className="mt-5 rounded-card bg-surface p-6 shadow-card">

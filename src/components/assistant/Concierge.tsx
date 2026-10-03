@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Bot, BriefcaseBusiness, CalendarDays, MessageCircle, Send, Sparkles, UserRound, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import MeetingRequestDialog, { type BookingInfo } from '@/components/meetings/MeetingRequestDialog'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 type Settings = { persona: string; greeting: string; suggested_actions: string[]; booking_url: string }
@@ -20,6 +21,8 @@ export default function Concierge({ profile, onConnect }: { profile: { id: strin
     const supabase = createClient()
     const [settings, setSettings] = useState<Settings | null>(null)
     const [open, setOpen] = useState(false)
+    const [bookingInfo, setBookingInfo] = useState<BookingInfo | null>(null)
+    const [meetingOpen, setMeetingOpen] = useState(false)
     const [name, setName] = useState('')
     const [intent, setIntent] = useState('')
     const [input, setInput] = useState('')
@@ -47,6 +50,14 @@ export default function Concierge({ profile, onConnect }: { profile: { id: strin
             })
     }, [profile.id, supabase])
 
+    useEffect(() => {
+        const controller = new AbortController()
+        void fetch(`/api/meetings?${new URLSearchParams({ slug: profile.slug })}`, { signal: controller.signal })
+            .then(response => response.ok ? response.json() : null)
+            .then(data => { if (data?.enabled) setBookingInfo(data) }).catch(() => {})
+        return () => controller.abort()
+    }, [profile.slug])
+
     const ask = async (question: string, selectedIntent = intent) => {
         const text = question.trim()
         if (!text || busy) return
@@ -70,7 +81,10 @@ export default function Concierge({ profile, onConnect }: { profile: { id: strin
     const actions = settings.suggested_actions.length ? settings.suggested_actions : fallbackActions
     const greeting = settings.greeting || t('Hi, I’m the concierge for {name}. What brings you here?', { name: profile.display_name || t('this card') })
     const bookingUrl = /^https:\/\//i.test(settings.booking_url) ? settings.booking_url : ''
-    const selectIntent = (action: string) => { setIntent(action); setOpen(true); void ask(questionFor(action), action) }
+    const selectIntent = (action: string) => {
+        if (action === 'Book a meeting' && bookingInfo) { setMeetingOpen(true); return }
+        setIntent(action); setOpen(true); void ask(questionFor(action), action)
+    }
 
     return <>
         <section className="mb-6 rounded-card border border-ink/10 bg-surface p-4 shadow-row">
@@ -83,6 +97,7 @@ export default function Concierge({ profile, onConnect }: { profile: { id: strin
                     {index === 0 ? <BriefcaseBusiness className="h-4 w-4 shrink-0" /> : index === 3 ? <CalendarDays className="h-4 w-4 shrink-0" /> : <MessageCircle className="h-4 w-4 shrink-0" />}{t(action)}
                 </button>)}
             </div>
+            {bookingInfo && !actions.includes('Book a meeting') && <button type="button" onClick={() => setMeetingOpen(true)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3 text-[12px] text-white"><CalendarDays className="h-4 w-4" />{t('Book a meeting')}</button>}
             <button onClick={() => setOpen(true)} className="mt-3 inline-flex items-center gap-2 text-[12px] font-medium text-ink-2 hover:text-ink"><Bot className="h-4 w-4" />{t('Ask something else')}</button>
         </section>
         {open && <div className="fixed inset-0 z-[110] flex items-end bg-ink/35 p-0 sm:items-center sm:justify-center sm:p-4" onMouseDown={event => event.target === event.currentTarget && setOpen(false)}>
@@ -97,11 +112,13 @@ export default function Concierge({ profile, onConnect }: { profile: { id: strin
                     {busy && <p className="text-[12px] text-ink-2">{t('Thinking…')}</p>}{notice && <p className="rounded-row bg-coral-soft px-3 py-2 text-[12px] text-coral-soft-ink">{notice}</p>}
                 </div>
                 <div className="border-t border-ink/10 p-3">
-                    {bookingUrl && <a href={bookingUrl} target="_blank" rel="noreferrer" className="mb-2 flex items-center justify-center gap-2 rounded-full bg-ink py-2.5 text-[12px] font-medium text-white"><CalendarDays className="h-4 w-4" />{t('Book a meeting')}</a>}
+                    {bookingInfo && <button type="button" onClick={() => { setOpen(false); setMeetingOpen(true) }} className="mb-2 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-2.5 text-[12px] font-medium text-white"><CalendarDays className="h-4 w-4" />{t('Book a meeting')}</button>}
+                    {!bookingInfo && bookingUrl && <a href={bookingUrl} target="_blank" rel="noreferrer" className="mb-2 flex items-center justify-center gap-2 rounded-full bg-ink py-2.5 text-[12px] font-medium text-white"><CalendarDays className="h-4 w-4" />{t('Book a meeting')}</a>}
                     <button onClick={onConnect} className="mb-2 flex w-full items-center justify-center gap-2 rounded-full border border-ink/15 py-2.5 text-[12px] font-medium text-ink"><UserRound className="h-4 w-4" />{t('Share contact details')}</button>
                     <form onSubmit={event => { event.preventDefault(); void ask(input) }} className="flex gap-2"><input value={input} disabled={busy} maxLength={1000} onChange={event => setInput(event.target.value)} placeholder={t('Ask a question…')} className="min-w-0 flex-1 rounded-full bg-fill-subtle px-4 py-3 text-[13px] outline-none" /><button disabled={busy || !input.trim()} aria-label={t('Send question')} className="rounded-full bg-ink p-3 text-white disabled:opacity-40"><Send className="h-4 w-4" /></button></form>
                 </div>
             </section>
         </div>}
+        {meetingOpen && bookingInfo && <MeetingRequestDialog slug={profile.slug} info={bookingInfo} onClose={() => setMeetingOpen(false)} />}
     </>
 }
