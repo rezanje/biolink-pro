@@ -87,3 +87,13 @@ Headings, language selection, bio text and portrait crops were readable in the f
 - [x] Long name/role, short bio, dark/missing photo, Liquid Glass and Free-tier restrictions verified.
 - [x] Browser page-error collection empty; 28 Node tests pass; no new ESLint findings against the existing baseline.
 - [x] Independent read-only review completed and both P2 findings corrected and checked in the production browser fixture.
+
+## Horizontal theme picker
+
+Final result: passed
+
+The layout picker now presents a single horizontal row of cards with native touch scrolling and centered snap stops. The next card peeks into view. Browsing leaves the current theme unchanged; tapping updates the draft and Save publishes it. Loaded saved selections scroll horizontally into view without moving the page vertically.
+
+Browser-rendered evidence: `/tmp/theme-rail-start-390.png`, `/tmp/theme-rail-selected-390.png`, `/tmp/theme-rail-selected-320.png` (viewport width × 844, scale factor 1). Reviewed the unselected and selected states. The existing fixed Save button and bottom navigation remain available while scrolling the page.
+
+Production browser checks passed: actual CDP touch swipe, one-row geometry, next-card peek, selected draft preview, save/reload visibility, 320/375/390/430/768/1280 px widths without page overflow, keyboard Tab/Enter, reduced motion, Free-tier restrictions, and no page errors. Targeted translation test passes. ESLint has only the existing Supabase effect dependency warning. Independent code review found no actionable issue.

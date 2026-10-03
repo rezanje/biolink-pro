@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
     Palette,
     Check,
@@ -27,6 +27,7 @@ export default function AppearancePage() {
     const [themeMode, setThemeMode] = useState('dark')
     const [imageFilter, setImageFilter] = useState('normal')
     const [template, setTemplate] = useState('classic')
+    const layoutRailRef = useRef<HTMLDivElement>(null)
     const [fontPair, setFontPair] = useState('classic')
     const [userTier, setUserTier] = useState<string>('FREE')
     const [previewSlug, setPreviewSlug] = useState('')
@@ -37,6 +38,16 @@ export default function AppearancePage() {
     const [savedAppearance, setSavedAppearance] = useState({ mode: 'dark', filter: 'normal', color: '#3B82F6', template: 'classic', font: 'classic' })
     const hasUnsavedChanges = themeMode !== savedAppearance.mode || imageFilter !== savedAppearance.filter || primaryColor !== savedAppearance.color || template !== savedAppearance.template || fontPair !== savedAppearance.font
     const previewRevision = `${themeMode}-${imageFilter}-${primaryColor}-${template}-${fontPair}`
+
+    useEffect(() => {
+        const rail = layoutRailRef.current
+        const selected = rail?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')
+        if (!rail || !selected) return
+        rail.scrollTo({
+            left: selected.offsetLeft - (rail.clientWidth - selected.offsetWidth) / 2,
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        })
+    }, [template])
 
     const syncDraftPreview = (mode: string, filter: string, color: string, nextTemplate = template, nextFont = fontPair) => {
         if (!previewSlug) return
@@ -250,7 +261,8 @@ export default function AppearancePage() {
                         <p className="text-[12px] text-ink-2">{t('Choose a layout for your card')}</p>
                     </div>
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <p className="mt-3 text-[11px] text-ink-2">{t('Swipe to browse, tap to choose')}</p>
+                <div ref={layoutRailRef} role="region" aria-label={t('Card Layout')} tabIndex={0} className="relative mt-2 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain p-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-2 focus-visible:outline-offset-2">
                     {CARD_TEMPLATES.map(option => (
                         <button
                             key={option.id}
@@ -260,7 +272,7 @@ export default function AppearancePage() {
                             aria-label={t(option.name)}
                             aria-describedby={`card-layout-description-${option.id}`}
                             aria-pressed={template === option.id}
-                            className={`min-w-0 rounded-2xl border p-2 text-left transition-colors ${template === option.id ? 'border-ink ring-1 ring-ink' : 'border-black/10 hover:border-ink-3'} ${userTier === 'FREE' && option.id !== 'classic' ? 'cursor-not-allowed opacity-40' : ''}`}
+                            className={`w-[80%] max-w-[224px] shrink-0 snap-center rounded-2xl border p-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${template === option.id ? 'border-ink ring-1 ring-ink' : 'border-black/10 hover:border-ink-3'} ${userTier === 'FREE' && option.id !== 'classic' ? 'cursor-not-allowed opacity-40' : ''}`}
                         >
                             <div className={`relative h-24 overflow-hidden rounded-xl ${option.id === 'dial' ? 'bg-[#162524]' : option.id === 'voyage' ? 'bg-[#f7e77a]' : option.id === 'statement' ? 'bg-[#fcfbf5]' : option.id === 'portrait' ? 'bg-[#f1eadb]' : option.id === 'atelier' ? 'bg-[#f2efe9]' : 'bg-zinc-100'}`}>
                                 {option.id === 'voyage' ? (

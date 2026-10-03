@@ -11,6 +11,7 @@ export function uiLanguage(value) {
 }
 
 export const UI_MESSAGES = {
+    'Swipe to browse, tap to choose': ['Geser untuk lihat tema, tap untuk pilih', '滑动浏览，点击选择'],
     'Voyage': ['Voyage', '旅途'],
     'Statement': ['Statement', '宣言'],
     'Sunny yellow and forest-green headlines': ['Kuning cerah dan judul hijau hutan', '明亮黄色与森林绿标题'],
