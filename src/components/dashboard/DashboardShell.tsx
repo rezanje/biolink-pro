@@ -1,5 +1,6 @@
 'use client'
 
+import PageMotion from '@/components/motion/PageMotion'
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -75,7 +76,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         return (
             <div className="min-h-screen bg-canvas font-kabut text-ink">
                 <div className="flex justify-end px-5 pt-4"><UiLanguageSelect /></div>
-                {children}
+                <PageMotion key={pathname}>{children}</PageMotion>
                 <KabutNav />
             </div>
         )
@@ -163,7 +164,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 {/* Main Content + Preview */}
                 <div className="flex-1 flex overflow-hidden">
                     <main className="flex-1 overflow-y-auto p-4 pb-24 md:p-8 lg:p-12 text-zinc-900">
-                        {children}
+                        <PageMotion key={pathname}>{children}</PageMotion>
                     </main>
 
                     {/* Desktop Preview Sidebar — Liquid Glass */}

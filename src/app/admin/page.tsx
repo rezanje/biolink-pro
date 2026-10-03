@@ -1,5 +1,7 @@
 'use client'
 
+import AnimatedNumber from '@/components/motion/AnimatedNumber'
+
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -1143,7 +1145,7 @@ export default function AdminPage() {
                                             {stat.icon}
                                         </div>
                                         <div>
-                                            <p className="text-2xl font-bold text-zinc-900">{stat.val}</p>
+                                            <p className="text-2xl font-bold text-zinc-900"><AnimatedNumber value={stat.val} /></p>
                                             <p className="text-zinc-500 text-sm">{stat.label}</p>
                                         </div>
                                     </div>

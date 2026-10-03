@@ -1,5 +1,6 @@
 'use client'
 
+import PageMotion from '@/components/motion/PageMotion'
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -103,7 +104,7 @@ export default function CompanyShell({ children }: { children: React.ReactNode }
 
                 <main className="flex-1 overflow-y-auto p-6 lg:p-10">
                     <div className="max-w-7xl mx-auto">
-                        {children}
+                        <PageMotion key={pathname}>{children}</PageMotion>
                     </div>
                 </main>
             </div>

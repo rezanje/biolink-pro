@@ -26,6 +26,7 @@ import {
     Bookmark,
     Trash2,
 } from 'lucide-react'
+import AnimatedNumber from '@/components/motion/AnimatedNumber'
 import PremiumLock from '@/components/dashboard/PremiumLock'
 import { whatsappLink } from '@/lib/wa.mjs'
 import { useTier } from '@/app/dashboard/tier-context'
@@ -520,7 +521,9 @@ export default function AnalyticsPage() {
                             <Stat
                                 icon={TrendingUp}
                                 label="CTR"
-                                value={`${stats.totalViews > 0 ? ((stats.totalClicks / stats.totalViews) * 100).toFixed(1) : 0}%`}
+                                value={stats.totalViews > 0 ? (stats.totalClicks / stats.totalViews) * 100 : 0}
+                                decimals={1}
+                                suffix="%"
                             />
                         </section>
 
@@ -925,11 +928,17 @@ export default function AnalyticsPage() {
 }
 
 /** Satu angka di dalam kartu ringkasan — pola yang sama dipakai beranda. */
-function Stat({ icon: Icon, label, value }: { icon: typeof Eye; label: string; value: number | string }) {
+function Stat({ icon: Icon, label, value, decimals = 0, suffix = '' }: {
+    icon: typeof Eye; label: string; value: number; decimals?: number; suffix?: string
+}) {
+    const { locale } = useUiLanguage()
+    const numberLocale = locale === 'id' ? 'id-ID' : locale === 'zh-CN' ? 'zh-CN' : 'en-US'
     return (
         <div className="flex flex-col items-center px-2">
             <Icon className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} />
-            <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]">{value}</p>
+            <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]">
+                <AnimatedNumber value={value} locale={numberLocale} decimals={decimals} suffix={suffix} />
+            </p>
             <p className="mt-1.5 text-center text-[11.5px] text-ink-2">{label}</p>
         </div>
     )

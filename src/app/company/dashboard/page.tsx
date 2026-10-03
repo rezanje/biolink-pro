@@ -1,5 +1,7 @@
 'use client'
 
+import AnimatedNumber from '@/components/motion/AnimatedNumber'
+
 import { useCompany } from '@/app/company/company-context'
 import {
     Users,
@@ -15,10 +17,10 @@ export default function CompanyDashboardPage() {
     const { company } = useCompany()
 
     const stats = [
-        { label: 'Total Assets', value: '124', icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { label: 'Active Employees', value: '98', icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
-        { label: 'Total Scans', value: '12.4k', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-        { label: 'Green Impact', value: '450kg', icon: ShieldCheck, color: 'text-orange-600', bg: 'bg-orange-50' },
+        { label: 'Total Assets', value: 124, icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { label: 'Active Employees', value: 98, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
+        { label: 'Total Scans', value: 12.4, decimals: 1, suffix: 'k', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { label: 'Green Impact', value: 450, suffix: 'kg', icon: ShieldCheck, color: 'text-orange-600', bg: 'bg-orange-50' },
     ]
 
     return (
@@ -48,7 +50,7 @@ export default function CompanyDashboardPage() {
                             </span>
                         </div>
                         <p className="text-zinc-500 text-sm font-medium">{stat.label}</p>
-                        <p className="text-2xl font-bold text-zinc-900 mt-1">{stat.value}</p>
+                        <p className="text-2xl font-bold text-zinc-900 mt-1"><AnimatedNumber value={stat.value} decimals={stat.decimals} suffix={stat.suffix} /></p>
                     </motion.div>
                 ))}
             </div>
