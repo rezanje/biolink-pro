@@ -68,6 +68,12 @@
   border-color: var(--border);
 }
 
+/* Allow scrolling in both directions while disabling browser pinch zoom. */
+html,
+body {
+  touch-action: pan-x pan-y;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
