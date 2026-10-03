@@ -1,0 +1,49 @@
+# Portrait theme QA
+
+Final result: passed
+
+## Evidence and scope
+
+The requested addition is a selectable card theme inspired by the supplied board, with each owner's existing profile data and app controls.
+
+- Source visual: `/tmp/codex-remote-attachments/01a100e2-9e1e-711a-854c-f638dd02108c/5F52FEBD-956D-458A-A7FA-26CCF51FFB58/1-Photo-1.jpg` (736 × 736 px, two presentation states).
+- Rendered cover: `/tmp/portrait-cover-390.png`.
+- Rendered detail: `/tmp/portrait-details-390.png`.
+- Rendered desktop: `/tmp/portrait-desktop-768.png`.
+- Settings: `/tmp/portrait-settings-390.png`.
+- Mobile captures: 390 × 844 px, CSS viewport 390 × 844, device scale factor 1. Desktop capture: 768 × 844 px at factor 1.
+- Source and both mobile captures were viewed together in one comparison input. The board's two cards are presentation examples; live captures show one interactive card. Content, card scale, available controls, and viewport differ intentionally, so pixel-for-pixel comparison is inappropriate.
+
+## Fidelity surfaces
+
+- Typography: Inter uses a heavy, tightly spaced cover heading and smaller detail heading, with readable body and compact labels. Long names and professions wrap within the panel. The reference's exact font is unspecified; Inter is the app's existing sans-serif.
+- Layout: cream surround, dominant portrait, overlapping white panel, 36 px corners, black profession pill, round detail avatar, and horizontal gallery retain the reference's hierarchy. Expanded detail presents the full bio. Language selection, save contact, QR, links, and files remain available.
+- Colors: cream `#f1eadb`, white panel, near-black heading/pill, and social brand colors. Dark mode uses brown backgrounds. Fallback avatar explicitly uses dark lettering on cream.
+- Images: uploaded owner portrait is reused for the hero and round avatar; gallery uses existing uploaded items. Browser evidence uses existing demo/public assets. Hero uses a top-aligned cover crop; thumbnails preserve square crops. Reference portraits and music artwork are not part of this general-purpose profile theme.
+- Content: real profile fields replace the board's sample identity. Gallery and social sections reflect the owner's data; empty gallery is omitted. New controls have English, Indonesian, and Chinese labels.
+
+Focused typography, avatar/pill alignment, language control, gallery captions, and social controls were readable in the full-resolution mobile captures; additional cropped comparisons were unnecessary.
+
+## Comparison history and fixes
+
+1. Initial implementation placed the language selector on its own row, pushing the heading downward. Moved it into the panel's top-right corner; revised cover evidence shows the heading directly beneath the pull control.
+2. Expanding the profile retained the prior scroll position, hiding the avatar and heading. Reset card scroll on expansion/collapse; revised detail evidence shows the avatar, name, profession, and full bio. Browser assertion checks scroll position zero.
+3. Independent code review identified pale fallback initials in dark mode. Added explicit `#111` avatar text color against the cream avatar background.
+
+No actionable P0/P1/P2 findings remain for the requested style adaptation. Different profile photography, gallery content, brand icons, and extra app controls are expected product differences.
+
+## Verification
+
+- Production-build browser integration: draft preview without publishing, expand/collapse, save/reload, gallery lightbox, files, QR, and contact download.
+- Both states checked for horizontal page and panel overflow at 320, 375, 390, 430, and 768 px.
+- Long name/role, dark mode, missing portrait, and existing Free-tier restrictions checked.
+- Browser page-error collection empty.
+- 28 Node tests passed. Modified files add no ESLint findings relative to the existing baseline. Production build passed.
+- Independent read-only code review completed; fallback contrast finding fixed.
+
+## Implementation checklist
+
+- [x] Add Portrait to Appearance and persisted template validation.
+- [x] Preserve existing features, data, and tier restrictions.
+- [x] Verify mobile and desktop rendering and preview interactions.
+- [x] Fix visual/interaction findings and complete build verification.

@@ -11,6 +11,15 @@ export function uiLanguage(value) {
 }
 
 export const UI_MESSAGES = {
+    'Portrait': ['Portrait', '人像'],
+    'Bold portrait and rounded white panels': ['Foto dominan dan panel putih melengkung', '醒目人像与白色圆角面板'],
+    'Choose a layout for your card': ['Pilih gaya tampilan kartu lo', '选择你的名片布局'],
+    'Additional layouts are available on Premium.': ['Tema tambahan tersedia di Premium.', '更多布局可在高级版使用。'],
+    'Expand profile': ['Buka detail profil', '展开个人资料'],
+    'Show portrait': ['Tampilkan foto profil', '显示人像'],
+    'Profiles': ['Profil sosial', '社交资料'],
+    'Open photo {number}': ['Buka foto {number}', '打开第 {number} 张照片'],
+
     'Approval calendar: {email}': ['Kalender persetujuan: {email}', '批准使用的日历：{email}'],
     'Reconnect the original Google account to retry this approval.': ['Hubungkan ulang akun Google asal untuk melanjutkan persetujuan ini.', '请重新连接原来的 Google 账号以重试此批准。'],
     'Retry approval': ['Coba konfirmasi lagi', '重试批准'],

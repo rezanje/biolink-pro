@@ -3,6 +3,7 @@ import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesig
 
 assert.equal(cardTemplate(undefined), 'classic')
 assert.equal(cardTemplate('dial'), 'dial')
+assert.equal(cardTemplate('portrait'), 'portrait')
 assert.equal(cardTemplate('removed-template'), 'classic')
 assert.equal(cardFont('editorial'), 'editorial')
 assert.equal(cardFont('unknown'), 'classic')

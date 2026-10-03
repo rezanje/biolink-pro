@@ -134,7 +134,9 @@ export default function AppearancePage() {
 
     const handleTemplateChange = (value: string) => {
         const safeTemplate = cardTemplate(value)
-        const preset = safeTemplate === 'atelier'
+        const preset = safeTemplate === 'portrait'
+            ? { mode: 'light', color: '#111111', font: 'classic' }
+            : safeTemplate === 'atelier'
             ? { mode: 'light', color: '#345648', font: 'editorial' }
             : safeTemplate === 'dial'
                 ? { mode: 'dark', color: '#B49964', font: 'modern' }
@@ -241,21 +243,28 @@ export default function AppearancePage() {
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fill-subtle text-ink-2"><Palette className="h-[18px] w-[18px]" strokeWidth={1.8} /></span>
                     <div>
                         <h2 className="text-[15px] font-semibold">{t('Card Layout')}</h2>
-                        <p className="text-[12px] text-ink-2">{t('Same card, three ways to show it')}</p>
+                        <p className="text-[12px] text-ink-2">{t('Choose a layout for your card')}</p>
                     </div>
                 </div>
-                <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {CARD_TEMPLATES.map(option => (
                         <button
                             key={option.id}
                             type="button"
                             onClick={() => handleTemplateChange(option.id)}
                             disabled={userTier === 'FREE' && option.id !== 'classic'}
+                            aria-label={t(option.name)}
+                            aria-describedby={`card-layout-description-${option.id}`}
                             aria-pressed={template === option.id}
                             className={`min-w-0 rounded-2xl border p-2 text-left transition-colors ${template === option.id ? 'border-ink ring-1 ring-ink' : 'border-black/10 hover:border-ink-3'} ${userTier === 'FREE' && option.id !== 'classic' ? 'cursor-not-allowed opacity-40' : ''}`}
                         >
-                            <div className={`relative h-24 overflow-hidden rounded-xl ${option.id === 'dial' ? 'bg-[#162524]' : option.id === 'atelier' ? 'bg-[#f2efe9]' : 'bg-zinc-100'}`}>
-                                {option.id === 'dial' ? (
+                            <div className={`relative h-24 overflow-hidden rounded-xl ${option.id === 'dial' ? 'bg-[#162524]' : option.id === 'portrait' ? 'bg-[#f1eadb]' : option.id === 'atelier' ? 'bg-[#f2efe9]' : 'bg-zinc-100'}`}>
+                                {option.id === 'portrait' ? (
+                                    <div className="mx-3 mt-2 overflow-hidden rounded-xl">
+                                        <div className="h-14 bg-cover bg-top" style={{ backgroundImage: previewAvatar ? `url(${previewAvatar})` : undefined }} />
+                                        <div className="relative -mt-3 rounded-t-xl bg-white px-2 py-2"><span className="block truncate text-[12px] font-extrabold tracking-tight text-black">{previewName}</span></div>
+                                    </div>
+                                ) : option.id === 'dial' ? (
                                     <div className="flex items-center gap-2 p-3">
                                         <div className="h-9 w-9 shrink-0 rounded-full border-[3px] border-[#c9b68a] bg-cover bg-center" style={{ backgroundImage: previewAvatar ? `url(${previewAvatar})` : undefined }} />
                                         <span className="truncate text-[11px] font-semibold text-[#f1f0e8]">{previewName}</span>
@@ -266,14 +275,14 @@ export default function AppearancePage() {
                                         <span className={`block truncate px-2 pt-1 text-[11px] ${option.id === 'atelier' ? 'font-serif text-[#203c33]' : 'font-semibold text-zinc-900'}`}>{previewName}</span>
                                     </>
                                 )}
-                                <span className={`absolute bottom-2 left-2 h-1.5 w-12 rounded-full ${option.id === 'dial' ? 'bg-[#c9b68a]' : option.id === 'atelier' ? 'bg-[#315846]' : 'bg-blue-500'}`} />
+                                {option.id !== 'portrait' && <span className={`absolute bottom-2 left-2 h-1.5 w-12 rounded-full ${option.id === 'dial' ? 'bg-[#c9b68a]' : option.id === 'atelier' ? 'bg-[#315846]' : 'bg-blue-500'}`} />}
                             </div>
                             <span className="mt-2 block text-[12px] font-semibold">{t(option.name)}</span>
-                            <span className="block text-[10px] leading-tight text-ink-2">{t(option.description)}</span>
+                            <span id={`card-layout-description-${option.id}`} className="block text-[10px] leading-tight text-ink-2">{t(option.description)}</span>
                         </button>
                     ))}
                 </div>
-                {userTier === 'FREE' && <p className="mt-3 text-[11px] text-ink-2">{t('Atelier and Dial are available on Premium.')}</p>}
+                {userTier === 'FREE' && <p className="mt-3 text-[11px] text-ink-2">{t('Additional layouts are available on Premium.')}</p>}
             </section>
 
             {/* Tema kartu publik */}

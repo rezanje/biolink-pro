@@ -2,6 +2,7 @@ export const CARD_TEMPLATES = [
     { id: 'classic', name: 'Classic', description: 'The original Gentanala card' },
     { id: 'atelier', name: 'Atelier', description: 'Portrait-led and editorial' },
     { id: 'dial', name: 'Dial', description: 'Watch-inspired and precise' },
+    { id: 'portrait', name: 'Portrait', description: 'Bold portrait and rounded white panels' },
 ]
 
 export const CARD_FONTS = [

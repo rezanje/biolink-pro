@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, type CSSProperties } from 'react'
 import { notFound, useParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
@@ -13,6 +13,7 @@ import { trackProfileView, trackLinkClick } from '@/lib/analytics'
 import ArunaAnimation from '@/components/special/ArunaAnimation'
 import PrabowoAnimation from '@/components/special/PrabowoAnimation'
 import AIAssistant from '@/components/profile/AIAssistant'
+import PortraitGallery from '@/components/profile/PortraitGallery'
 import Concierge from '@/components/assistant/Concierge'
 import PublicInterpreter from '@/components/interpreter/PublicInterpreter'
 import SaveCardButton from '@/components/profile/SaveCardButton'
@@ -67,6 +68,12 @@ function PublicProfileInner() {
     const [copied, setCopied] = useState(false)
     const [selectedImage, setSelectedImage] = useState<string | null>(null)
     const [bioExpanded, setBioExpanded] = useState(false)
+    const [portraitExpanded, setPortraitExpanded] = useState(false)
+    const cardScrollRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        cardScrollRef.current?.scrollTo({ top: 0 })
+    }, [portraitExpanded])
     const [showWelcome, setShowWelcome] = useState(true)
     const [welcomeText, setWelcomeText] = useState('')
     const [welcomeComplete, setWelcomeComplete] = useState(false)
@@ -358,11 +365,12 @@ function PublicProfileInner() {
     }
     // ----------------------------------------------------
 
+    const templateId = cardTemplate(profile.template_id)
+    const isPortrait = templateId === 'portrait'
     const isLightMode = profile.theme_mode === 'light' || profile.theme_mode === 'liquid_glass'
     const isLiquidGlass = profile.theme_mode === 'liquid_glass'
     const isGrayscale = profile.image_filter === 'grayscale'
     const primaryColor = cardAccent(profile.primary_color)
-    const templateId = cardTemplate(profile.template_id)
     const fontPair = cardFont(profile.font_pair)
 
     // Track link clicks
@@ -496,21 +504,23 @@ function PublicProfileInner() {
     return (
         <>
             {/* Desktop background */}
-            <div className="hidden md:block fixed inset-0 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 -z-10" />
+            <div className={`hidden md:block fixed inset-0 -z-10 ${isPortrait ? isLightMode ? 'bg-[#f1eadb]' : 'bg-[#24211e]' : 'bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900'}`} />
 
             <div
                 data-card-template={templateId}
+                data-card-expanded={isPortrait && portraitExpanded ? 'true' : 'false'}
+                style={isPortrait ? { '--portrait-accent': primaryColor } as CSSProperties : undefined}
                 data-card-font={fontPair}
                 data-card-mode={profile.theme_mode}
                 onClickCapture={designPreview ? event => {
                     const target = event.target as Element
-                    if (target.closest('a, button, input, select, [role="button"]') && !target.closest('.card-tabs')) {
+                    if (target.closest('a, button, input, select, [role="button"]') && !target.closest('.card-tabs, .card-portrait-toggle')) {
                         event.preventDefault()
                         event.stopPropagation()
                     }
                 } : undefined}
                 onKeyDownCapture={designPreview ? event => {
-                    if ((event.key === 'Enter' || event.key === ' ') && (event.target as Element).closest('a, button, input, select, [role="button"]') && !(event.target as Element).closest('.card-tabs')) {
+                    if ((event.key === 'Enter' || event.key === ' ') && (event.target as Element).closest('a, button, input, select, [role="button"]') && !(event.target as Element).closest('.card-tabs, .card-portrait-toggle')) {
                         event.preventDefault()
                         event.stopPropagation()
                     }
@@ -575,7 +585,7 @@ function PublicProfileInner() {
                 </AnimatePresence>
 
                 {/* Scrollable container */}
-                <div className={`card-scroll h-screen md:h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden relative ${isLiquidGlass ? 'bg-[radial-gradient(circle_at_20%_0%,rgba(125,211,252,0.24),transparent_34%),radial-gradient(circle_at_85%_22%,rgba(216,180,254,0.20),transparent_30%),linear-gradient(180deg,#edf7ff_0%,#f7fbff_48%,#eaf1f8_100%)]' : isLightMode ? 'bg-zinc-100' : 'bg-zinc-950'}`}>
+                <div ref={cardScrollRef} className={`card-scroll h-screen md:h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden relative ${isLiquidGlass ? 'bg-[radial-gradient(circle_at_20%_0%,rgba(125,211,252,0.24),transparent_34%),radial-gradient(circle_at_85%_22%,rgba(216,180,254,0.20),transparent_30%),linear-gradient(180deg,#edf7ff_0%,#f7fbff_48%,#eaf1f8_100%)]' : isLightMode ? 'bg-zinc-100' : 'bg-zinc-950'}`}>
 
                     {/* Hero Photo — STICKY, stays fixed while card scrolls over it */}
                     <div className="card-hero sticky top-0 w-full z-0" style={{ height: '55vh' }}>
@@ -587,7 +597,7 @@ function PublicProfileInner() {
                                     className={`w-full h-full object-cover object-top ${isGrayscale ? 'grayscale' : ''}`}
                                 />
                                 {/* Subtle bottom gradient */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                                {!isPortrait && <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />}
                             </div>
                         ) : (
                             <div className={`w-full h-full flex items-center justify-center ${isLightMode ? 'bg-zinc-200' : 'bg-zinc-900'}`}>
@@ -609,14 +619,21 @@ function PublicProfileInner() {
                             }`}
                     >
                         {/* Pull indicator */}
-                        <div className="flex justify-center mb-6">
-                            <div className={`w-10 h-1 rounded-full ${isLightMode ? 'bg-zinc-300' : 'bg-white/20'}`} />
+                        <div className="card-pull-indicator flex justify-center mb-6">
+                            {isPortrait ? <button type="button" className="card-portrait-toggle flex h-9 w-12 items-center justify-center rounded-full hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => setPortraitExpanded(current => !current)} aria-label={portraitExpanded ? t('Show portrait') : t('Expand profile')} aria-expanded={portraitExpanded}><ChevronDown className={`h-5 w-5 ${portraitExpanded ? '' : 'rotate-180'}`} /></button> : <div className={`w-10 h-1 rounded-full ${isLightMode ? 'bg-zinc-300' : 'bg-white/20'}`} />}
                         </div>
 
-                        <div className="mb-5 flex justify-end"><UiLanguageSelect /></div>
+                        <div className="card-language mb-5 flex justify-end"><UiLanguageSelect /></div>
 
                         {/* Profile Info */}
                         <div className="card-info text-center mb-8">
+                            {isPortrait && <div className="card-portrait-avatar" aria-hidden="true">
+                                {profile.avatar_url ? (
+                                    // Uploaded portraits use the same image handling as the hero.
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={profile.avatar_url} alt="" className={`h-full w-full rounded-full object-cover ${isGrayscale ? 'grayscale' : ''}`} />
+                                ) : <span>{profile.display_name?.[0]?.toUpperCase() || 'G'}</span>}
+                            </div>}
                             {templateId === 'dial' && (
                                 <div className="card-dial-portrait" aria-hidden="true">
                                     {profile.avatar_url ? <img src={profile.avatar_url} alt="" className={`h-full w-full rounded-full object-cover ${isGrayscale ? 'grayscale' : ''}`} /> : <span>{profile.display_name?.[0]?.toUpperCase() || 'G'}</span>}
@@ -626,7 +643,8 @@ function PublicProfileInner() {
                             <p className={`card-handle text-sm font-medium tracking-widest uppercase mb-4 ${textMuted}`}>@{profile.slug}</p>
 
                             {(profile.job_title || profile.company) && (
-                                <div className={`flex items-center justify-center gap-2 text-sm mb-4 ${textSecondary}`}>
+                                <div className={`card-role flex items-center justify-center gap-2 text-sm mb-4 ${textSecondary}`}>
+                                    {isPortrait && <Briefcase className="h-3.5 w-3.5 shrink-0" />}
                                     {profile.job_title && <span>{profile.job_title}</span>}
                                     {profile.job_title && profile.company && <span className="opacity-50">•</span>}
                                     {profile.company && <span>{profile.company}</span>}
@@ -635,8 +653,8 @@ function PublicProfileInner() {
 
                             {profile.bio && (
                                 <div className="px-2">
-                                    <p className={`text-base leading-relaxed ${textSecondary} ${!bioExpanded ? 'line-clamp-3' : ''}`}>{profile.bio}</p>
-                                    {profile.bio.length > 150 && (
+                                    <p className={`text-base leading-relaxed ${textSecondary} ${!(bioExpanded || (isPortrait && portraitExpanded)) ? 'line-clamp-3' : ''}`}>{profile.bio}</p>
+                                    {profile.bio.length > 150 && !(isPortrait && portraitExpanded) && (
                                         <button onClick={() => setBioExpanded(!bioExpanded)} className={`mt-2 text-sm font-medium ${textMuted} underline underline-offset-2`}>
                                             {bioExpanded ? t('Show Less') : t('Read More')}
                                         </button>
@@ -645,8 +663,12 @@ function PublicProfileInner() {
                             )}
                         </div>
 
+                        {isPortrait && <PortraitGallery items={profile.gallery || []} onOpen={setSelectedImage} />}
+
                         {/* Social Icons Row */}
                         {filteredSocials.length > 0 && (
+                            <div className="card-social-section">
+                            {isPortrait && <h2 className="mb-3 text-base font-bold">{t('Profiles')}</h2>}
                             <div className="card-socials flex justify-center flex-wrap gap-4 mb-8">
                                 {filteredSocials.map((link: any) => (
                                     <a
@@ -656,6 +678,7 @@ function PublicProfileInner() {
                                         aria-label={link.title || t('Open social profile')}
                                         title={link.title || undefined}
                                         key={link.id}
+                                        data-social={link.icon}
                                         onClick={() => handleLinkClick(link.id, link)}
                                         className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 ${isLiquidGlass
                                             ? 'lg-social text-zinc-800'
@@ -667,6 +690,7 @@ function PublicProfileInner() {
                                         {renderIcon(link.icon, "w-6 h-6")}
                                     </a>
                                 ))}
+                            </div>
                             </div>
                         )}
 
