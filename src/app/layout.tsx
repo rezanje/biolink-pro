@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Schibsted_Grotesk } from "next/font/google";
+import { Anton, Archivo_Black, Inter, JetBrains_Mono, Schibsted_Grotesk } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
 
@@ -19,6 +19,9 @@ const schibsted = Schibsted_Grotesk({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
 });
+
+const archivoBlack = Archivo_Black({ variable: "--font-archivo-black", subsets: ["latin"], weight: "400", preload: false });
+const anton = Anton({ variable: "--font-anton", subsets: ["latin"], weight: "400", preload: false });
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -49,7 +52,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${jetbrainsMono.variable} ${schibsted.variable} font-sans antialiased bg-white text-zinc-900`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} ${schibsted.variable} ${archivoBlack.variable} ${anton.variable} font-sans antialiased bg-white text-zinc-900`}>
         <CartProvider>
           {children}
         </CartProvider>

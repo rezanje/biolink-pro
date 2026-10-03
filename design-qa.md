@@ -1,4 +1,4 @@
-# Portrait theme QA
+# Card theme QA
 
 Final result: passed
 
@@ -47,3 +47,43 @@ No actionable P0/P1/P2 findings remain for the requested style adaptation. Diffe
 - [x] Preserve existing features, data, and tier restrictions.
 - [x] Verify mobile and desktop rendering and preview interactions.
 - [x] Fix visual/interaction findings and complete build verification.
+
+## Voyage and Statement additions
+
+Final result: passed
+
+### Comparison evidence
+
+- Voyage source: `/tmp/codex-remote-attachments/01a100e2-9e1e-711a-854c-f638dd02108c/3CE6AB6A-177A-44B5-8B2D-B5BFDFE4C74F/1-Photo-1.jpg` (736 × 920 px).
+- Statement source: `/tmp/codex-remote-attachments/01a100e2-9e1e-711a-854c-f638dd02108c/3CE6AB6A-177A-44B5-8B2D-B5BFDFE4C74F/2-Photo-2.jpg` (736 × 736 px).
+- Final mobile captures: `/tmp/voyage-cover-390.png`, `/tmp/statement-cover-390.png`; 390 × 844 px, CSS viewport 390 × 844, scale factor 1.
+- Narrow and desktop captures: `/tmp/{voyage,statement}-cover-{320,768}.png`; matching viewport width × 844 px, scale factor 1.
+- Dark fallback captures: `/tmp/{voyage,statement}-dark-no-avatar-320.png`.
+- Each source was viewed together with its rendered implementation in one comparison input. Source phone photography is a presentation frame; live captures show the app viewport. No density normalization was required, and source/implementation content and card scale intentionally differ. This is a style adaptation with owner profile content.
+
+### Fidelity surfaces
+
+- Typography: Voyage uses Archivo Black for heavy uppercase headings and Inter for readable green body text. Statement uses Anton for tall, tightly spaced headings and Georgia for the centered bio. Fonts are self-hosted through Next fonts and only fetched when used. Alternate font selections remain effective. Long names wrap inside the card.
+- Spacing/layout: Voyage preserves the yellow header/hero, green identity, cream body, and rectangular green action. Statement preserves the large typographic introduction, warm white surface, serif supporting copy, and green accent. The owner's photo sits below the bio in a green-ringed circle. All original card controls remain below the introduction.
+- Colors: Voyage light palette is `#f7e77a`, `#123d1b`, `#fff8ef`; Statement is `#fcfbf5`, `#211f1c`, `#16ae69`, with `#40ce7a` desktop surround. Dark variants retain clear foreground/background contrast. User accent changes still control the contact action.
+- Images: use existing owner photos rather than advertising illustrations or sample brand artwork. Voyage center-crops the hero so the sample portrait subject is visible; Statement uses a round crop. Missing Voyage portraits retain the yellow/green cover and initial; missing Statement photos omit the portrait gracefully.
+- Copy/content: owner name, company, role and full bio remain intact. Statement greeting follows the visitor UI language. Original music/travel/product copy is outside the scope of reusable profile themes.
+
+Headings, language selection, bio text and portrait crops were readable in the full-resolution captures; no extra crop was necessary for focused inspection. No actionable P0/P1/P2 style-adaptation findings remain.
+
+### Findings and iteration history
+
+1. Initial screenshots captured the existing welcome animation instead of the completed card. Corrected the capture procedure to wait for the welcome overlay to finish; all final captures show the intended profile state.
+2. Voyage's initial top-aligned photo cropped the sample portrait subject. Centered its hero crop; final Voyage evidence shows the subject clearly.
+3. Review found dark Voyage language text inherited a dark color against dark green. Applied `color: var(--poster-ink)`; final dark capture and computed-style assertion confirm readable yellow text. The missing-photo cover now also uses the theme color.
+4. Review found a 93-character bio could need four lines in Statement while the old three-line clamp offered no expansion below 150 characters. Both new themes now show the full bio. Production browser assertions at 320 px confirm the short bio's scroll height fits its client height; final screenshots also show the complete longer bio.
+
+### Verification and checklist
+
+- [x] Draft preview does not publish; save/reload preserves the template, font, accent, gallery and translation settings.
+- [x] Both themes checked at 320, 375, 390, 430 and 768 px with no page/panel overflow.
+- [x] Actual heading font families, alternate font selection and custom accent changes verified.
+- [x] Language change, gallery lightbox, QR, files and contact download verified.
+- [x] Long name/role, short bio, dark/missing photo, Liquid Glass and Free-tier restrictions verified.
+- [x] Browser page-error collection empty; 28 Node tests pass; no new ESLint findings against the existing baseline.
+- [x] Independent read-only review completed and both P2 findings corrected and checked in the production browser fixture.

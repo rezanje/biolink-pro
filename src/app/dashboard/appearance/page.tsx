@@ -134,7 +134,11 @@ export default function AppearancePage() {
 
     const handleTemplateChange = (value: string) => {
         const safeTemplate = cardTemplate(value)
-        const preset = safeTemplate === 'portrait'
+        const preset = safeTemplate === 'voyage'
+            ? { mode: 'light', color: '#123D1B', font: 'bold' }
+            : safeTemplate === 'statement'
+            ? { mode: 'light', color: '#16AE69', font: 'condensed' }
+            : safeTemplate === 'portrait'
             ? { mode: 'light', color: '#111111', font: 'classic' }
             : safeTemplate === 'atelier'
             ? { mode: 'light', color: '#345648', font: 'editorial' }
@@ -246,7 +250,7 @@ export default function AppearancePage() {
                         <p className="text-[12px] text-ink-2">{t('Choose a layout for your card')}</p>
                     </div>
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {CARD_TEMPLATES.map(option => (
                         <button
                             key={option.id}
@@ -258,8 +262,12 @@ export default function AppearancePage() {
                             aria-pressed={template === option.id}
                             className={`min-w-0 rounded-2xl border p-2 text-left transition-colors ${template === option.id ? 'border-ink ring-1 ring-ink' : 'border-black/10 hover:border-ink-3'} ${userTier === 'FREE' && option.id !== 'classic' ? 'cursor-not-allowed opacity-40' : ''}`}
                         >
-                            <div className={`relative h-24 overflow-hidden rounded-xl ${option.id === 'dial' ? 'bg-[#162524]' : option.id === 'portrait' ? 'bg-[#f1eadb]' : option.id === 'atelier' ? 'bg-[#f2efe9]' : 'bg-zinc-100'}`}>
-                                {option.id === 'portrait' ? (
+                            <div className={`relative h-24 overflow-hidden rounded-xl ${option.id === 'dial' ? 'bg-[#162524]' : option.id === 'voyage' ? 'bg-[#f7e77a]' : option.id === 'statement' ? 'bg-[#fcfbf5]' : option.id === 'portrait' ? 'bg-[#f1eadb]' : option.id === 'atelier' ? 'bg-[#f2efe9]' : 'bg-zinc-100'}`}>
+                                {option.id === 'voyage' ? (
+                                    <><div className="h-12 bg-cover bg-center" style={{ backgroundImage: previewAvatar ? `url(${previewAvatar})` : undefined }} /><div className="bg-[#fff8ef] px-2 py-1.5"><span className="line-clamp-2 text-[14px] uppercase leading-none text-[#123d1b]" style={{ fontFamily: 'var(--font-archivo-black)' }}>{previewName}</span></div></>
+                                ) : option.id === 'statement' ? (
+                                    <div className="px-2 py-1 text-[28px] leading-none tracking-tight text-[#211f1c]" style={{ fontFamily: 'var(--font-anton)' }}><span className="block">{t('Hello,')}</span><span className="line-clamp-2">{previewName}</span><span className="mt-1 block h-1 w-8 bg-[#16ae69]" /></div>
+                                ) : option.id === 'portrait' ? (
                                     <div className="mx-3 mt-2 overflow-hidden rounded-xl">
                                         <div className="h-14 bg-cover bg-top" style={{ backgroundImage: previewAvatar ? `url(${previewAvatar})` : undefined }} />
                                         <div className="relative -mt-3 rounded-t-xl bg-white px-2 py-2"><span className="block truncate text-[12px] font-extrabold tracking-tight text-black">{previewName}</span></div>
@@ -275,7 +283,7 @@ export default function AppearancePage() {
                                         <span className={`block truncate px-2 pt-1 text-[11px] ${option.id === 'atelier' ? 'font-serif text-[#203c33]' : 'font-semibold text-zinc-900'}`}>{previewName}</span>
                                     </>
                                 )}
-                                {option.id !== 'portrait' && <span className={`absolute bottom-2 left-2 h-1.5 w-12 rounded-full ${option.id === 'dial' ? 'bg-[#c9b68a]' : option.id === 'atelier' ? 'bg-[#315846]' : 'bg-blue-500'}`} />}
+                                {!['portrait', 'voyage', 'statement'].includes(option.id) && <span className={`absolute bottom-2 left-2 h-1.5 w-12 rounded-full ${option.id === 'dial' ? 'bg-[#c9b68a]' : option.id === 'atelier' ? 'bg-[#315846]' : 'bg-blue-500'}`} />}
                             </div>
                             <span className="mt-2 block text-[12px] font-semibold">{t(option.name)}</span>
                             <span id={`card-layout-description-${option.id}`} className="block text-[10px] leading-tight text-ink-2">{t(option.description)}</span>
@@ -432,7 +440,7 @@ export default function AppearancePage() {
                     {CARD_FONTS.map(option => (
                         <button key={option.id} type="button" onClick={() => handleFontChange(option.id)} disabled={userTier === 'FREE' && option.id !== 'classic'} aria-pressed={fontPair === option.id}
                             className={`rounded-row border px-4 py-3 text-left ${fontPair === option.id ? 'border-ink bg-fill-subtle' : 'border-black/10'} ${userTier === 'FREE' && option.id !== 'classic' ? 'cursor-not-allowed opacity-40' : ''}`}>
-                            <span className={`block text-[19px] ${option.id === 'editorial' ? 'font-serif' : option.id === 'modern' ? 'font-kabut' : 'font-sans'}`}>Aa</span>
+                            <span className={`block text-[19px] ${option.id === 'editorial' ? 'font-serif' : option.id === 'modern' ? 'font-kabut' : 'font-sans'}`} style={option.id === 'bold' ? { fontFamily: 'var(--font-archivo-black)' } : option.id === 'condensed' ? { fontFamily: 'var(--font-anton)' } : undefined}>Aa</span>
                             <span className="block text-[12px] font-semibold">{t(option.name)}</span>
                             <span className="block text-[10px] text-ink-2">{t(option.description)}</span>
                         </button>

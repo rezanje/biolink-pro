@@ -11,6 +11,16 @@ export function uiLanguage(value) {
 }
 
 export const UI_MESSAGES = {
+    'Voyage': ['Voyage', '旅途'],
+    'Statement': ['Statement', '宣言'],
+    'Sunny yellow and forest-green headlines': ['Kuning cerah dan judul hijau hutan', '明亮黄色与森林绿标题'],
+    'Oversized type and a fresh green accent': ['Tipografi besar dengan aksen hijau segar', '超大字体与清新绿点缀'],
+    'Bold': ['Tebal', '粗体'],
+    'Condensed': ['Ramping', '窄体'],
+    'Archivo Black heading · clean body': ['Judul Archivo Black · isi simpel', 'Archivo Black 标题 · 简洁正文'],
+    'Anton heading · serif body': ['Judul Anton · isi serif', 'Anton 标题 · 衬线正文'],
+    'Hello,': ['Halo,', '你好，'],
+    'I’m': ['Gue', '我是'],
     'Portrait': ['Portrait', '人像'],
     'Bold portrait and rounded white panels': ['Foto dominan dan panel putih melengkung', '醒目人像与白色圆角面板'],
     'Choose a layout for your card': ['Pilih gaya tampilan kartu lo', '选择你的名片布局'],

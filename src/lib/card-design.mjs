@@ -3,12 +3,16 @@ export const CARD_TEMPLATES = [
     { id: 'atelier', name: 'Atelier', description: 'Portrait-led and editorial' },
     { id: 'dial', name: 'Dial', description: 'Watch-inspired and precise' },
     { id: 'portrait', name: 'Portrait', description: 'Bold portrait and rounded white panels' },
+    { id: 'voyage', name: 'Voyage', description: 'Sunny yellow and forest-green headlines' },
+    { id: 'statement', name: 'Statement', description: 'Oversized type and a fresh green accent' },
 ]
 
 export const CARD_FONTS = [
     { id: 'classic', name: 'Classic', description: 'Inter' },
     { id: 'editorial', name: 'Editorial', description: 'Serif heading · clean body' },
     { id: 'modern', name: 'Modern', description: 'Schibsted heading · clean body' },
+    { id: 'bold', name: 'Bold', description: 'Archivo Black heading · clean body' },
+    { id: 'condensed', name: 'Condensed', description: 'Anton heading · serif body' },
 ]
 
 export const CARD_COLORS = [
