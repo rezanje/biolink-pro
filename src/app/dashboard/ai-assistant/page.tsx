@@ -8,6 +8,7 @@ import { PET_CHARACTERS } from '@/lib/pet/characters.mjs'
 import { PET_FEATURE_ENABLED } from '@/lib/pet/pet-selection.mjs'
 import { buildPetGreeting } from '@/lib/pet/pet-greeting.mjs'
 import ConciergeManager from '@/components/assistant/ConciergeManager'
+import TranslateManager from '@/components/interpreter/TranslateManager'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 // Halaman Asisten: pilih karakter pet, kasih nama, nyalakan/matikan.
@@ -85,11 +86,12 @@ export default function AssistantPage() {
         return (
             <div className="mx-auto max-w-[1200px] px-5 pb-[150px] pt-6">
                 <header>
-                    <h1 className="text-[26px] font-semibold tracking-[-0.03em]">{t('AI Concierge')}</h1>
+                    <h1 className="text-[26px] font-semibold tracking-[-0.03em]">{t('AI & Translate')}</h1>
                     <p className="mt-1.5 text-[13px] text-ink-2">
-                        {t('Set up answers, visitor shortcuts, and booking handoff for your public card')}
+                        {t('Choose which AI and translation features visitors can use on your card.')}
                     </p>
                 </header>
+                <TranslateManager eligible={profile?.tier === 'PREMIUM' || profile?.tier === 'B2B'} />
                 <ConciergeManager />
             </div>
         )
@@ -108,12 +110,13 @@ export default function AssistantPage() {
     return (
         <div className="mx-auto max-w-[1200px] px-5 pb-[150px] pt-6">
             <header>
-                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">{t('AI Concierge')}</h1>
+                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">{t('AI & Translate')}</h1>
                 <p className="mt-1.5 text-[13px] text-ink-2">
-                    {t('Set up answers, visitor shortcuts, and booking handoff for your public card')}
+                    {t('Choose which AI and translation features visitors can use on your card.')}
                 </p>
             </header>
 
+            <TranslateManager eligible={profile?.tier === 'PREMIUM' || profile?.tier === 'B2B'} />
             <ConciergeManager />
 
             {/* Pratinjau */}

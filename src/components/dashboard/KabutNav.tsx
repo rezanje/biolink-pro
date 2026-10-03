@@ -2,17 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, Home, Link2, Palette, User } from 'lucide-react'
+import { BarChart3, Bot, Home, Palette, User } from 'lucide-react'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
 
-// Navigasi melayang area dashboard: pil berisi empat tombol bundar, plus satu
-// tombol aksi gelap yang berdiri sendiri di sebelahnya. Sengaja terpisah dari
-// DashboardShell lama supaya layar yang belum dipindahkan tetap memakai
-// navigasi lamanya tanpa bentrok.
+// Five dashboard tabs; AI and Translate share one settings destination.
 const ITEMS = [
     { href: '/dashboard', icon: Home, label: 'Overview' },
     { href: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
-    { href: '/dashboard/links', icon: Link2, label: 'Links' },
+    { href: '/dashboard/ai-assistant', icon: Bot, label: 'AI & Translate' },
     { href: '/dashboard/profile', icon: User, label: 'Profile' },
     { href: '/dashboard/appearance', icon: Palette, label: 'Appearance' },
 ]
@@ -30,16 +27,18 @@ export default function KabutNav() {
                 <ul className="flex h-full items-center justify-around">
                     {ITEMS.map((item) => {
                         const active = pathname === item.href
+                            || (item.href === '/dashboard/ai-assistant' && pathname === '/dashboard/interpreter')
                         return (
                             <li key={item.href}>
                                 <Link
                                     href={item.href}
                                     aria-current={active ? 'page' : undefined}
                                     aria-label={t(item.label)}
-                                    className={`flex h-[50px] w-[50px] items-center justify-center rounded-full transition-colors ${active ? 'bg-ink/[0.08] text-ink' : 'text-ink-2 hover:text-ink'
+                                    className={`flex h-[50px] w-[50px] flex-col items-center justify-center rounded-full transition-colors ${active ? 'bg-ink/[0.08] text-ink' : 'text-ink-2 hover:text-ink'
                                         }`}
                                 >
                                     <item.icon className="h-[21px] w-[21px]" strokeWidth={1.8} />
+                                    {item.label === 'AI & Translate' && <span className="mt-0.5 text-center text-[8px] leading-tight">{t(item.label)}</span>}
                                 </Link>
                             </li>
                         )

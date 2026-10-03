@@ -202,7 +202,7 @@ export default function DashboardPage() {
             icon: Link2,
             label: t('Manage Links'),
             desc: t('Add and organize your social links'),
-            href: '/dashboard/links',
+            href: '/dashboard/profile#profile-links',
             preview: links.length ? (
                 <div className="grid gap-1">
                     {links.slice(0, 3).map((l, i) => (
@@ -534,7 +534,7 @@ export default function DashboardPage() {
                 <section>
                     <div className="flex items-center justify-between">
                         <h2 className="text-[19px] font-semibold tracking-[-0.025em]">{t('Your Links')}</h2>
-                        <Link href="/dashboard/links" className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-2">
+                        <Link href="/dashboard/profile#profile-links" className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-2">
                             <Plus className="h-3.5 w-3.5" strokeWidth={2} />
                             {t('Add Link')}
                         </Link>
@@ -568,7 +568,7 @@ export default function DashboardPage() {
                             <h3 className="text-[15px] font-medium">{t('No links yet')}</h3>
                             <p className="mt-1.5 text-[12.5px] text-ink-2">{t('Add social media and custom links to your card')}</p>
                             <Link
-                                href="/dashboard/links"
+                                href="/dashboard/profile#profile-links"
                                 className="mt-5 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-[13px] font-medium text-white"
                             >
                                 <Plus className="h-4 w-4" strokeWidth={2} />

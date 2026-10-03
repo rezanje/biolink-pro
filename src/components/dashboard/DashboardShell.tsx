@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import {
     LayoutDashboard,
     User,
-    Link2,
+    Bot,
     Palette,
     LogOut,
     CreditCard,
@@ -24,7 +24,7 @@ const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
     { href: '/dashboard/analytics', icon: BarChart3, label: 'Analytics', feature: 'analytics_leads' },
     { href: '/dashboard/profile', icon: User, label: 'Edit Profile' },
-    { href: '/dashboard/links', icon: Link2, label: 'Manage Links' },
+    { href: '/dashboard/ai-assistant', icon: Bot, label: 'AI & Translate' },
     { href: '/dashboard/appearance', icon: Palette, label: 'Appearance' },
 ]
 

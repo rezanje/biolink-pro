@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import DesktopPreview from '@/components/dashboard/DesktopPreview'
+import ProfileLinkEditor from '@/components/profile/ProfileLinkEditor'
 import { uploadAvatar, uploadGalleryImage, deleteFile } from '@/lib/storage'
 import { getAvailableSpecialEditions, SPECIAL_EDITIONS, WELCOME_DURATIONS } from '@/lib/special-greeting.mjs'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
@@ -276,7 +277,7 @@ export default function ProfileEditor() {
                     gallery: uiTheme.gallery || [],
                     files: uiTheme.files || [],
                     documents: profile.documents || [],
-                    social_links: profile.social_links || [],
+                    social_links: profile.social_links?.length ? profile.social_links : uiTheme.links || [],
                     tier: profile.tier || 'FREE',
                     special_edition: profile.special_edition || null,
                     special_editions: Array.isArray(profile.special_editions)
@@ -294,7 +295,7 @@ export default function ProfileEditor() {
                 const detectedTier = (profile.tier || 'FREE').toUpperCase()
                 setUserTier(detectedTier)
                 // Sync to localStorage for the live preview bridge
-                localStorage.setItem('genhub_profile', JSON.stringify(loadedData))
+                localStorage.setItem('genhub_profile', JSON.stringify({ ...loadedData, links: loadedData.social_links }))
             } else {
                 // Try localStorage fallback if no Supabase profile yet (edge case)
                 const profileStr = localStorage.getItem('genhub_profile')
@@ -323,6 +324,7 @@ export default function ProfileEditor() {
             // Updated local storage for the preview pane to pick up changes instantly
             localStorage.setItem('genhub_profile', JSON.stringify({
                 ...newFormData,
+                links: newFormData.social_links,
                 phone: formatPhoneNumber(newFormData.phone_country_code, newFormData.phone),
                 whatsapp: formatPhoneNumber(newFormData.whatsapp_country_code, newFormData.whatsapp)
             }))
@@ -905,6 +907,8 @@ export default function ProfileEditor() {
                         </div>
                     )}
                 </section>
+
+                <ProfileLinkEditor links={formData.social_links} tier={userTier} onChange={links => updateField('social_links', links)} />
 
                 {/* Documents and links */}
                 <section className="mt-3 rounded-card bg-surface p-5 shadow-card">

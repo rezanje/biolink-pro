@@ -62,7 +62,7 @@ export default function PublicTranslateSettings() {
         <div className="flex items-start justify-between gap-4">
             <div>
                 <div className="flex items-center gap-2"><Languages className="h-5 w-5" /><h2 id="public-translate-label" className="text-[16px] font-semibold">{t('Show Live Translate on public card')}</h2></div>
-                <p id="public-translate-description" className="mt-2 text-[12.5px] leading-relaxed text-ink-2">{t('Let visitors translate from your card. You can still use the interpreter here when this is off.')}</p>
+                <p id="public-translate-description" className="mt-2 text-[12.5px] leading-relaxed text-ink-2">{t('Let visitors translate from your card. You can still use Live Interpreter from your dashboard when this is off.')}</p>
             </div>
             <button type="button" role="switch" aria-checked={enabled} aria-labelledby="public-translate-label" aria-describedby="public-translate-description" disabled={loading || saving || !userId}
                 onClick={() => { setEnabled(current => !current); setSaved(false); setError('') }}
