@@ -23,6 +23,7 @@ import { PET_FEATURE_ENABLED, selectPetCharacter } from '@/lib/pet/pet-selection
 import { getSelectedSpecialGreetingAnimation, getWelcomeCloseDelay, shouldShowSpecialGreetingAnimation } from '@/lib/special-greeting.mjs'
 import { activeRedirectUrl, normalizeUrl } from '@/lib/redirect-mode.mjs'
 import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview } from '@/lib/card-design.mjs'
+import { canUsePublicTranslate } from '@/lib/profile-display.mjs'
 import { UiLanguageProvider, UiLanguageSelect, useUiLanguage } from '@/components/UiLanguageProvider'
 
 // WhatsApp SVG Icon
@@ -674,7 +675,7 @@ function PublicProfileInner() {
                             onConnect={() => setShowLeadModal(true)}
                         />
 
-                        {(profile.tier === 'PREMIUM' || profile.tier === 'B2B') && (
+                        {canUsePublicTranslate(profile) && (
                             <PublicInterpreter profileSlug={profile.slug} displayName={profile.display_name} />
                         )}
 

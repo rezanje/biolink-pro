@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft, Loader2, LockKeyhole } from 'lucide-react'
 import { useTier } from '@/app/dashboard/tier-context'
 import InterpreterPanel from '@/components/interpreter/InterpreterPanel'
+import PublicTranslateSettings from '@/components/interpreter/PublicTranslateSettings'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 export default function InterpreterPage() {
@@ -16,6 +17,7 @@ export default function InterpreterPage() {
     return <div className="mx-auto max-w-md px-5 pb-[150px] pt-6">
         <Link href="/dashboard" className="inline-flex items-center gap-2 text-[12px] text-ink-2"><ArrowLeft className="h-4 w-4" />{t('Back to dashboard')}</Link>
         <header className="mt-5"><h1 className="text-[26px] font-semibold tracking-[-0.03em]">{t('Live Interpreter')}</h1><p className="mt-1.5 text-[13px] text-ink-2">{t('Speak one sentence, then pass the phone.')}</p></header>
+        <PublicTranslateSettings />
         <section className="mt-5 rounded-card bg-surface p-5 shadow-card"><InterpreterPanel /></section>
     </div>
 }

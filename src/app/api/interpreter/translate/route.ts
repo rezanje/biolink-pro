@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { canUsePublicTranslate } from '@/lib/profile-display.mjs'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -38,8 +39,8 @@ export async function POST(req: Request) {
         const ownerCanTranslate = ownerProfile?.tier === 'PREMIUM' || ownerProfile?.tier === 'B2B'
 
         if (slug) {
-            const { data: profile } = await supabase.from('profiles').select('tier,is_public').eq('slug', slug).maybeSingle()
-            if (!profile || profile.is_public === false || (profile.tier !== 'PREMIUM' && profile.tier !== 'B2B')) return NextResponse.json({ error: 'Live Translate is not available on this card.' }, { status: 403 })
+            const { data: profile } = await supabase.from('profiles').select('tier,is_public,theme').eq('slug', slug).maybeSingle()
+            if (!canUsePublicTranslate(profile)) return NextResponse.json({ error: 'Live Translate is not available on this card.' }, { status: 403 })
         } else if (!ownerCanTranslate) {
             return NextResponse.json({ error: 'Live Interpreter is available on Premium and B2B plans.' }, { status: 403 })
         }
