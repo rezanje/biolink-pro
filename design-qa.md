@@ -97,3 +97,11 @@ The layout picker now presents a single horizontal row of cards with native touc
 Browser-rendered evidence: `/tmp/theme-rail-start-390.png`, `/tmp/theme-rail-selected-390.png`, `/tmp/theme-rail-selected-320.png` (viewport width × 844, scale factor 1). Reviewed the unselected and selected states. The existing fixed Save button and bottom navigation remain available while scrolling the page.
 
 Production browser checks passed: actual CDP touch swipe, one-row geometry, next-card peek, selected draft preview, save/reload visibility, 320/375/390/430/768/1280 px widths without page overflow, keyboard Tab/Enter, reduced motion, Free-tier restrictions, and no page errors. Targeted translation test passes. ESLint has only the existing Supabase effect dependency warning. Independent code review found no actionable issue.
+
+## Actual phone-screen theme previews
+
+Final result: passed
+
+The picker now renders each actual public-card page at a 375 × 812 CSS-pixel phone viewport, scaled to the carousel card width. Source truth is the app's public profile renderer for the same owner and theme. Rendered evidence: `/tmp/real-mini-start-390.png`, `/tmp/real-mini-selected-390.png`, `/tmp/real-mini-selected-320.png` (viewport width × 844, density 1). Typography, photos, bio, spacing and colors come from the same renderer as the live card; dimensions preserve the phone-screen aspect ratio. Each card represents the first screen of a scrollable profile. Accessible theme labels remain outside the miniature.
+
+All six independent layout previews and their 375 × 812 internal viewports were verified in a production browser fixture. Active custom color is preserved; unselected themes use the same defaults as the actual selection handler. Native touch swipe, tap over inert miniature content, draft-only changes, save/reload, six responsive widths, keyboard navigation and reduced motion pass. Locked layouts can be demonstrated while Free selection remains disabled; a standalone public URL ignores the preview override and retains tier restrictions. Welcome/analytics remain suppressed inside design previews. No page errors, 28 passing Node tests, and no new lint findings. Independent review found no actionable issue; native lazy loading may load several nearby frames with shared browser-cached assets.

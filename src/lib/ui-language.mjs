@@ -11,6 +11,7 @@ export function uiLanguage(value) {
 }
 
 export const UI_MESSAGES = {
+    'Preview of {name}': ['Preview {name}', '{name}预览'],
     'Swipe to browse, tap to choose': ['Geser untuk lihat tema, tap untuk pilih', '滑动浏览，点击选择'],
     'Voyage': ['Voyage', '旅途'],
     'Statement': ['Statement', '宣言'],

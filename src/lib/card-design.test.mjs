@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview } from './card-design.mjs'
+import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview, cardThemeForTemplate } from './card-design.mjs'
 
 assert.equal(cardTemplate(undefined), 'classic')
 assert.equal(cardTemplate('dial'), 'dial')
@@ -26,3 +26,11 @@ assert.equal(cardThemeForPreview(saved, draft, false).template_id, 'classic')
 assert.deepEqual(cardThemeForPreview(saved, draft, true), { ...saved, ...draft })
 assert.equal(cardThemeForPreview(saved, {}, true).template_id, 'classic')
 assert.equal(cardThemeForPreview({ ...saved, ...draft }, {}, false).template_id, 'dial')
+
+const custom = { template_id: 'voyage', primary: '#EC4899', font_pair: 'modern', theme_mode: 'dark', image_filter: 'grayscale', gallery: ['existing'] }
+assert.deepEqual(cardThemeForPreview(saved, custom, true, 'voyage'), { ...saved, ...custom })
+assert.deepEqual(cardThemeForPreview(saved, custom, true, 'statement'), { ...saved, ...custom, template_id: 'statement', primary: '#16AE69', font_pair: 'condensed', theme_mode: 'light' })
+assert.deepEqual(cardThemeForPreview(saved, custom, false, 'statement'), saved)
+assert.deepEqual(cardThemeForPreview(saved, custom, true, 'invalid'), { ...saved, ...custom })
+assert.equal(cardThemeForTemplate('dial', custom).theme_mode, 'dark')
+assert.equal(cardThemeForTemplate('classic', custom).primary, '#EC4899')

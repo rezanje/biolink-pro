@@ -47,8 +47,25 @@ export function canUsePremiumDesign(tier, validUntil, now = Date.now()) {
     return tier === 'PREMIUM' && (!validUntil || new Date(validUntil).getTime() >= now)
 }
 
-export function cardThemeForPreview(savedTheme, draftTheme, isPreview) {
-    return isPreview ? { ...savedTheme, ...draftTheme } : savedTheme
+const TEMPLATE_PRESETS = {
+    atelier: { theme_mode: 'light', primary: '#345648', font_pair: 'editorial' },
+    dial: { theme_mode: 'dark', primary: '#B49964', font_pair: 'modern' },
+    portrait: { theme_mode: 'light', primary: '#111111', font_pair: 'classic' },
+    voyage: { theme_mode: 'light', primary: '#123D1B', font_pair: 'bold' },
+    statement: { theme_mode: 'light', primary: '#16AE69', font_pair: 'condensed' },
+}
+
+export function cardThemeForTemplate(value, currentTheme) {
+    const template = cardTemplate(value)
+    return { ...currentTheme, ...TEMPLATE_PRESETS[template], template_id: template }
+}
+
+export function cardThemeForPreview(savedTheme, draftTheme, isPreview, templateOverride) {
+    if (!isPreview) return savedTheme
+    const theme = { ...savedTheme, ...draftTheme }
+    return CARD_TEMPLATES.some(template => template.id === templateOverride) && templateOverride !== theme.template_id
+        ? cardThemeForTemplate(templateOverride, theme)
+        : theme
 }
 
 export function accentTextColor(value) {

@@ -114,7 +114,10 @@ function PublicProfileInner() {
                         draftTheme = JSON.parse(sessionStorage.getItem(`gentanala_design_preview_${slug}`) || '{}')
                     } catch { /* Ignore malformed preview data. */ }
                 }
-                const renderedTheme = cardThemeForPreview(uiTheme, draftTheme, designPreview)
+                const thumbnailTemplate = designPreview ? new URLSearchParams(window.location.search).get('template-preview') : null
+                const renderedTheme = cardThemeForPreview(uiTheme, draftTheme, designPreview, thumbnailTemplate)
+                // Locked layouts can be demonstrated in the picker; saved public cards retain tier restrictions.
+                const canPreviewLayout = designPreview && thumbnailTemplate !== null && cardTemplate(thumbnailTemplate) === thumbnailTemplate
                 const processedProfile = {
                     ...dbProfile,
                     whatsapp: renderedTheme.whatsapp || '',
@@ -127,8 +130,8 @@ function PublicProfileInner() {
                     welcome_word: uiTheme.welcome_word || 'hello',
                     welcome_duration: uiTheme.welcome_duration,
                     primary_color: cardAccent(renderedTheme.primary),
-                    template_id: canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until) ? cardTemplate(renderedTheme.template_id) : 'classic',
-                    font_pair: canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until) ? cardFont(renderedTheme.font_pair) : 'classic',
+                    template_id: canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until) || canPreviewLayout ? cardTemplate(renderedTheme.template_id) : 'classic',
+                    font_pair: canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until) || canPreviewLayout ? cardFont(renderedTheme.font_pair) : 'classic',
                     active_mode: designPreview ? 'profile' : uiTheme.active_mode || 'profile',
                     redirect_url: uiTheme.redirect_url || '',
                     redirect_type: uiTheme.redirect_type || 'direct',
