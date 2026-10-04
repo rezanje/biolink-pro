@@ -105,3 +105,15 @@ Final result: passed
 The picker now renders each actual public-card page at a 375 × 812 CSS-pixel phone viewport, scaled to the carousel card width. Source truth is the app's public profile renderer for the same owner and theme. Rendered evidence: `/tmp/real-mini-start-390.png`, `/tmp/real-mini-selected-390.png`, `/tmp/real-mini-selected-320.png` (viewport width × 844, density 1). Typography, photos, bio, spacing and colors come from the same renderer as the live card; dimensions preserve the phone-screen aspect ratio. Each card represents the first screen of a scrollable profile. Accessible theme labels remain outside the miniature.
 
 All six independent layout previews and their 375 × 812 internal viewports were verified in a production browser fixture. Active custom color is preserved; unselected themes use the same defaults as the actual selection handler. Native touch swipe, tap over inert miniature content, draft-only changes, save/reload, six responsive widths, keyboard navigation and reduced motion pass. Locked layouts can be demonstrated while Free selection remains disabled; a standalone public URL ignores the preview override and retains tier restrictions. Welcome/analytics remain suppressed inside design previews. No page errors, 28 passing Node tests, and no new lint findings. Independent review found no actionable issue; native lazy loading may load several nearby frames with shared browser-cached assets.
+
+## Dashboard motion and metric counters
+
+Final result: passed
+
+Overview statistics, Green Impact and Analytics summary metrics count up for 1.1 seconds when visible, then finish on the exact data. Decimal precision and locale formatting are retained; static final values are available to screen readers. Viewed counters do not restart when scrolling back. Navigation remounts the counters for a new page visit. Reduced-motion preferences show final values immediately, including when the preference changes mid-animation.
+
+Dashboard cards enter with a short staggered fade/12 px lift; route content fades without a parent transform, preserving fixed action positioning. Buttons/links respond to press and icons to pointer hover. Navigation uses the same interaction treatment. Viewport and mutation observers process new cards, remove discarded targets, ignore counter text churn and clean up on navigation.
+
+Production browser fixture verified intermediate values and final `1,076`, `4`, `81`, `10.76`, `0.1076`, Analytics totals and `7.5%` CTR; once-only counting on scroll; card entry animations; four viewport widths (320/390/768/1280); reduced motion/live preference changes; Indonesian formatting; Free restrictions; no retained removed-card targets; and no page errors. Evidence: `/tmp/dashboard-counts-final-390.png`. The narrow-screen fixture also exposed a long profile URL exceeding its container; the link now truncates within its available width.
+
+28 Node tests pass. New components have clean ESLint results; modified legacy files add no lint findings. Independent review's removed-target retention finding was fixed and checked with the browser observer instrumentation.

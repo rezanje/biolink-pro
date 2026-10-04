@@ -14,6 +14,7 @@ import { activeRedirectUrl, readShortcuts } from '@/lib/redirect-mode.mjs'
 import PetSprite from '@/components/pet/PetSprite'
 import { PET_FEATURE_ENABLED, petDisplayName, selectPetCharacter } from '@/lib/pet/pet-selection.mjs'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
+import AnimatedNumber from '@/components/dashboard/AnimatedNumber'
 
 type LinkRow = { id?: string; title?: string; url?: string; is_active?: boolean }
 type DashProfile = {
@@ -44,12 +45,13 @@ function Skeleton() {
 
 /** Angka besar + satuan + catatan kecil — pola yang dipakai kartu Green Impact. */
 function Impact({
-    icon: Icon, tone, label, value, unit,
+    icon: Icon, tone, label, value, unit, decimals = 0,
 }: {
     icon: typeof Leaf
     tone: string
     label: string
-    value: string
+    value: number
+    decimals?: number
     unit: string
 }) {
     return (
@@ -59,7 +61,7 @@ function Impact({
             </span>
             <p className="mt-2.5 text-[10px] font-medium uppercase leading-tight tracking-wider text-ink-2">{label}</p>
             <p className="mt-1.5 flex items-baseline gap-1">
-                <span className="text-[22px] font-semibold leading-none tracking-[-0.03em]">{value}</span>
+                <span className="text-[22px] font-semibold leading-none tracking-[-0.03em]"><AnimatedNumber key={unit} value={value} decimals={decimals} /></span>
                 <span className="text-[11.5px] text-ink-3">{unit}</span>
             </p>
         </div>
@@ -67,8 +69,7 @@ function Impact({
 }
 
 export default function DashboardPage() {
-    const { t, locale } = useUiLanguage()
-    const nf = new Intl.NumberFormat(locale === 'id' ? 'id-ID' : locale === 'zh-CN' ? 'zh-CN' : 'en-US')
+    const { t } = useUiLanguage()
     const router = useRouter()
     const supabase = createClient()
 
@@ -339,9 +340,9 @@ export default function DashboardPage() {
                             <Link
                                 href={`/${profile.slug}`}
                                 target="_blank"
-                                className="mt-4 inline-flex items-center gap-2 text-[12.5px] text-ink-2 hover:text-ink"
+                                className="mt-4 inline-flex max-w-full items-center gap-2 text-[12.5px] text-ink-2 hover:text-ink"
                             >
-                                <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.8} />
+                                <ExternalLink className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} />
                                 <span className="truncate">{shareHost}</span>
                             </Link>
                         </div>
@@ -405,13 +406,13 @@ export default function DashboardPage() {
             <section className="mt-3 grid grid-cols-3 divide-x divide-ink/[0.08] rounded-card-sm bg-surface px-2 py-4 shadow-row">
                 <div className="flex flex-col items-center px-2">
                     <Eye className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} />
-                    <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]">{nf.format(viewCount)}</p>
+                    <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]"><AnimatedNumber value={viewCount} /></p>
                     <p className="mt-1.5 text-center text-[11.5px] text-ink-2">{t('Profile Views')}</p>
                 </div>
 
                 <div className="flex flex-col items-center px-2">
                     <Link2 className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} />
-                    <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]">{links.length}</p>
+                    <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]"><AnimatedNumber value={links.length} /></p>
                     <p className="mt-1.5 text-center text-[11.5px] text-ink-2">{t('Total Links')}</p>
                 </div>
 
@@ -429,7 +430,7 @@ export default function DashboardPage() {
                         </>
                     ) : (
                         <>
-                            <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]">{nf.format(linkClicks)}</p>
+                            <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]"><AnimatedNumber value={linkClicks} /></p>
                             <p className="mt-1.5 text-center text-[11.5px] text-ink-2">{t('Link Clicks')}</p>
                         </>
                     )}
@@ -454,21 +455,23 @@ export default function DashboardPage() {
                             icon={BarChart3}
                             tone="bg-success-soft text-success-soft-ink"
                             label={t('Paper Saved')}
-                            value={nf.format(viewCount)}
+                            value={viewCount}
                             unit={t('sheets')}
                         />
                         <Impact
                             icon={Wind}
                             tone="bg-fill-subtle text-ink-2"
                             label={t('Carbon Emissions Prevented')}
-                            value={co2 >= 1000 ? (co2 / 1000).toFixed(2) : nf.format(co2)}
+                            value={co2 >= 1000 ? co2 / 1000 : co2}
+                            decimals={co2 >= 1000 ? 2 : 0}
                             unit={co2 >= 1000 ? 'kg' : 'gram'}
                         />
                         <Impact
                             icon={TreeDeciduous}
                             tone="bg-coral-soft text-coral-soft-ink"
                             label={t('Trees Protected')}
-                            value={(viewCount / 10000).toFixed(4)}
+                            value={viewCount / 10000}
+                            decimals={4}
                             unit={t('trees')}
                         />
                     </div>

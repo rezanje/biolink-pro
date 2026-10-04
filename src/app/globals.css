@@ -508,6 +508,48 @@ textarea:focus {
 }
 
 /* Curated business-card layouts. Classic intentionally has no overrides. */
+@keyframes dashboard-page-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dashboard-motion {
+  animation: dashboard-page-in 240ms ease-out;
+}
+
+:is(.dashboard-motion, .dashboard-navigation) :is(button, a[href]) {
+  transition: transform 160ms ease-out, background-color 180ms ease-out, color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+:is(.dashboard-motion, .dashboard-navigation) :is(button:not(:disabled), a[href]):active {
+  transform: scale(0.98);
+}
+
+:is(.dashboard-motion, .dashboard-navigation) :is(button, a[href]) > svg {
+  transition: transform 180ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(.dashboard-motion, .dashboard-navigation) :is(button:not(:disabled), a[href]):hover > svg {
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-motion,
+  :is(.dashboard-motion, .dashboard-navigation) :is(button, a[href]),
+  :is(.dashboard-motion, .dashboard-navigation) :is(button, a[href]) > svg {
+    animation: none;
+    transition: none;
+  }
+  :is(.dashboard-motion, .dashboard-navigation) :is(button:not(:disabled), a[href]):active {
+    transform: none;
+  }
+  :is(.dashboard-motion, .dashboard-navigation) :is(button:not(:disabled), a[href]):hover > svg {
+    transform: none;
+  }
+}
+
 .public-card .card-scroll {
   scrollbar-width: none;
 }

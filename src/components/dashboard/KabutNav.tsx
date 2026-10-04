@@ -22,7 +22,7 @@ export default function KabutNav() {
         <div className="fixed bottom-6 left-[22px] right-[22px] z-50 md:left-1/2 md:w-[420px] md:-translate-x-1/2">
             <nav
                 aria-label={t('Dashboard navigation')}
-                className="h-[68px] rounded-full border border-white/80 bg-white/[0.72] px-2 shadow-nav backdrop-blur-[26px] backdrop-saturate-[1.7]"
+                className="dashboard-navigation h-[68px] rounded-full border border-white/80 bg-white/[0.72] px-2 shadow-nav backdrop-blur-[26px] backdrop-saturate-[1.7]"
             >
                 <ul className="flex h-full items-center justify-around">
                     {ITEMS.map((item) => {
