@@ -130,7 +130,7 @@ export default function SavedCardCollection() {
     const folderCards = (folderId: string | null) => visibleCards.filter(card => card.folder_id === folderId).map(card => card.profile!)
     const folderName = selectedFolder === 'unfiled' ? t('Unfiled') : folders.find(folder => folder.id === selectedFolder)?.name
     const filteredCards = visibleCards.filter(card => {
-        const inFolder = selectedFolder === null || (selectedFolder === 'unfiled' ? card.folder_id === null : card.folder_id === selectedFolder)
+        const inFolder = selectedFolder !== null && (selectedFolder === 'unfiled' ? card.folder_id === null : card.folder_id === selectedFolder)
         return inFolder && [card.profile?.display_name, card.profile?.company, card.profile?.job_title].filter(Boolean).join(' ').toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())
     })
 
@@ -147,9 +147,10 @@ export default function SavedCardCollection() {
                 <CardFolderTile name={t('Unfiled')} cards={folderCards(null)} selected={selectedFolder === 'unfiled'} disabled={busy} onOpen={() => { setSelectedFolder('unfiled'); setSearch('') }} />
             </div>
 
+            {selectedFolder !== null && <>
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-5">
                 <div className="flex min-w-0 items-center gap-1.5 text-[13px]">
-                    <button type="button" onClick={() => { setSelectedFolder(null); setSearch('') }} className={`shrink-0 rounded-md py-1 font-medium hover:underline ${selectedFolder ? 'text-ink-2' : 'text-ink'}`}>{t('All cards')} <span className="ml-1 text-ink-3">{visibleCards.length}</span></button>
+                    <button type="button" onClick={() => { setSelectedFolder(null); setSearch('') }} className="shrink-0 rounded-md py-1 font-medium text-ink-2 hover:underline">{t('Back to folders')}</button>
                     {folderName && <><ChevronRight className="h-3.5 w-3.5 shrink-0 text-ink-3" /><span className="truncate font-semibold">{folderName}</span></>}
                 </div>
                 <label className="relative block w-full sm:w-60"><span className="sr-only">{t('Search cards')}</span><Search className="absolute left-3 top-3 h-4 w-4 text-ink-3" /><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder={t('Search cards')} className="w-full rounded-full bg-surface py-2.5 pl-9 pr-3 text-[12px] shadow-row outline-none focus-visible:ring-2 focus-visible:ring-ink/30" /></label>
@@ -167,6 +168,7 @@ export default function SavedCardCollection() {
                     <button type="button" onClick={() => void removeCard(card.profile_id)} disabled={busy} aria-label={t('Remove {name} from saved cards', { name: card.profile!.display_name || t('Card') })} className="absolute right-2 top-2 rounded-full bg-surface/95 p-2 text-ink-2 shadow-row hover:bg-coral-soft hover:text-coral-soft-ink disabled:opacity-50"><Trash2 className="h-3.5 w-3.5" /></button>
                 </article>)}
             </div> : <div className="mt-4 rounded-card border border-dashed border-ink/15 bg-surface/60 px-5 py-8 text-center"><Bookmark className="mx-auto mb-3 h-8 w-8 text-ink-3" strokeWidth={1.5} /><h3 className="text-[14px] font-medium">{t(search ? 'No matching cards' : selectedFolder ? 'This folder is empty' : 'No saved cards yet')}</h3><p className="mt-2 text-[12px] text-ink-2">{t(search ? 'Try another name or company.' : selectedFolder ? 'Choose a folder from the menu on any saved card to move it here.' : 'Bookmark any Gentanala card to build your personal network collection.')}</p></div>}
+            </>}
         </>}
 
         {action && <FolderDialog key={action.kind === 'create' ? 'create' : `${action.kind}-${action.folder.id}`} action={action} busy={busy} error={error} onClose={() => { if (!busy) { setAction(null); setError('') } }} onSave={name => void saveFolder(name)} />}

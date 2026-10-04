@@ -16,6 +16,7 @@ import {
     Clock,
     ArrowUpDown,
     ChevronRight,
+    ChevronDown,
     Building2,
     Briefcase,
     Linkedin,
@@ -90,6 +91,8 @@ export default function AnalyticsPage() {
     })
     const [chartData, setChartData] = useState<TrafficDay[]>([])
     const [recentLeads, setRecentLeads] = useState<LeadRecord[]>([])
+    const [leadsExpanded, setLeadsExpanded] = useState(false)
+    const visibleLeads = leadsExpanded ? recentLeads : recentLeads.slice(0, 5)
     const [dateRange, setDateRange] = useState('30d')
     const [leadCaptureEnabled, setLeadCaptureEnabled] = useState(false)
     const [leadCaptureDelay, setLeadCaptureDelay] = useState(4)
@@ -155,6 +158,7 @@ export default function AnalyticsPage() {
                 console.error('Error fetching leads:', error)
             } else {
                 setRecentLeads(leads || [])
+                setLeadsExpanded(false)
             }
         } catch (err) {
             console.error('Error in fetchLeads:', err)
@@ -489,8 +493,9 @@ export default function AnalyticsPage() {
                             <Loader2 className="h-6 w-6 animate-spin text-ink-3" />
                         </div>
                     ) : recentLeads.length > 0 ? (
-                        <div className="mt-4 grid gap-2.5">
-                            {recentLeads.map(lead => {
+                        <>
+                        <div id="lead-list" className="mt-4 grid gap-2.5">
+                            {visibleLeads.map(lead => {
                                 const wa = whatsappLink(lead.whatsapp)
                                 return (
                                     <div
@@ -535,6 +540,19 @@ export default function AnalyticsPage() {
                                 )
                             })}
                         </div>
+                        {recentLeads.length > 5 && (
+                            <button
+                                type="button"
+                                onClick={() => setLeadsExpanded(value => !value)}
+                                aria-expanded={leadsExpanded}
+                                aria-controls="lead-list"
+                                className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-surface px-4 py-3 text-[12.5px] font-medium text-ink-2 shadow-row transition-colors hover:text-ink"
+                            >
+                                {leadsExpanded ? t('Collapse leads') : t('Expand leads ({count} more)', { count: recentLeads.length - 5 })}
+                                <ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform ${leadsExpanded ? 'rotate-180' : ''}`} />
+                            </button>
+                        )}
+                        </>
                     ) : (
                         <div className="mt-4 rounded-card border border-dashed border-ink/15 bg-surface/60 p-10 text-center">
                             <MessageSquare className="mx-auto mb-3 h-10 w-10 text-ink-3" strokeWidth={1.5} />
