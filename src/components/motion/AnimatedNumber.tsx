@@ -1,14 +1,12 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { useUiLanguage } from '@/components/UiLanguageProvider'
 
-export default function AnimatedNumber({ value, decimals = 0, suffix = '' }: { value: number; decimals?: number; suffix?: string }) {
-    const { locale } = useUiLanguage()
+export default function AnimatedNumber({ value, locale = 'en-US', decimals = 0, suffix = '' }: { value: number; locale?: string; decimals?: number; suffix?: string }) {
     const rootRef = useRef<HTMLSpanElement>(null)
     const textRef = useRef<HTMLSpanElement>(null)
     const currentRef = useRef(0)
-    const formatter = new Intl.NumberFormat(locale === 'id' ? 'id-ID' : locale === 'zh-CN' ? 'zh-CN' : 'en-US', {
+    const formatter = new Intl.NumberFormat(locale, {
         minimumFractionDigits: decimals, maximumFractionDigits: decimals,
     })
 
@@ -16,7 +14,7 @@ export default function AnimatedNumber({ value, decimals = 0, suffix = '' }: { v
         const root = rootRef.current
         const text = textRef.current
         if (!root || !text) return
-        const nf = new Intl.NumberFormat(locale === 'id' ? 'id-ID' : locale === 'zh-CN' ? 'zh-CN' : 'en-US', {
+        const nf = new Intl.NumberFormat(locale, {
             minimumFractionDigits: decimals, maximumFractionDigits: decimals,
         })
         const media = window.matchMedia('(prefers-reduced-motion: reduce)')

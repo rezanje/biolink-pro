@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, type ReactNode } from 'react'
 
-const CARD_SELECTOR = '.rounded-card, .rounded-card-sm, .rounded-row'
+const CARD_SELECTOR = 'header, section, .rounded-card, .rounded-card-sm, .rounded-row, .rounded-3xl, .shadow-card, .shadow-row'
 
-export default function DashboardMotion({ children }: { children: ReactNode }) {
+export default function PageMotion({ children }: { children: ReactNode }) {
     const rootRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
         const root = rootRef.current
@@ -25,7 +25,10 @@ export default function DashboardMotion({ children }: { children: ReactNode }) {
             })
         }, { threshold: 0.08 })
         const observe = (element: Element) => {
-            if (!root.contains(element) || seen.has(element) || element.parentElement?.closest(CARD_SELECTOR) || element.querySelector('.fixed')) return
+            if (!root.contains(element) || seen.has(element) || element.querySelector('.fixed')) return
+            for (let parent = element.parentElement; parent && root.contains(parent); parent = parent.parentElement) {
+                if (seen.has(parent)) return
+            }
             seen.add(element)
             observer.observe(element)
         }

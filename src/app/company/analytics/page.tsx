@@ -1,5 +1,7 @@
 'use client'
 
+import AnimatedNumber from '@/components/motion/AnimatedNumber'
+
 import { useState, useEffect } from 'react'
 import { useCompany } from '@/app/company/company-context'
 import { createClient } from '@/lib/supabase/client'
@@ -120,10 +122,10 @@ export default function CompanyAnalyticsPage() {
     }, [company?.id])
 
     const summaryCards = [
-        { label: 'Total Profile Views', value: stats.totalViews.toLocaleString(), icon: Eye, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { label: 'Total Link Clicks', value: stats.totalClicks.toLocaleString(), icon: MousePointer2, color: 'text-purple-600', bg: 'bg-purple-50' },
-        { label: 'Total NFC Taps', value: stats.totalTaps.toLocaleString(), icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-        { label: 'Green Impact (kg CO2)', value: stats.greenImpact.toLocaleString(), icon: ShieldCheck, color: 'text-orange-600', bg: 'bg-orange-50' },
+        { label: 'Total Profile Views', value: stats.totalViews, icon: Eye, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { label: 'Total Link Clicks', value: stats.totalClicks, icon: MousePointer2, color: 'text-purple-600', bg: 'bg-purple-50' },
+        { label: 'Total NFC Taps', value: stats.totalTaps, icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { label: 'Green Impact (kg CO2)', value: stats.greenImpact, icon: ShieldCheck, color: 'text-orange-600', bg: 'bg-orange-50' },
     ]
 
     return (
@@ -164,7 +166,7 @@ export default function CompanyAnalyticsPage() {
                             </span>
                         </div>
                         <p className="text-zinc-500 text-sm font-medium">{card.label}</p>
-                        <p className="text-2xl font-bold text-zinc-900 mt-1">{isLoading ? '...' : card.value}</p>
+                        <p className="text-2xl font-bold text-zinc-900 mt-1">{isLoading ? '...' : <AnimatedNumber value={card.value} />}</p>
                     </motion.div>
                 ))}
             </div>

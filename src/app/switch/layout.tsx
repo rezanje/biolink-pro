@@ -5,7 +5,7 @@ import type { Metadata } from 'next'
 // Manifest sendiri di sini bikin ikonnya membuka /switch, bukan dashboard.
 export const metadata: Metadata = {
     title: 'Pintasan',
-    manifest: '/switch.webmanifest',
+    manifest: '/switch.webmanifest?v=e4deab2832b5',
     appleWebApp: {
         capable: true,
         title: 'Pintasan',

@@ -13,8 +13,8 @@ import { PWAHint } from '@/components/dashboard/PWAHint'
 import { activeRedirectUrl, readShortcuts } from '@/lib/redirect-mode.mjs'
 import PetSprite from '@/components/pet/PetSprite'
 import { PET_FEATURE_ENABLED, petDisplayName, selectPetCharacter } from '@/lib/pet/pet-selection.mjs'
+import AnimatedNumber from '@/components/motion/AnimatedNumber'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
-import AnimatedNumber from '@/components/dashboard/AnimatedNumber'
 
 type LinkRow = { id?: string; title?: string; url?: string; is_active?: boolean }
 type DashProfile = {
@@ -45,14 +45,15 @@ function Skeleton() {
 
 /** Angka besar + satuan + catatan kecil — pola yang dipakai kartu Green Impact. */
 function Impact({
-    icon: Icon, tone, label, value, unit, decimals = 0,
+    icon: Icon, tone, label, value, unit, locale, decimals = 0,
 }: {
     icon: typeof Leaf
     tone: string
     label: string
     value: number
-    decimals?: number
     unit: string
+    locale: string
+    decimals?: number
 }) {
     return (
         <div className="flex flex-col items-center px-2 text-center">
@@ -61,7 +62,7 @@ function Impact({
             </span>
             <p className="mt-2.5 text-[10px] font-medium uppercase leading-tight tracking-wider text-ink-2">{label}</p>
             <p className="mt-1.5 flex items-baseline gap-1">
-                <span className="text-[22px] font-semibold leading-none tracking-[-0.03em]"><AnimatedNumber key={unit} value={value} decimals={decimals} /></span>
+                <span className="text-[22px] font-semibold leading-none tracking-[-0.03em]"><AnimatedNumber key={unit} value={value} locale={locale} decimals={decimals} /></span>
                 <span className="text-[11.5px] text-ink-3">{unit}</span>
             </p>
         </div>
@@ -69,7 +70,8 @@ function Impact({
 }
 
 export default function DashboardPage() {
-    const { t } = useUiLanguage()
+    const { t, locale } = useUiLanguage()
+    const numberLocale = locale === 'id' ? 'id-ID' : locale === 'zh-CN' ? 'zh-CN' : 'en-US'
     const router = useRouter()
     const supabase = createClient()
 
@@ -406,13 +408,13 @@ export default function DashboardPage() {
             <section className="mt-3 grid grid-cols-3 divide-x divide-ink/[0.08] rounded-card-sm bg-surface px-2 py-4 shadow-row">
                 <div className="flex flex-col items-center px-2">
                     <Eye className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} />
-                    <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]"><AnimatedNumber value={viewCount} /></p>
+                    <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]"><AnimatedNumber value={viewCount} locale={numberLocale} /></p>
                     <p className="mt-1.5 text-center text-[11.5px] text-ink-2">{t('Profile Views')}</p>
                 </div>
 
                 <div className="flex flex-col items-center px-2">
                     <Link2 className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} />
-                    <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]"><AnimatedNumber value={links.length} /></p>
+                    <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]"><AnimatedNumber value={links.length} locale={numberLocale} /></p>
                     <p className="mt-1.5 text-center text-[11.5px] text-ink-2">{t('Total Links')}</p>
                 </div>
 
@@ -430,7 +432,7 @@ export default function DashboardPage() {
                         </>
                     ) : (
                         <>
-                            <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]"><AnimatedNumber value={linkClicks} /></p>
+                            <p className="mt-2 text-[22px] font-semibold leading-none tracking-[-0.03em]"><AnimatedNumber value={linkClicks} locale={numberLocale} /></p>
                             <p className="mt-1.5 text-center text-[11.5px] text-ink-2">{t('Link Clicks')}</p>
                         </>
                     )}
@@ -456,6 +458,7 @@ export default function DashboardPage() {
                             tone="bg-success-soft text-success-soft-ink"
                             label={t('Paper Saved')}
                             value={viewCount}
+                            locale={numberLocale}
                             unit={t('sheets')}
                         />
                         <Impact
@@ -464,6 +467,7 @@ export default function DashboardPage() {
                             label={t('Carbon Emissions Prevented')}
                             value={co2 >= 1000 ? co2 / 1000 : co2}
                             decimals={co2 >= 1000 ? 2 : 0}
+                            locale={numberLocale}
                             unit={co2 >= 1000 ? 'kg' : 'gram'}
                         />
                         <Impact
@@ -472,6 +476,7 @@ export default function DashboardPage() {
                             label={t('Trees Protected')}
                             value={viewCount / 10000}
                             decimals={4}
+                            locale={numberLocale}
                             unit={t('trees')}
                         />
                     </div>

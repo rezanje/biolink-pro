@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* Dashboard motion: short entrances and tactile interactions. */
 /* ── Token desain area dashboard ──────────────────────────────────────────
    Palet hangat: kanvas krem, kartu putih hangat, satu aksen oranye.
    Nama token sengaja tidak diubah supaya semua layar yang sudah memakainya
@@ -517,6 +518,10 @@ textarea:focus {
   animation: dashboard-page-in 240ms ease-out;
 }
 
+.dashboard-motion :is(input, select, textarea) {
+  transition: background-color 180ms ease-out, border-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+
 :is(.dashboard-motion, .dashboard-navigation) :is(button, a[href]) {
   transition: transform 160ms ease-out, background-color 180ms ease-out, color 180ms ease-out, box-shadow 180ms ease-out;
 }
@@ -537,6 +542,7 @@ textarea:focus {
 
 @media (prefers-reduced-motion: reduce) {
   .dashboard-motion,
+  .dashboard-motion :is(input, select, textarea),
   :is(.dashboard-motion, .dashboard-navigation) :is(button, a[href]),
   :is(.dashboard-motion, .dashboard-navigation) :is(button, a[href]) > svg {
     animation: none;
