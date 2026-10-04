@@ -2,13 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, Bot, Home, Palette, User } from 'lucide-react'
+import { Bot, Home, IdCard, Palette, User } from 'lucide-react'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 // Five dashboard tabs; AI and Translate share one settings destination.
 const ITEMS = [
     { href: '/dashboard', icon: Home, label: 'Overview' },
-    { href: '/dashboard/analytics', icon: BarChart3, label: 'Database Leads' },
+    { href: '/dashboard/analytics', icon: IdCard, label: 'Database Leads' },
     { href: '/dashboard/ai-assistant', icon: Bot, label: 'AI & Translate' },
     { href: '/dashboard/profile', icon: User, label: 'Profile' },
     { href: '/dashboard/appearance', icon: Palette, label: 'Appearance' },

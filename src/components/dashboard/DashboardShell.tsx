@@ -13,7 +13,7 @@ import {
     LogOut,
     CreditCard,
     ExternalLink,
-    BarChart3
+    IdCard
 } from 'lucide-react'
 import PhonePreview from '@/components/dashboard/PhonePreview'
 import { useTier } from '@/app/dashboard/tier-context'
@@ -23,7 +23,7 @@ import { UiLanguageSelect, useUiLanguage } from '@/components/UiLanguageProvider
 
 const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
-    { href: '/dashboard/analytics', icon: BarChart3, label: 'Database Leads', feature: 'analytics_leads' },
+    { href: '/dashboard/analytics', icon: IdCard, label: 'Database Leads', feature: 'analytics_leads' },
     { href: '/dashboard/profile', icon: User, label: 'Edit Profile' },
     { href: '/dashboard/ai-assistant', icon: Bot, label: 'AI & Translate' },
     { href: '/dashboard/appearance', icon: Palette, label: 'Appearance' },
