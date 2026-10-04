@@ -38,7 +38,6 @@ export default function KabutNav() {
                                         }`}
                                 >
                                     <item.icon className="h-[21px] w-[21px]" strokeWidth={1.8} />
-                                    {item.label === 'AI & Translate' && <span className="mt-0.5 text-center text-[8px] leading-tight">{t(item.label)}</span>}
                                 </Link>
                             </li>
                         )
