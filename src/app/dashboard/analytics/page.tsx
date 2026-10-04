@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -23,11 +22,10 @@ import {
     MessageCircle,
     Search,
     X,
-    Bookmark,
-    Trash2,
 } from 'lucide-react'
 import AnimatedNumber from '@/components/motion/AnimatedNumber'
 import PremiumLock from '@/components/dashboard/PremiumLock'
+import SavedCardCollection from '@/components/dashboard/SavedCardCollection'
 import { whatsappLink } from '@/lib/wa.mjs'
 import { useTier } from '@/app/dashboard/tier-context'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
@@ -62,9 +60,19 @@ const getExternalUrl = (value: unknown) => {
     }
 }
 
-type SavedCardPreview = { slug: string; display_name: string | null; company: string | null; job_title: string | null; avatar_url: string | null }
-type SavedCard = { profile_id: string; created_at: string; profile: SavedCardPreview | null }
-type SavedCardRow = Omit<SavedCard, 'profile'> & { profile: SavedCardPreview | SavedCardPreview[] | null }
+type TrafficDay = { date: string; views: number; clicks: number }
+type LeadRecord = {
+    id: string
+    created_at: string
+    name: string | null
+    email: string | null
+    whatsapp: string | null
+    company: string | null
+    status: string
+    job_title?: string | null
+    linkedin?: string | null
+    wechat_id?: string | null
+}
 
 export default function AnalyticsPage() {
     const { t, locale } = useUiLanguage()
@@ -80,15 +88,15 @@ export default function AnalyticsPage() {
         totalLeads: 0,
         uniqueVisitors: 0
     })
-    const [chartData, setChartData] = useState<any[]>([])
-    const [recentLeads, setRecentLeads] = useState<any[]>([])
+    const [chartData, setChartData] = useState<TrafficDay[]>([])
+    const [recentLeads, setRecentLeads] = useState<LeadRecord[]>([])
     const [dateRange, setDateRange] = useState('30d')
     const [leadCaptureEnabled, setLeadCaptureEnabled] = useState(false)
     const [leadCaptureDelay, setLeadCaptureDelay] = useState(4)
     const [savingDelay, setSavingDelay] = useState(false)
 
     // Kartu calon pelanggan yang sedang dibuka detailnya
-    const [activeLead, setActiveLead] = useState<any | null>(null)
+    const [activeLead, setActiveLead] = useState<LeadRecord | null>(null)
 
     // Filtering & Sorting State
     const [statusFilter, setStatusFilter] = useState('all')
@@ -97,9 +105,6 @@ export default function AnalyticsPage() {
     const [leadSearch, setLeadSearch] = useState('')
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
     const [loadingLeads, setLoadingLeads] = useState(false)
-    const [collectionTab, setCollectionTab] = useState<'contacts' | 'saved'>(() => typeof window !== 'undefined' && window.location.hash === '#saved' ? 'saved' : 'contacts')
-    const [savedCards, setSavedCards] = useState<SavedCard[]>([])
-    const [loadingSavedCards, setLoadingSavedCards] = useState(false)
 
     useEffect(() => {
         fetchAnalytics()
@@ -108,14 +113,6 @@ export default function AnalyticsPage() {
     useEffect(() => {
         fetchLeads()
     }, [statusFilter, dateFrom, dateTo, leadSearch, sortOrder])
-
-    useEffect(() => {
-        if (collectionTab === 'saved') void fetchSavedCards()
-    }, [collectionTab])
-
-    useEffect(() => {
-        if (window.location.hash === '#saved') setCollectionTab('saved')
-    }, [])
 
     const fetchLeads = async () => {
         try {
@@ -164,33 +161,6 @@ export default function AnalyticsPage() {
         } finally {
             setLoadingLeads(false)
         }
-    }
-
-    const fetchSavedCards = async () => {
-        try {
-            setLoadingSavedCards(true)
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-            const { data, error } = await supabase
-                .from('saved_profiles')
-                .select('profile_id,created_at,profile:profiles(slug,display_name,company,job_title,avatar_url)')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false })
-            if (error) { console.error('Error fetching saved cards:', error); return }
-            const rows = (data || []) as unknown as SavedCardRow[]
-            setSavedCards(rows.map(({ profile, ...card }) => ({ ...card, profile: Array.isArray(profile) ? profile[0] || null : profile })))
-        } catch (err) {
-            console.error('Error in fetchSavedCards:', err)
-        } finally {
-            setLoadingSavedCards(false)
-        }
-    }
-
-    const removeSavedCard = async (profileId: string) => {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
-        const { error } = await supabase.from('saved_profiles').delete().eq('user_id', user.id).eq('profile_id', profileId)
-        if (!error) setSavedCards(current => current.filter(card => card.profile_id !== profileId))
     }
 
     const fetchAnalytics = async () => {
@@ -265,7 +235,7 @@ export default function AnalyticsPage() {
             }
 
             if (dailyData) {
-                dailyData.forEach((item: any) => {
+                dailyData.forEach(item => {
                     const date = new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                     if (days.has(date)) {
                         const dayStats = days.get(date)
@@ -373,7 +343,7 @@ export default function AnalyticsPage() {
             setRecentLeads(prev => prev.map(lead =>
                 lead.id === leadId ? { ...lead, status: newStatus } : lead
             ))
-            setActiveLead((prev: any) => (prev && prev.id === leadId ? { ...prev, status: newStatus } : prev))
+            setActiveLead(prev => (prev && prev.id === leadId ? { ...prev, status: newStatus } : prev))
 
             const { error } = await supabase
                 .from('leads')
@@ -416,9 +386,8 @@ export default function AnalyticsPage() {
     return (
         <>
         <div className="mx-auto max-w-[1200px] px-5 pt-6">
-            <Link href="/dashboard/saved" className="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2 text-[12.5px] font-medium text-ink shadow-row">
-                <Bookmark className="h-4 w-4" strokeWidth={1.8} />{t('Saved Cards')}
-            </Link>
+            <header className="mb-7"><h1 className="text-[26px] font-semibold tracking-[-0.03em]">{t('Database Leads')}</h1><p className="mt-1.5 text-[13px] text-ink-2">{t('Keep your cards and leads together.')}</p></header>
+            <SavedCardCollection />
         </div>
         <PremiumLock
             isLocked={isLocked}
@@ -426,8 +395,157 @@ export default function AnalyticsPage() {
             description={t('Unlock detailed visitor insights, lead capture forms, and traffic charts.')}
         >
             <div className="mx-auto max-w-[1200px] px-5 pb-[150px] pt-6">
-                <header>
-                    <h1 className="text-[26px] font-semibold tracking-[-0.03em]">{t('Analytics')}</h1>
+                <section className="mt-4 border-t border-hairline pt-7">
+                    <div className="flex items-center justify-between gap-3">
+                        <h2 className="text-[19px] font-semibold tracking-[-0.025em]">{t('Leads')}</h2>
+                        <button
+                            onClick={exportLeads}
+                            className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-[12.5px] font-medium text-white shadow-ink transition-transform active:scale-[0.98]"
+                        >
+                            <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
+                            {t('Export')}
+                        </button>
+                    </div>
+
+                    <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+                        <label className="relative block">
+                            <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">{t('Search')}</span>
+                            <Search className="pointer-events-none absolute bottom-3 left-3 h-4 w-4 text-ink-3" strokeWidth={1.8} />
+                            <input
+                                value={leadSearch}
+                                onChange={(e) => setLeadSearch(e.target.value)}
+                                placeholder={t('Name, company, phone, email')}
+                                className="w-full rounded-row bg-surface py-3 pl-9 pr-3 text-[12.5px] text-ink shadow-row placeholder:text-ink-3 focus:outline-none"
+                            />
+                        </label>
+
+                        <label className="block">
+                            <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">{t('Status')}</span>
+                            <div className="relative">
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    className="w-full cursor-pointer appearance-none rounded-row bg-surface py-3 pl-4 pr-9 text-[12.5px] text-ink shadow-row focus:outline-none"
+                                >
+                                    <option value="all">{t('All statuses')}</option>
+                                    <option value="new">{t('New')}</option>
+                                    <option value="contacted">{t('Contacted')}</option>
+                                    <option value="converted">{t('Deal')}</option>
+                                    <option value="failed">{t('Failed')}</option>
+                                </select>
+                                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-ink-3">
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                        </label>
+
+                        <label className="block">
+                            <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">{t('From')}</span>
+                            <input
+                                type="date"
+                                value={dateFrom}
+                                onChange={(e) => setDateFrom(e.target.value)}
+                                className="w-full rounded-row bg-surface px-3 py-3 text-[12.5px] text-ink shadow-row focus:outline-none"
+                            />
+                        </label>
+
+                        <label className="block">
+                            <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">{t('To')}</span>
+                            <input
+                                type="date"
+                                value={dateTo}
+                                min={dateFrom || undefined}
+                                onChange={(e) => setDateTo(e.target.value)}
+                                className="w-full rounded-row bg-surface px-3 py-3 text-[12.5px] text-ink shadow-row focus:outline-none"
+                            />
+                        </label>
+                    </div>
+
+                    <div className="mt-2.5 flex items-center gap-2.5">
+                        <button
+                            onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                            className="flex shrink-0 items-center gap-2 rounded-row bg-surface px-4 py-3 text-[12.5px] font-medium text-ink-2 shadow-row"
+                        >
+                            <ArrowUpDown className="h-4 w-4" strokeWidth={1.8} />
+                            {sortOrder === 'desc' ? t('Newest') : t('Oldest')}
+                        </button>
+                        {(statusFilter !== 'all' || dateFrom || dateTo || leadSearch) && (
+                            <button
+                                onClick={() => {
+                                    setStatusFilter('all')
+                                    setDateFrom('')
+                                    setDateTo('')
+                                    setLeadSearch('')
+                                }}
+                                className="px-3 py-3 text-[12.5px] font-medium text-ink-2 transition-colors hover:text-ink"
+                            >
+                                {t('Clear filters')}
+                            </button>
+                        )}
+                    </div>
+
+                    {loadingLeads ? (
+                        <div className="mt-4 flex justify-center py-12">
+                            <Loader2 className="h-6 w-6 animate-spin text-ink-3" />
+                        </div>
+                    ) : recentLeads.length > 0 ? (
+                        <div className="mt-4 grid gap-2.5">
+                            {recentLeads.map(lead => {
+                                const wa = whatsappLink(lead.whatsapp)
+                                return (
+                                    <div
+                                        key={lead.id}
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => setActiveLead(lead)}
+                                        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActiveLead(lead)}
+                                        className="flex cursor-pointer items-center gap-3 rounded-card-sm bg-surface p-4 text-left shadow-row transition-transform active:scale-[0.99]"
+                                    >
+                                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-fill-subtle text-[15px] font-semibold text-ink-2">
+                                            {(lead.name || '?').trim().charAt(0).toUpperCase()}
+                                        </span>
+
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <p className="truncate text-[14.5px] font-medium">{lead.name || t('No name')}</p>
+                                                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${getStatusColor(lead.status || 'new')}`}>
+                                                    {t(getStatusLabel(lead.status || 'new'))}
+                                                </span>
+                                            </div>
+                                            <p className="mt-0.5 truncate text-[12px] text-ink-2">
+                                                {lead.company ? `${lead.company} · ` : ''}{lead.whatsapp}
+                                            </p>
+                                        </div>
+
+                                        {/* Direct chat button; does not open the contact details */}
+                                        {wa && (
+                                            <a
+                                                href={wa}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                aria-label={t('Chat with {name} on WhatsApp', { name: lead.name || t('Contact') })}
+                                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success-soft text-success-soft-ink transition-transform active:scale-95"
+                                            >
+                                                <MessageSquare className="h-4 w-4" strokeWidth={1.8} />
+                                            </a>
+                                        )}
+                                        <ChevronRight className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    ) : (
+                        <div className="mt-4 rounded-card border border-dashed border-ink/15 bg-surface/60 p-10 text-center">
+                            <MessageSquare className="mx-auto mb-3 h-10 w-10 text-ink-3" strokeWidth={1.5} />
+                            <h3 className="text-[15px] font-medium">{t('No contacts yet')}</h3>
+                            <p className="mt-1.5 text-[12.5px] text-ink-2">{t('Enable the contact form so visitors can leave their details')}</p>
+                        </div>
+                    )}
+                </section>
+
+                <header className="mt-10 border-t border-hairline pt-7">
+                    <h2 className="text-[22px] font-semibold tracking-[-0.03em]">{t('Analytics')}</h2>
                     <p className="mt-1.5 text-[13px] text-ink-2">{t('Track your digital card performance and potential customers')}</p>
                 </header>
 
@@ -551,7 +669,7 @@ export default function AnalyticsPage() {
 
                                     return (
                                         <div key={i} className="group relative flex h-full flex-1 flex-col justify-end gap-1">
-                                            <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-[11px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+                                            <div className={`pointer-events-none absolute bottom-full z-10 mb-2 whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-[11px] text-white opacity-0 transition-opacity group-hover:opacity-100 ${i < 7 ? 'left-0' : i >= chartData.length - 7 ? 'right-0' : 'left-1/2 -translate-x-1/2'}`}>
                                                 {item.date}: {item.views} {t('views')}, {item.clicks} {t('clicks')}
                                             </div>
 
@@ -578,193 +696,7 @@ export default function AnalyticsPage() {
                             </div>
                         </section>
 
-                        <section className="mt-7">
-                            <div role="tablist" aria-label={t('Relationship collections')} className="grid grid-cols-2 gap-1 rounded-full bg-surface p-1 shadow-row">
-                                <button role="tab" aria-selected={collectionTab === 'contacts'} onClick={() => { setCollectionTab('contacts'); window.history.replaceState(null, '', '/dashboard/analytics') }} className={`rounded-full py-2.5 text-[12.5px] font-medium transition-colors ${collectionTab === 'contacts' ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink'}`}>{t('Contacts')} <span className="ml-1 opacity-70">{stats.totalLeads}</span></button>
-                                <button role="tab" aria-selected={collectionTab === 'saved'} onClick={() => { setCollectionTab('saved'); window.history.replaceState(null, '', '#saved') }} className={`rounded-full py-2.5 text-[12.5px] font-medium transition-colors ${collectionTab === 'saved' ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink'}`}>{t('Saved Cards')}</button>
-                            </div>
 
-                            <div className={collectionTab === 'contacts' ? 'mt-5' : 'hidden'}>
-                        <section className="mt-7">
-                            <div className="flex items-center justify-between gap-3">
-                                <h2 className="text-[19px] font-semibold tracking-[-0.025em]">{t('Contacts')}</h2>
-                                <button
-                                    onClick={exportLeads}
-                                    className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-[12.5px] font-medium text-white shadow-ink transition-transform active:scale-[0.98]"
-                                >
-                                    <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
-                                    {t('Export')}
-                                </button>
-                            </div>
-
-                            <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-                                <label className="relative block">
-                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">{t('Search')}</span>
-                                    <Search className="pointer-events-none absolute bottom-3 left-3 h-4 w-4 text-ink-3" strokeWidth={1.8} />
-                                    <input
-                                        value={leadSearch}
-                                        onChange={(e) => setLeadSearch(e.target.value)}
-                                        placeholder={t('Name, company, phone, email')}
-                                        className="w-full rounded-row bg-surface py-3 pl-9 pr-3 text-[12.5px] text-ink shadow-row placeholder:text-ink-3 focus:outline-none"
-                                    />
-                                </label>
-
-                                <label className="block">
-                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">{t('Status')}</span>
-                                    <div className="relative">
-                                        <select
-                                            value={statusFilter}
-                                            onChange={(e) => setStatusFilter(e.target.value)}
-                                            className="w-full cursor-pointer appearance-none rounded-row bg-surface py-3 pl-4 pr-9 text-[12.5px] text-ink shadow-row focus:outline-none"
-                                        >
-                                            <option value="all">{t('All statuses')}</option>
-                                            <option value="new">{t('New')}</option>
-                                            <option value="contacted">{t('Contacted')}</option>
-                                            <option value="converted">{t('Deal')}</option>
-                                            <option value="failed">{t('Failed')}</option>
-                                        </select>
-                                        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-ink-3">
-                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                        </div>
-                                    </div>
-                                </label>
-
-                                <label className="block">
-                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">{t('From')}</span>
-                                    <input
-                                        type="date"
-                                        value={dateFrom}
-                                        onChange={(e) => setDateFrom(e.target.value)}
-                                        className="w-full rounded-row bg-surface px-3 py-3 text-[12.5px] text-ink shadow-row focus:outline-none"
-                                    />
-                                </label>
-
-                                <label className="block">
-                                    <span className="mb-1.5 block text-[10.5px] font-medium uppercase tracking-wider text-ink-3">{t('To')}</span>
-                                    <input
-                                        type="date"
-                                        value={dateTo}
-                                        min={dateFrom || undefined}
-                                        onChange={(e) => setDateTo(e.target.value)}
-                                        className="w-full rounded-row bg-surface px-3 py-3 text-[12.5px] text-ink shadow-row focus:outline-none"
-                                    />
-                                </label>
-                            </div>
-
-                            <div className="mt-2.5 flex items-center gap-2.5">
-                                <button
-                                    onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                                    className="flex shrink-0 items-center gap-2 rounded-row bg-surface px-4 py-3 text-[12.5px] font-medium text-ink-2 shadow-row"
-                                >
-                                    <ArrowUpDown className="h-4 w-4" strokeWidth={1.8} />
-                                    {sortOrder === 'desc' ? t('Newest') : t('Oldest')}
-                                </button>
-                                {(statusFilter !== 'all' || dateFrom || dateTo || leadSearch) && (
-                                    <button
-                                        onClick={() => {
-                                            setStatusFilter('all')
-                                            setDateFrom('')
-                                            setDateTo('')
-                                            setLeadSearch('')
-                                        }}
-                                        className="px-3 py-3 text-[12.5px] font-medium text-ink-2 transition-colors hover:text-ink"
-                                    >
-                                        {t('Clear filters')}
-                                    </button>
-                                )}
-                            </div>
-
-                            {loadingLeads ? (
-                                <div className="mt-4 flex justify-center py-12">
-                                    <Loader2 className="h-6 w-6 animate-spin text-ink-3" />
-                                </div>
-                            ) : recentLeads.length > 0 ? (
-                                <div className="mt-4 grid gap-2.5">
-                                    {recentLeads.map((lead: any) => {
-                                        const wa = whatsappLink(lead.whatsapp)
-                                        return (
-                                            <div
-                                                key={lead.id}
-                                                role="button"
-                                                tabIndex={0}
-                                                onClick={() => setActiveLead(lead)}
-                                                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActiveLead(lead)}
-                                                className="flex cursor-pointer items-center gap-3 rounded-card-sm bg-surface p-4 text-left shadow-row transition-transform active:scale-[0.99]"
-                                            >
-                                                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-fill-subtle text-[15px] font-semibold text-ink-2">
-                                                    {(lead.name || '?').trim().charAt(0).toUpperCase()}
-                                                </span>
-
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="truncate text-[14.5px] font-medium">{lead.name || t('No name')}</p>
-                                                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${getStatusColor(lead.status || 'new')}`}>
-                                                            {t(getStatusLabel(lead.status || 'new'))}
-                                                        </span>
-                                                    </div>
-                                                    <p className="mt-0.5 truncate text-[12px] text-ink-2">
-                                                        {lead.company ? `${lead.company} · ` : ''}{lead.whatsapp}
-                                                    </p>
-                                                </div>
-
-                                                {/* Direct chat button; does not open the contact details */}
-                                                {wa && (
-                                                    <a
-                                                        href={wa}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        aria-label={t('Chat with {name} on WhatsApp', { name: lead.name || t('Contact') })}
-                                                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success-soft text-success-soft-ink transition-transform active:scale-95"
-                                                    >
-                                                        <MessageSquare className="h-4 w-4" strokeWidth={1.8} />
-                                                    </a>
-                                                )}
-                                                <ChevronRight className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="mt-4 rounded-card border border-dashed border-ink/15 bg-surface/60 p-10 text-center">
-                                    <MessageSquare className="mx-auto mb-3 h-10 w-10 text-ink-3" strokeWidth={1.5} />
-                                    <h3 className="text-[15px] font-medium">{t('No contacts yet')}</h3>
-                                    <p className="mt-1.5 text-[12.5px] text-ink-2">{t('Enable the contact form so visitors can leave their details')}</p>
-                                </div>
-                            )}
-                        </section>
-                            </div>
-
-                            {collectionTab === 'saved' && (
-                                <div className="mt-5">
-                                    {loadingSavedCards ? (
-                                        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-ink-3" /></div>
-                                    ) : savedCards.length > 0 ? (
-                                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                                            {savedCards.map(card => card.profile && (
-                                                <article key={card.profile_id} className="group relative overflow-hidden rounded-card-sm bg-surface p-3 shadow-row transition-transform active:scale-[0.99]">
-                                                    <a href={`/${card.profile.slug}`} target="_blank" rel="noopener noreferrer" className="block">
-                                                        <div className="flex h-24 items-center justify-center overflow-hidden rounded-xl bg-fill-subtle text-[27px] font-semibold text-ink-2">
-                                                            {card.profile.avatar_url ? <img src={card.profile.avatar_url} alt="" className="h-full w-full object-cover" /> : card.profile.display_name?.slice(0, 1).toUpperCase()}
-                                                        </div>
-                                                        <p className="mt-3 truncate text-[13px] font-semibold">{card.profile.display_name || t('Gentanala member')}</p>
-                                                        <p className="mt-1 truncate text-[11px] text-ink-2">{[card.profile.job_title, card.profile.company].filter(Boolean).join(' · ') || t('Digital business card')}</p>
-                                                        <p className="mt-3 text-[10px] text-ink-3">{t('Saved')} {new Date(card.created_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' })}</p>
-                                                    </a>
-                                                    <button type="button" onClick={() => void removeSavedCard(card.profile_id)} aria-label={t('Remove {name} from saved cards', { name: card.profile.display_name || t('Card') })} className="absolute right-2 top-2 rounded-full bg-surface/95 p-2 text-ink-2 shadow-row transition-colors hover:bg-coral-soft hover:text-coral-soft-ink"><Trash2 className="h-3.5 w-3.5" /></button>
-                                                </article>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="rounded-card border border-dashed border-ink/15 bg-surface/60 p-10 text-center">
-                                            <Bookmark className="mx-auto mb-3 h-10 w-10 text-ink-3" strokeWidth={1.5} />
-                                            <h3 className="text-[15px] font-medium">{t('No saved cards yet')}</h3>
-                                            <p className="mt-1.5 text-[12.5px] text-ink-2">{t('Bookmark any Gentanala card to build your personal network collection.')}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </section>
                     </>
                 )}
 
