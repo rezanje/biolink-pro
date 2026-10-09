@@ -46,11 +46,15 @@ import { createClient } from '@/lib/supabase/client'
 import { QRCodeSVG } from 'qrcode.react'
 import { SPECIAL_EDITIONS, normalizeSpecialEditions } from '@/lib/special-greeting.mjs'
 import { newGiftToken } from '@/lib/gift.mjs'
+import { CatalogSettings, type CatalogItem } from '@/components/admin/CatalogSettings'
 
 interface SerialWithProfile {
     id: string
     serial_uuid: string
     product_name: string
+    device_type_id: string | null
+    event_id: string | null
+    event_name: string | null
     is_claimed: boolean
     claimed_at: string | null
     owner_id: string | null
@@ -112,7 +116,7 @@ export default function AdminPage() {
     const [adminCompanyId, setAdminCompanyId] = useState<string | null>(null)
     const [authCheckComplete, setAuthCheckComplete] = useState(false)
 
-    const [activeTab, setActiveTab] = useState<'profiles' | 'companies' | 'features'>('profiles')
+    const [activeTab, setActiveTab] = useState<'profiles' | 'companies' | 'features' | 'settings'>('profiles')
     const [userToDelete, setUserToDelete] = useState<any | null>(null)
     const [tierConfigs, setTierConfigs] = useState<any[]>([])
     const [serials, setSerials] = useState<SerialWithProfile[]>([])
@@ -121,6 +125,15 @@ export default function AdminPage() {
     const [loading, setLoading] = useState(false)
     const [generateCount, setGenerateCount] = useState(1)
     const [generateCompanyId, setGenerateCompanyId] = useState<string>('')
+    const [deviceTypes, setDeviceTypes] = useState<CatalogItem[]>([])
+    const [events, setEvents] = useState<CatalogItem[]>([])
+    const [catalogError, setCatalogError] = useState('')
+    const [assignmentSerial, setAssignmentSerial] = useState<SerialWithProfile | null>(null)
+    const [assignmentSaving, setAssignmentSaving] = useState(false)
+    const [assignmentError, setAssignmentError] = useState('')
+    const [generateDeviceId, setGenerateDeviceId] = useState('')
+    const [generateEventId, setGenerateEventId] = useState('')
+    const [generateSource, setGenerateSource] = useState<'b2c' | 'company' | 'event'>('b2c')
     const [generateSpecialEdition, setGenerateSpecialEdition] = useState<string>('')
     const [generating, setGenerating] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
@@ -199,6 +212,21 @@ export default function AdminPage() {
         const { data: companyData } = await companyQuery
         const { data: tierData } = await supabase.from('tier_configs').select('*').order('tier', { ascending: true })
 
+        let loadedDevices: CatalogItem[] = []
+        let loadedEvents: CatalogItem[] = []
+        try {
+            const res = await fetch('/api/admin/catalogs')
+            const catalog = await res.json()
+            if (!res.ok) throw new Error(catalog.error)
+            loadedDevices = catalog.device_types
+            loadedEvents = catalog.events
+            setCatalogError('')
+        } catch (err) {
+            setCatalogError(err instanceof Error ? err.message : 'Gagal memuat device/event')
+        }
+        setDeviceTypes(loadedDevices)
+        setEvents(loadedEvents)
+
         // Map Profiles
         const profileMap = new Map<string, any>()
         if (profileData) {
@@ -215,13 +243,18 @@ export default function AdminPage() {
         const mappedSerials: SerialWithProfile[] = (serialData || []).map((s: any) => {
             const profile = s.owner_id ? profileMap.get(s.owner_id) : null
             const theme = profile?.theme || {}
+            // Preserve legacy company membership until the serial receives an explicit device/source assignment.
+            const serialCompanyId = s.event_id ? null : s.device_type_id ? s.company_id : s.company_id || profile?.company_id
             const specialEditions = normalizeSpecialEditions(
                 profile?.special_editions?.length ? profile.special_editions : s.special_editions?.length ? s.special_editions : s.special_edition || profile?.special_edition
             )
             return {
                 id: s.id,
                 serial_uuid: s.serial_uuid,
-                product_name: 'Gentanala Classic',
+                product_name: loadedDevices.find(d => d.id === s.device_type_id)?.name || 'Belum ditentukan',
+                device_type_id: s.device_type_id || null,
+                event_id: s.event_id || null,
+                event_name: loadedEvents.find(e => e.id === s.event_id)?.name || null,
                 is_claimed: s.is_claimed || false,
                 claimed_at: s.claimed_at,
                 owner_id: s.owner_id || null,
@@ -239,8 +272,8 @@ export default function AdminPage() {
                 special_edition: specialEditions[0] || s.special_edition || profile?.special_edition || null,
                 special_editions: specialEditions,
                 selected_special_greeting_anim: profile?.selected_special_greeting_anim || null,
-                company_id: s.company_id || profile?.company_id || null,
-                company_name: (s.company_id ? companyMap.get(s.company_id)?.name : null) || (profile?.company_id ? companyMap.get(profile.company_id)?.name : null),
+                company_id: serialCompanyId || null,
+                company_name: serialCompanyId ? companyMap.get(serialCompanyId)?.name : null,
                 user_id: s.owner_id || null,
                 gift_enabled: s.gift_enabled || false,
                 gift_url: s.gift_url || null,
@@ -266,7 +299,12 @@ export default function AdminPage() {
     }
 
     const generateSerials = async () => {
-        if (!window.confirm(`Generate ${generateCount} new serials${generateCompanyId ? ' for the selected Company' : ''}?`)) return
+        if (!generateDeviceId || (generateSource === 'company' && !generateCompanyId) || (generateSource === 'event' && !generateEventId)) {
+            alert('Pilih device dan company/event tujuan terlebih dahulu')
+            return
+        }
+        const destination = generateSource === 'company' ? companies.find(c => c.id === generateCompanyId)?.name : generateSource === 'event' ? events.find(e => e.id === generateEventId)?.name : 'Personal / B2C'
+        if (!window.confirm(`Buat ${generateCount} serial ${deviceTypes.find(d => d.id === generateDeviceId)?.name} untuk ${destination}?`)) return
         setGenerating(true)
 
         try {
@@ -275,7 +313,9 @@ export default function AdminPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     count: generateCount,
-                    company_id: generateCompanyId || null,
+                    company_id: generateSource === 'company' ? generateCompanyId : null,
+                    event_id: generateSource === 'event' ? generateEventId : null,
+                    device_type_id: generateDeviceId,
                     special_edition: generateSpecialEdition || null
                 })
             })
@@ -287,6 +327,7 @@ export default function AdminPage() {
             } else {
                 alert(data.message || `${generateCount} serial berhasil dibuat!`)
                 if (adminRole) await loadAllData(adminRole, adminCompanyId)
+                setGenerateEventId('')
                 setGenerateCompanyId('')
                 setGenerateSpecialEdition('')
             }
@@ -341,11 +382,13 @@ export default function AdminPage() {
     }
 
     const exportCSV = () => {
-        const headers = ['UUID', 'NFC URL', 'Product', 'Status', 'Nama', 'Email', 'WhatsApp', 'Views', 'Clicks', 'Taps', 'Last Active', 'Created']
+        const headers = ['UUID', 'NFC URL', 'Device', 'Company', 'Event', 'Status', 'Nama', 'Email', 'WhatsApp', 'Views', 'Clicks', 'Taps', 'Last Active', 'Created']
         const rows = serials.map(s => [
             s.serial_uuid,
             `${siteUrl}/tap/${s.serial_uuid}`,
             s.product_name,
+            s.company_name || '-',
+            s.event_name || '-',
             s.is_claimed ? 'Claimed' : 'Unclaimed',
             s.display_name || '-',
             s.email || '-',
@@ -356,7 +399,7 @@ export default function AdminPage() {
             s.last_active ? new Date(s.last_active).toLocaleDateString('id-ID') : '-',
             new Date(s.created_at).toLocaleDateString('id-ID')
         ])
-        const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
+        const csv = [headers, ...rows].map(r => r.map(c => `"${c.replaceAll('"', '""')}"`).join(',')).join('\n')
         const blob = new Blob([csv], { type: 'text/csv' })
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
@@ -465,7 +508,9 @@ export default function AdminPage() {
                 s.display_name?.toLowerCase().includes(q) ||
                 s.email?.toLowerCase().includes(q) ||
                 s.whatsapp?.toLowerCase().includes(q) ||
-                s.product_name.toLowerCase().includes(q)
+                s.product_name.toLowerCase().includes(q) ||
+                s.company_name?.toLowerCase().includes(q) ||
+                s.event_name?.toLowerCase().includes(q)
             )
         }
         return result
@@ -627,6 +672,8 @@ export default function AdminPage() {
                                             >
                                                 {serial.sync_enabled !== false ? 'Synced' : 'Independent'}
                                             </button>
+                                            <span className="text-xs text-zinc-600">{serial.product_name}</span>
+                                            {serial.event_name && <span className="text-xs text-purple-600">Event: {serial.event_name}</span>}
                                             {serial.company_name && (
                                                 <span className="text-[9px] text-blue-500 font-medium truncate max-w-[140px]" title={serial.company_name}>
                                                     🏢 {serial.company_name}
@@ -716,6 +763,7 @@ export default function AdminPage() {
                                     </td>
                                     <td className="px-4 py-4">
                                         <div className="flex items-center gap-1 justify-end">
+                                            {adminRole === 'super_admin' && <button onClick={() => { setAssignmentSerial(serial); setAssignmentError('') }} title="Atur device dan sumber akun" className="rounded-lg p-2 hover:bg-blue-50"><Settings className="h-4 w-4 text-blue-500" /></button>}
                                             <button
                                                 onClick={() => downloadQR(serial.serial_uuid, serial.display_name || undefined)}
                                                 className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
@@ -1113,7 +1161,7 @@ export default function AdminPage() {
             <div className="max-w-7xl mx-auto px-6 py-8">
                 {/* Tabs */}
                 <div className="flex items-center gap-1 p-1 bg-zinc-100/50 backdrop-blur-sm rounded-xl w-fit mb-8 border border-zinc-200/50">
-                    {['profiles', 'companies', 'features']
+                    {['profiles', 'companies', 'features', 'settings']
                         .filter(tab => adminRole === 'super_admin' || tab === 'profiles')
                         .map((tab) => (
                             <button
@@ -1128,6 +1176,14 @@ export default function AdminPage() {
                             </button>
                         ))}
                 </div>
+
+                {catalogError && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">{catalogError}</p>}
+                {activeTab === 'settings' && adminRole === 'super_admin' && (
+                    <div className="grid gap-5 md:grid-cols-2">
+                        <CatalogSettings kind="device_types" title="Jenis Device" items={deviceTypes} onSaved={() => loadAllData(adminRole, adminCompanyId)} />
+                        <CatalogSettings kind="events" title="Events" items={events} onSaved={() => loadAllData(adminRole, adminCompanyId)} />
+                    </div>
+                )}
 
                 {activeTab === 'profiles' && (
                     <>
@@ -1156,7 +1212,7 @@ export default function AdminPage() {
                         {/* Actions */}
                         <div className="flex flex-wrap gap-3 mb-6">
                             {adminRole === 'super_admin' && (
-                                <div className="flex items-center gap-2 bg-white/50 backdrop-blur-sm border border-zinc-200 rounded-xl px-2 py-1">
+                                <div className="flex flex-wrap items-center gap-2 bg-white/50 backdrop-blur-sm border border-zinc-200 rounded-xl px-2 py-2">
                                     <span className="text-xs font-semibold text-zinc-500 pl-2">Generate:</span>
                                     <input
                                         type="number"
@@ -1166,17 +1222,25 @@ export default function AdminPage() {
                                         onChange={(e) => setGenerateCount(parseInt(e.target.value) || 1)}
                                         className="w-16 px-2 py-1.5 bg-transparent border-none text-zinc-900 text-center focus:outline-none"
                                     />
-                                    <span className="text-xs text-zinc-400">cards for</span>
-                                    <select
-                                        value={generateCompanyId}
-                                        onChange={(e) => setGenerateCompanyId(e.target.value)}
-                                        className="py-1.5 px-2 bg-white rounded-lg border border-zinc-200 text-xs focus:outline-none focus:border-blue-500 min-w-[140px]"
-                                    >
-                                        <option value="">(No Company/B2C)</option>
-                                        {companies.map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                        ))}
+                                    <label className="text-xs text-zinc-500">Device:
+                                        <select aria-label="Jenis device" value={generateDeviceId} onChange={e => setGenerateDeviceId(e.target.value)} className="ml-2 rounded-lg border border-zinc-200 bg-white px-2 py-1.5">
+                                            <option value="">Pilih device</option>
+                                            {deviceTypes.filter(d => d.is_active).map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                        </select>
+                                    </label>
+                                    <select aria-label="Sumber akun" value={generateSource} onChange={e => { setGenerateSource(e.target.value as 'b2c' | 'company' | 'event'); setGenerateCompanyId(''); setGenerateEventId('') }} className="rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-xs">
+                                        <option value="b2c">Personal / B2C</option>
+                                        <option value="company">Company</option>
+                                        <option value="event">Event</option>
                                     </select>
+                                    {generateSource === 'company' && <select aria-label="Company tujuan" value={generateCompanyId} onChange={e => setGenerateCompanyId(e.target.value)} className="rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-xs">
+                                        <option value="">Pilih company</option>
+                                        {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    </select>}
+                                    {generateSource === 'event' && <select aria-label="Event tujuan" value={generateEventId} onChange={e => setGenerateEventId(e.target.value)} className="rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-xs">
+                                        <option value="">Pilih event</option>
+                                        {events.filter(e => e.is_active).map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                                    </select>}
                                     <span className="text-xs text-zinc-400 pl-2">Edition:</span>
                                     <select
                                         value={generateSpecialEdition}
@@ -1189,7 +1253,7 @@ export default function AdminPage() {
                                     </select>
                                     <button
                                         onClick={generateSerials}
-                                        disabled={generating}
+                                        disabled={generating || !!catalogError || !generateDeviceId || (generateSource === 'company' && !generateCompanyId) || (generateSource === 'event' && !generateEventId)}
                                         className="flex items-center gap-2 px-4 py-1.5 ml-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm disabled:opacity-50 text-xs font-medium"
                                     >
                                         {generating ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
@@ -1228,7 +1292,7 @@ export default function AdminPage() {
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    placeholder="Cari UUID, nama, email..."
+                                    placeholder="Cari UUID, nama, email, device, company, event..."
                                     className="w-full pl-11 pr-4 py-2.5 bg-white/50 backdrop-blur-sm border border-zinc-200 rounded-xl focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-zinc-900 placeholder-zinc-400"
                                 />
                             </div>
@@ -1265,6 +1329,49 @@ export default function AdminPage() {
                     </div>
                 )}
             </div>
+
+            {assignmentSerial && adminRole === 'super_admin' && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm">
+                <form onSubmit={async e => {
+                    e.preventDefault()
+                    setAssignmentSaving(true)
+                    setAssignmentError('')
+                    try {
+                        const res = await fetch('/api/admin/serials/assignment', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: assignmentSerial.id, device_type_id: assignmentSerial.device_type_id, company_id: assignmentSerial.company_id, event_id: assignmentSerial.event_id }) })
+                        const data = await res.json()
+                        if (!res.ok) throw new Error(data.error)
+                        await loadAllData(adminRole, adminCompanyId)
+                        setAssignmentSerial(null)
+                    } catch (err) { setAssignmentError(err instanceof Error ? err.message : 'Gagal menyimpan') }
+                    finally { setAssignmentSaving(false) }
+                }} className="w-full max-w-md space-y-4 rounded-2xl bg-white p-6 shadow-xl">
+                    <h2 className="text-lg font-semibold">Device dan Sumber Akun</h2>
+                    <p className="break-all text-xs text-zinc-500">{assignmentSerial.serial_uuid}</p>
+                    <label className="block text-sm">Jenis device
+                        <select required disabled={assignmentSaving} value={assignmentSerial.device_type_id || ''} onChange={e => setAssignmentSerial({ ...assignmentSerial, device_type_id: e.target.value || null })} className="mt-1 w-full rounded-lg border border-zinc-200 p-2">
+                            <option value="">Pilih device</option>
+                            {deviceTypes.filter(d => d.is_active || d.id === assignmentSerial.device_type_id).map(d => <option key={d.id} value={d.id}>{d.name}{!d.is_active ? ' (Nonaktif)' : ''}</option>)}
+                        </select>
+                    </label>
+                    <label className="block text-sm">Company
+                        <select disabled={assignmentSaving} value={assignmentSerial.company_id || ''} onChange={e => setAssignmentSerial({ ...assignmentSerial, company_id: e.target.value || null, event_id: null })} className="mt-1 w-full rounded-lg border border-zinc-200 p-2">
+                            <option value="">Tanpa company</option>
+                            {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                    </label>
+                    <label className="block text-sm">Event
+                        <select disabled={assignmentSaving} value={assignmentSerial.event_id || ''} onChange={e => setAssignmentSerial({ ...assignmentSerial, event_id: e.target.value || null, company_id: null })} className="mt-1 w-full rounded-lg border border-zinc-200 p-2">
+                            <option value="">Tanpa event</option>
+                            {events.filter(ev => ev.is_active || ev.id === assignmentSerial.event_id).map(ev => <option key={ev.id} value={ev.id}>{ev.name}{!ev.is_active ? ' (Nonaktif)' : ''}</option>)}
+                        </select>
+                    </label>
+                    <p className="text-xs text-zinc-500">Pilih company atau event. Kosongkan keduanya untuk akun personal. Pengaturan ini berlaku untuk serial ini.</p>
+                    {assignmentError && <p role="alert" className="text-sm text-red-600">{assignmentError}</p>}
+                    <div className="flex justify-end gap-2">
+                        <button type="button" disabled={assignmentSaving} onClick={() => setAssignmentSerial(null)} className="rounded-lg px-4 py-2 text-sm">Batal</button>
+                        <button disabled={assignmentSaving || !!catalogError} className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50">{assignmentSaving ? 'Menyimpan...' : 'Simpan'}</button>
+                    </div>
+                </form>
+            </div>}
 
             {/* Edit User Modal */}
             <AnimatePresence>

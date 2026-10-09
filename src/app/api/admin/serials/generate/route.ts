@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { adminSession } from '@/lib/admin-session'
+import { validateSerialAssignment } from '@/lib/serial-assignment.mjs'
 
 export async function POST(req: Request) {
     try {
@@ -9,17 +10,18 @@ export async function POST(req: Request) {
         if (session.actor.role !== 'super_admin' && session.actor.role !== 'company_admin') {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
-        const { count, company_id, special_edition } = await req.json()
-
-        if (!Number.isInteger(count) || count < 1 || count > 100) {
-            return NextResponse.json({ error: 'Count must be between 1 and 100' }, { status: 400 })
-        }
-        if (session.actor.role === 'company_admin' && (!session.actor.companyId || (company_id && company_id !== session.actor.companyId))) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-        }
-
-        // Use service role to bypass RLS
+        const input = await req.json()
+        const { count, company_id, special_edition, device_type_id, event_id } = input
+        const validation = validateSerialAssignment(session.actor, input)
+        if (validation) return NextResponse.json({ error: validation }, { status: validation === 'Forbidden' ? 403 : 400 })
         const supabaseAdmin = session.admin
+        for (const [table, id] of [['device_types', device_type_id], ['events', event_id], ['companies', company_id]]) {
+            if (!id) continue
+            let query = supabaseAdmin.from(table).select('id').eq('id', id)
+            if (table !== 'companies') query = query.eq('is_active', true)
+            const { data, error } = await query.maybeSingle()
+            if (error || !data) return NextResponse.json({ error: `Pilihan ${table} tidak tersedia atau sudah nonaktif` }, { status: 400 })
+        }
 
         // 1. Find or create a master product
         let { data: product } = await supabaseAdmin
@@ -54,6 +56,8 @@ export async function POST(req: Request) {
         const newSerials = Array.from({ length: count }).map(() => ({
             serial_uuid: randomUUID(),
             product_id: product!.id,
+            device_type_id: device_type_id || null,
+            event_id: event_id || null,
             is_claimed: false,
             nfc_tap_count: 0,
             company_id: session.actor.role === 'company_admin' ? session.actor.companyId : company_id || null,
@@ -77,8 +81,8 @@ export async function POST(req: Request) {
             count: inserted?.length || count,
             message: `Successfully generated ${inserted?.length || count} serials`
         })
-    } catch (e: any) {
+    } catch (e) {
         console.error('Generate Serials API error:', e)
-        return NextResponse.json({ error: e.message || 'Internal Server Error' }, { status: 500 })
+        return NextResponse.json({ error: e instanceof Error ? e.message : 'Internal Server Error' }, { status: 500 })
     }
 }
