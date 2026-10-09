@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Bot, BriefcaseBusiness, CalendarDays, MessageCircle, Send, Sparkles, UserRound, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import MeetingRequestDialog, { type BookingInfo } from '@/components/meetings/MeetingRequestDialog'
@@ -100,8 +101,8 @@ export default function Concierge({ profile, onConnect }: { profile: { id: strin
             {bookingInfo && !actions.includes('Book a meeting') && <button type="button" onClick={() => setMeetingOpen(true)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3 text-[12px] text-white"><CalendarDays className="h-4 w-4" />{t('Book a meeting')}</button>}
             <button onClick={() => setOpen(true)} className="mt-3 inline-flex items-center gap-2 text-[12px] font-medium text-ink-2 hover:text-ink"><Bot className="h-4 w-4" />{t('Ask something else')}</button>
         </section>
-        {open && <div className="fixed inset-0 z-[110] flex items-end bg-ink/35 p-0 sm:items-center sm:justify-center sm:p-4" onMouseDown={event => event.target === event.currentTarget && setOpen(false)}>
-            <section role="dialog" aria-modal="true" aria-label={t('AI concierge')} className="flex h-[min(680px,92vh)] w-full max-w-lg flex-col overflow-hidden rounded-t-card bg-surface shadow-2xl sm:rounded-card">
+        {open && createPortal(<div className="fixed inset-0 z-[110] flex items-center justify-center bg-ink/35 p-4 text-ink" onMouseDown={event => event.target === event.currentTarget && setOpen(false)}>
+            <section role="dialog" aria-modal="true" aria-label={t('AI concierge')} className="flex h-[min(680px,calc(100dvh-2rem))] w-full max-w-lg flex-col overflow-hidden rounded-card bg-surface shadow-2xl">
                 <header className="flex items-center justify-between border-b border-ink/10 p-4">
                     <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fill-subtle"><Bot className="h-5 w-5" /></span><div><p className="text-[14px] font-semibold">{settings.persona || 'AI Concierge'}</p><p className="text-[11px] text-ink-2">For {profile.display_name}</p></div></div>
                     <button onClick={() => setOpen(false)} aria-label={t('Close concierge')} className="rounded-full p-2 text-ink-2 hover:bg-fill-subtle"><X className="h-5 w-5" /></button>
@@ -118,7 +119,7 @@ export default function Concierge({ profile, onConnect }: { profile: { id: strin
                     <form onSubmit={event => { event.preventDefault(); void ask(input) }} className="flex gap-2"><input value={input} disabled={busy} maxLength={1000} onChange={event => setInput(event.target.value)} placeholder={t('Ask a question…')} className="min-w-0 flex-1 rounded-full bg-fill-subtle px-4 py-3 text-[13px] outline-none" /><button disabled={busy || !input.trim()} aria-label={t('Send question')} className="rounded-full bg-ink p-3 text-white disabled:opacity-40"><Send className="h-4 w-4" /></button></form>
                 </div>
             </section>
-        </div>}
+        </div>, document.body)}
         {meetingOpen && bookingInfo && <MeetingRequestDialog slug={profile.slug} info={bookingInfo} onClose={() => setMeetingOpen(false)} />}
     </>
 }
