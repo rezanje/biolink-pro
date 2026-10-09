@@ -71,7 +71,7 @@ export default function PrivacyPage() {
         </section>
         <section id="contact">
             <h2>10. Kontak privasi</h2>
-            <p>Untuk pertanyaan privasi atau permintaan akses, koreksi, dan penghapusan data, hubungi Gentanala melalui <a href="mailto:rezarahman@gentanala.com">rezarahman@gentanala.com</a>. Sebutkan email akun atau tautan profil yang terkait dan jenis permintaan Anda. Jangan mengirim kata sandi atau token akses.</p>
+            <p>Untuk pertanyaan privasi atau permintaan akses, koreksi, dan penghapusan data, hubungi Gentanala melalui <a href="mailto:gentanala.id@gmail.com">gentanala.id@gmail.com</a>. Sebutkan email akun atau tautan profil yang terkait dan jenis permintaan Anda. Jangan mengirim kata sandi atau token akses.</p>
             <p className="mt-4">Lihat juga <Link href="/terms">Terms of Service</Link>.</p>
         </section>
     </>

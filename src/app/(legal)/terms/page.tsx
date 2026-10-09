@@ -72,7 +72,7 @@ export default function TermsPage() {
         </section>
         <section id="contact">
             <h2>12. Kontak layanan</h2>
-            <p>Untuk pertanyaan tentang layanan, akun, atau ketentuan ini, hubungi Gentanala melalui <a href="mailto:rezarahman@gentanala.com">rezarahman@gentanala.com</a>. Untuk informasi tentang pemrosesan data, lihat <Link href="/privacy">Privacy Policy</Link>.</p>
+            <p>Untuk pertanyaan tentang layanan, akun, atau ketentuan ini, hubungi Gentanala melalui <a href="mailto:gentanala.id@gmail.com">gentanala.id@gmail.com</a>. Untuk informasi tentang pemrosesan data, lihat <Link href="/privacy">Privacy Policy</Link>.</p>
         </section>
     </>
 }
