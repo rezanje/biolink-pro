@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from "next/link"
+import { LegalLinks } from "@/components/legal/LegalLinks"
 import { motion, useScroll, useTransform } from "framer-motion"
 import {
   ArrowRight,
@@ -492,6 +493,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="max-w-6xl mx-auto mt-12 pt-8 border-t border-zinc-200/40">
+            <div className="mb-5"><LegalLinks /></div>
             <p className="text-[12px] font-medium text-zinc-300 uppercase tracking-widest">
               © 2026 Gentanala Studio. All rights reserved.
             </p>

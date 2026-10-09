@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LegalLinks } from "@/components/legal/LegalLinks";
 
 export const metadata: Metadata = {
     title: "Login - GenHub",
@@ -13,6 +14,7 @@ export default function AuthLayout({
     return (
         <>
             {children}
+            <footer className="bg-white px-6 py-6"><LegalLinks /></footer>
         </>
     );
 }

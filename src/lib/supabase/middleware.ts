@@ -35,11 +35,11 @@ export async function updateSession(request: NextRequest) {
     const pathname = request.nextUrl.pathname
 
     // Public routes yang tidak perlu auth
-    const publicRoutes = ['/', '/login', '/register']
+    const publicRoutes = ['/privacy', '/terms', '/', '/login', '/register']
     const isPublicRoute = publicRoutes.includes(pathname)
 
     // Check if it's a public profile route (any slug at root level except reserved routes)
-    const reservedPaths = ['login', 'register', 'dashboard', 'activate', 'api', '_next', 'favicon.ico']
+    const reservedPaths = ['privacy', 'terms', 'login', 'register', 'dashboard', 'activate', 'api', '_next', 'favicon.ico']
     const pathSegments = pathname.split('/').filter(Boolean)
     const isPublicProfile = pathSegments.length === 1 && !reservedPaths.includes(pathSegments[0])
 
