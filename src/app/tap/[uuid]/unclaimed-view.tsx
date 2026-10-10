@@ -229,7 +229,7 @@ export function UnclaimedView({ serial }: UnclaimedViewProps) {
                 transition={{ duration: 0.6 }}
                 className="relative z-10 max-w-md w-full"
             >
-                {/* Product Image */}
+                {/* Intro video */}
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -237,11 +237,19 @@ export function UnclaimedView({ serial }: UnclaimedViewProps) {
                     className="relative mb-8"
                 >
                     <div className="w-full bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 rounded-3xl border border-zinc-800/50 backdrop-blur-sm overflow-hidden">
-                        <img
-                            src="https://damgyhadhnirwabekbvs.supabase.co/storage/v1/object/public/public-assets/7a9c1211-b7bf-4f1d-8da5-57c3ea8e9072/Image%2019-02-26%20at%2020.30.png"
-                            alt="Gentanala Product"
-                            className="w-full h-auto shadow-2xl"
-                        />
+                        <video
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            controls
+                            preload="metadata"
+                            aria-label="Gentanala intro"
+                            className="block w-full h-auto shadow-2xl"
+                        >
+                            <source src="/videos/gentanala-intro.mp4" type="video/mp4" />
+                            Browser Anda tidak mendukung pemutaran video.
+                        </video>
                     </div>
 
                     {/* Sparkle badge */}
