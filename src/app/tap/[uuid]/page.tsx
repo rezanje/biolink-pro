@@ -216,14 +216,14 @@ export default function TapPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+            <div className="min-h-screen bg-canvas font-kabut text-ink flex items-center justify-center">
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="text-center"
                 >
-                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-4" />
-                    <p className="text-zinc-400">Loading...</p>
+                    <Loader2 className="w-8 h-8 text-coral animate-spin mx-auto mb-4" />
+                    <p className="text-ink-2">Loading...</p>
                 </motion.div>
             </div>
         )
