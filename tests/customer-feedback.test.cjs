@@ -263,7 +263,7 @@ test('translation uses only the fixed free OpenRouter model and keeps credential
     assert.equal(response.status, 200)
     assert.equal(request.url, 'https://openrouter.ai/api/v1/chat/completions')
     assert.equal(request.headers.Authorization, 'Bearer test-key')
-    assert.equal(request.body.model, 'google/gemma-4-26b-a4b-it:free')
+    assert.equal(request.body.model, 'dots-studio/dots-3-note-preview:free')
     assert.equal(request.body.provider.max_price.prompt, 0)
     assert.equal(request.body.provider.max_price.completion, 0)
     assert.ok(request.body.messages[0].content.includes('Mandarin Chinese'))

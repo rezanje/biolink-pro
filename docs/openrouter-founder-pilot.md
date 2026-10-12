@@ -1,8 +1,8 @@
 # OpenRouter founder translation pilot
 
-Status: implemented and tested locally; not activated in production.
+Status: implementation verified; server credential saved as Secret for Production and Preview. Production release pending.
 
-The interpreter uses `google/gemma-4-26b-a4b-it:free` through the OpenRouter chat completions endpoint. The model is fixed server-side, with zero maximum prompt/completion prices. There is no paid model or Gemini fallback. Founder authorization, public translation pause, input validation, origin validation and 30-second timeout remain intact. Other AI features still use their existing provider.
+The interpreter uses `dots-studio/dots-3-note-preview:free` through the OpenRouter chat completions endpoint. The model is fixed server-side, with zero maximum prompt/completion prices. There is no paid model or Gemini fallback. Founder authorization, public translation pause, input validation, origin validation and 30-second timeout remain intact. Other AI features still use their existing provider.
 
 ## Activation
 
@@ -15,8 +15,8 @@ Without the key, the route returns a safe unavailable response and never calls a
 
 ## Verification
 
-45 Node tests passed, TypeScript check passed, targeted ESLint passed, production build passed. Coverage includes founder-only access, spoofed model rejection, OpenRouter request shape, successful Mandarin fixture, missing key, provider quota errors and malformed answers.
+45 Node tests passed, TypeScript check passed, targeted ESLint passed, production build passed. After replacing the unavailable Gemma model, all 45 tests and TypeScript passed again. Coverage includes founder-only access, spoofed model rejection, OpenRouter request shape, successful Mandarin fixture, missing key, provider quota errors and malformed answers.
 
-No actual OpenRouter completion or phone voice/playback test has run. Local environment has no OpenRouter key. Production environment was not changed. No credits purchased or paid fallback enabled.
+Actual OpenRouter tests on 2026-10-12: Gemma 4 26B and 31B returned provider-capacity HTTP 429. The fixed Dots3-Note Preview free model returned HTTP 200, valid translatedText JSON, and usage.cost=0 for Indonesian greetings to Mandarin (17.3 seconds), Mandarin greetings to Indonesian (8.0 seconds), and Indonesian pricing/shipping questions to Mandarin (3.8 seconds). This is a small phrase check, not a professional quality benchmark. Account quota was 50/day; dedicated key has $0.01 total limit and expires after 30 days. No credits purchased or paid fallback enabled. Phone voice/playback and authenticated production completion remain untested. Temporary credential file is used only for direct provider tests and must be removed after verification.
 
-Official references: https://openrouter.ai/docs/quickstart ; https://openrouter.ai/docs/guides/routing/provider-selection ; https://openrouter.ai/google/gemma-4-26b-a4b-it:free
+Official references: https://openrouter.ai/docs/quickstart ; https://openrouter.ai/docs/guides/routing/provider-selection ; https://openrouter.ai/dots-studio/dots-3-note-preview:free

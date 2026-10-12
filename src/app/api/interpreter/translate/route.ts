@@ -42,7 +42,7 @@ export async function POST(req: Request) {
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
             signal: AbortSignal.timeout(30_000),
             body: JSON.stringify({
-                model: 'google/gemma-4-26b-a4b-it:free',
+                model: 'dots-studio/dots-3-note-preview:free',
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0,
                 max_tokens: 1000,
