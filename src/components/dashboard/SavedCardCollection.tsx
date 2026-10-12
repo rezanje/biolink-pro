@@ -136,7 +136,7 @@ export default function SavedCardCollection() {
 
     return <section id="saved" aria-labelledby="card-collection-heading" className="scroll-mt-6">
         <div className="flex items-start justify-between gap-3">
-            <div><h2 id="card-collection-heading" className="text-[20px] font-semibold tracking-[-0.025em]">{t('Cards Collection')}</h2><p className="mt-1 text-[12.5px] text-ink-2">{t('Your network, organized your way.')}</p></div>
+            <div><h2 id="card-collection-heading" className="text-[20px] font-semibold tracking-[-0.025em]">{t('Cards Collection')}</h2><p className="mt-1 text-[12.5px] text-ink-2">{t('Saved digital cards from fellow Gentanala NFC card owners.')}</p></div>
             <button type="button" onClick={() => openAction({ kind: 'create' })} disabled={loading || loadError || busy} className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-ink px-3.5 py-2.5 text-[12px] font-medium text-white shadow-ink disabled:opacity-50"><FolderPlus className="h-4 w-4" />{t('New folder')}</button>
         </div>
 
