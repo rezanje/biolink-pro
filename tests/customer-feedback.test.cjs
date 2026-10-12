@@ -127,9 +127,10 @@ test('lead read failure shows an alert rather than an empty contacts claim', asy
 })
 
 async function translateWithProvider(status, payload, options = {}) {
-    const previous = { fetch: global.fetch, key: process.env.GOOGLE_GEMINI_API_KEY }
-    process.env.GOOGLE_GEMINI_API_KEY = 'test-key'
-    global.fetch = async () => { options.onFetch?.(); return new Response(JSON.stringify(payload), { status }) }
+    const previous = { fetch: global.fetch, key: process.env.OPENROUTER_API_KEY }
+    if (options.missingKey) delete process.env.OPENROUTER_API_KEY
+    else process.env.OPENROUTER_API_KEY = 'test-key'
+    global.fetch = async (url, init) => { options.onFetch?.(url, init); return new Response(JSON.stringify(payload), { status }) }
     const policy = await import('../src/lib/profile-display.mjs')
     const route = load('src/app/api/interpreter/translate/route.ts', {
         '@/lib/supabase/server': { createClient: async () => ({
@@ -145,8 +146,8 @@ async function translateWithProvider(status, payload, options = {}) {
         }))
     } finally {
         global.fetch = previous.fetch
-        if (previous.key === undefined) delete process.env.GOOGLE_GEMINI_API_KEY
-        else process.env.GOOGLE_GEMINI_API_KEY = previous.key
+        if (previous.key === undefined) delete process.env.OPENROUTER_API_KEY
+        else process.env.OPENROUTER_API_KEY = previous.key
     }
 }
 
@@ -157,7 +158,7 @@ test('depleted provider balance gives an unavailable message without billing or 
 })
 
 test('successful translation still returns the spoken sentence and translated text', async () => {
-    const response = await translateWithProvider(200, { candidates: [{ content: { parts: [{ text: '{"translatedText":"Good morning"}' }] } }] })
+    const response = await translateWithProvider(200, { choices: [{ message: { content: '{"translatedText":"Good morning"}' } }] })
     assert.equal(response.status, 200)
     assert.deepEqual(await response.json(), { sourceText: 'Selamat pagi', translatedText: 'Good morning' })
 })
@@ -249,5 +250,37 @@ test('direct interpreter page hides the recording panel for non-founder users', 
         }).default
         const panels = nodes(Page(), node => node.type === Panel)
         assert.equal(panels.length, canTranslate ? 1 : 0)
+    }
+})
+
+
+test('translation uses only the fixed free OpenRouter model and keeps credentials server-side', async () => {
+    let request
+    const response = await translateWithProvider(200, { choices: [{ message: { content: '{"translatedText":"早上好"}' } }] }, {
+        body: { targetLanguage: 'Mandarin Chinese', model: 'paid/model' },
+        onFetch: (url, init) => { request = { url, ...init, body: JSON.parse(init.body) } },
+    })
+    assert.equal(response.status, 200)
+    assert.equal(request.url, 'https://openrouter.ai/api/v1/chat/completions')
+    assert.equal(request.headers.Authorization, 'Bearer test-key')
+    assert.equal(request.body.model, 'dots-studio/dots-3-note-preview:free')
+    assert.equal(request.body.provider.max_price.prompt, 0)
+    assert.equal(request.body.provider.max_price.completion, 0)
+    assert.ok(request.body.messages[0].content.includes('Mandarin Chinese'))
+    assert.equal((await response.json()).translatedText, '早上好')
+})
+
+test('missing OpenRouter configuration never falls back to a paid provider', async () => {
+    let calls = 0
+    const response = await translateWithProvider(200, {}, { missingKey: true, onFetch: () => calls++ })
+    assert.equal(response.status, 503)
+    assert.equal(calls, 0)
+})
+
+test('free provider capacity and malformed answers fail safely', async () => {
+    for (const [status, payload, expected] of [[429, {error: {message: 'Private account details'}}, 503], [200, {choices: [{message: {content: 'invalid'}}]}, 502]]) {
+        const response = await translateWithProvider(status, payload)
+        assert.equal(response.status, expected)
+        assert.ok(!(await response.text()).includes('Private account details'))
     }
 })
