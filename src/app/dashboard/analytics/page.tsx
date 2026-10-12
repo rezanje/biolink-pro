@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -22,6 +22,7 @@ import {
     Linkedin,
     MessageCircle,
     Search,
+    RefreshCw,
     X,
 } from 'lucide-react'
 import AnimatedNumber from '@/components/motion/AnimatedNumber'
@@ -108,29 +109,29 @@ export default function AnalyticsPage() {
     const [leadSearch, setLeadSearch] = useState('')
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
     const [loadingLeads, setLoadingLeads] = useState(false)
+    const [leadsError, setLeadsError] = useState(false)
+    const leadsRequest = useRef(0)
 
     useEffect(() => {
         fetchAnalytics()
     }, [dateRange])
 
-    useEffect(() => {
-        fetchLeads()
-    }, [statusFilter, dateFrom, dateTo, leadSearch, sortOrder])
-
-    const fetchLeads = async () => {
+    const fetchLeads = useCallback(async () => {
+        const request = ++leadsRequest.current
         try {
             setLoadingLeads(true)
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
+            setLeadsError(false)
+            const { data: { user }, error: authError } = await supabase.auth.getUser()
+            if (authError || !user) throw new Error('Session unavailable')
 
             // Get profile ID first (we need it for the query)
-            const { data: profile } = await supabase
+            const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('id')
                 .eq('user_id', user.id)
                 .single()
 
-            if (!profile) return
+            if (profileError || !profile) throw new Error('Profile unavailable')
 
             let query = supabase
                 .from('leads')
@@ -154,18 +155,29 @@ export default function AnalyticsPage() {
 
             const { data: leads, error } = await query
 
-            if (error) {
-                console.error('Error fetching leads:', error)
-            } else {
-                setRecentLeads(leads || [])
-                setLeadsExpanded(false)
-            }
-        } catch (err) {
-            console.error('Error in fetchLeads:', err)
+            if (request !== leadsRequest.current) return
+            if (error) throw error
+            setRecentLeads(leads || [])
+            setLeadsExpanded(false)
+        } catch {
+            if (request === leadsRequest.current) setLeadsError(true)
         } finally {
-            setLoadingLeads(false)
+            if (request === leadsRequest.current) setLoadingLeads(false)
         }
-    }
+    }, [supabase, statusFilter, dateFrom, dateTo, leadSearch, sortOrder])
+
+    useEffect(() => {
+        void fetchLeads()
+        const refresh = () => {
+            if (document.visibilityState === 'visible') void fetchLeads()
+        }
+        window.addEventListener('focus', refresh)
+        document.addEventListener('visibilitychange', refresh)
+        return () => {
+            window.removeEventListener('focus', refresh)
+            document.removeEventListener('visibilitychange', refresh)
+        }
+    }, [fetchLeads])
 
     const fetchAnalytics = async () => {
         try {
@@ -402,13 +414,24 @@ export default function AnalyticsPage() {
                 <section className="mt-4 border-t border-hairline pt-7">
                     <div className="flex items-center justify-between gap-3">
                         <h2 className="text-[19px] font-semibold tracking-[-0.025em]">{t('Leads')}</h2>
-                        <button
-                            onClick={exportLeads}
-                            className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-[12.5px] font-medium text-white shadow-ink transition-transform active:scale-[0.98]"
-                        >
-                            <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
-                            {t('Export')}
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => void fetchLeads()}
+                                disabled={loadingLeads}
+                                aria-label={t('Refresh leads')}
+                                className="rounded-full bg-surface p-2 text-ink-2 shadow-row disabled:opacity-50"
+                            >
+                                <RefreshCw className="h-4 w-4" />
+                            </button>
+                            <button
+                                onClick={exportLeads}
+                                className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-[12.5px] font-medium text-white shadow-ink transition-transform active:scale-[0.98]"
+                            >
+                                <Download className="h-3.5 w-3.5" strokeWidth={1.8} />
+                                {t('Export')}
+                            </button>
+                        </div>
                     </div>
 
                     <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
@@ -491,6 +514,10 @@ export default function AnalyticsPage() {
                     {loadingLeads ? (
                         <div className="mt-4 flex justify-center py-12">
                             <Loader2 className="h-6 w-6 animate-spin text-ink-3" />
+                        </div>
+                    ) : leadsError ? (
+                        <div role="alert" className="mt-4 rounded-card bg-coral-soft p-4 text-[12.5px] text-coral-soft-ink">
+                            {t('Could not load contacts. Please refresh to try again.')}
                         </div>
                     ) : recentLeads.length > 0 ? (
                         <>
