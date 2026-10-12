@@ -58,9 +58,14 @@ export async function POST(req: Request) {
             }),
         })
         const data = await response.json().catch(() => ({}))
+        if (!response.ok) {
+            console.error('Interpreter provider request failed', { status: response.status })
+            if (response.status === 402) return NextResponse.json({ error: 'Translation is temporarily unavailable. Please try again later.' }, { status: 503 })
+            return NextResponse.json({ error: 'Could not translate that sentence. Please try again.' }, { status: 502 })
+        }
         const answer = data?.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text || '').join('')
         const translatedText = extractAnswer(answer)
-        if (!response.ok || !translatedText) return NextResponse.json({ error: 'Could not translate that sentence. Please try again.' }, { status: 502 })
+        if (!translatedText) return NextResponse.json({ error: 'Could not translate that sentence. Please try again.' }, { status: 502 })
         return NextResponse.json({ sourceText, translatedText })
     } catch {
         return NextResponse.json({ error: 'Could not translate that sentence. Please try again.' }, { status: 500 })

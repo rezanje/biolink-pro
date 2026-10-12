@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Loader2, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { useUiLanguage } from '@/components/UiLanguageProvider'
+import { translate } from '@/lib/ui-language.mjs'
 
 interface LeadCaptureModalProps {
     isOpen: boolean
@@ -14,7 +14,7 @@ interface LeadCaptureModalProps {
 }
 
 export default function LeadCaptureModal({ isOpen, onClose, profileId, profileName }: LeadCaptureModalProps) {
-    const { t } = useUiLanguage()
+    const t = (message: string, variables?: Record<string, string | number>) => translate(message, 'en', variables)
     const supabase = createClient()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
@@ -40,18 +40,6 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
         setIsSubmitting(true)
 
         try {
-            // Debug log
-            console.log('Submitting Lead Payload:', {
-                profile_id: profileId,
-                name: formData.name.trim() || null,
-                job_title: formData.job_title.trim() || null,
-                whatsapp: formData.whatsapp.trim(),
-                email: formData.email.trim() || null,
-                company: formData.company.trim() || null,
-                linkedin: formData.linkedin.trim() || null,
-                wechat_id: formData.wechat_id.trim() || null
-            })
-
             // Insert lead to Supabase
             const { error } = await supabase
                 .from('leads')
@@ -126,6 +114,7 @@ export default function LeadCaptureModal({ isOpen, onClose, profileId, profileNa
                                 damping: 25,
                                 mass: 1.2
                             }}
+                            lang="en"
                             className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-card border border-white/20 bg-white/80 p-6 shadow-2xl ring-1 ring-black/5 pointer-events-auto relative backdrop-blur-xl sm:p-8"
                         >
                             {/* Close button */}

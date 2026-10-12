@@ -63,7 +63,7 @@ export default function InterpreterPanel({ profileSlug }: { profileSlug?: string
             const data = await response.json().catch(() => ({}))
             if (!response.ok || typeof data.translatedText !== 'string') throw new Error(data.error || t('Could not translate that sentence.'))
             setTranslatedText(data.translatedText)
-        } catch (error) { setNotice((error as Error).message) } finally { setProcessing(false) }
+        } catch (error) { setNotice(t((error as Error).message)) } finally { setProcessing(false) }
     }
 
     const stopListening = () => {
