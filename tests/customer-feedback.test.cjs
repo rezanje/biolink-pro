@@ -126,22 +126,22 @@ test('lead read failure shows an alert rather than an empty contacts claim', asy
     } finally { Object.assign(global, previous) }
 })
 
-async function translateWithProvider(status, payload) {
+async function translateWithProvider(status, payload, options = {}) {
     const previous = { fetch: global.fetch, key: process.env.GOOGLE_GEMINI_API_KEY }
     process.env.GOOGLE_GEMINI_API_KEY = 'test-key'
-    global.fetch = async () => new Response(JSON.stringify(payload), { status })
-    const { canUsePublicTranslate } = await import('../src/lib/profile-display.mjs')
+    global.fetch = async () => { options.onFetch?.(); return new Response(JSON.stringify(payload), { status }) }
+    const policy = await import('../src/lib/profile-display.mjs')
     const route = load('src/app/api/interpreter/translate/route.ts', {
         '@/lib/supabase/server': { createClient: async () => ({
-            auth: { getUser: async () => ({ data: { user: null } }) },
+            auth: { getUser: async () => ({ data: { user: options.user === undefined ? { id: '47a89ca1-a84b-429d-a7d4-cabb92b5508e' } : options.user }, error: options.authError || null }) },
             from: () => ({ select() { return this }, eq() { return this }, maybeSingle: async () => ({ data: { tier: 'PREMIUM', is_public: true, theme: {} } }) }),
         }) },
-        '@/lib/profile-display.mjs': { canUsePublicTranslate },
+        '@/lib/profile-display.mjs': policy,
     })
     try {
         return await route.POST(new Request('https://example.com/api/interpreter/translate', {
             method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'https://example.com' },
-            body: JSON.stringify({ sourceText: 'Selamat pagi', sourceLanguage: 'Indonesian', targetLanguage: 'English', slug: 'owner' }),
+            body: JSON.stringify({ sourceText: 'Selamat pagi', sourceLanguage: 'Indonesian', targetLanguage: 'English', ...(options.body || {}) }),
         }))
     } finally {
         global.fetch = previous.fetch
@@ -218,4 +218,36 @@ test('an older dashboard request cannot overwrite the newest lead results', asyn
         assert.equal(nodes(tree, node => node.props?.children === 'Outdated visitor').length, 0)
         cleanup.forEach(fn => typeof fn === 'function' && fn())
     } finally { Object.assign(global, previous) }
+})
+
+
+test('translation rejects anonymous and non-founder callers before any provider request', async () => {
+    for (const user of [null, { id: 'ordinary-premium-user' }, { id: '53702a75-c7b3-41f9-8ec6-7571fa4518fc', role: 'super_admin' }]) {
+        let calls = 0
+        const response = await translateWithProvider(200, {}, {
+            user, onFetch: () => calls++, body: { slug: 'rezanje', userId: '47a89ca1-a84b-429d-a7d4-cabb92b5508e', role: 'super_admin' },
+        })
+        assert.equal(response.status, 403)
+        assert.equal(calls, 0)
+    }
+})
+
+test('translation fails closed if the founder session cannot be verified', async () => {
+    let calls = 0
+    const response = await translateWithProvider(200, {}, { authError: new Error('Invalid session'), onFetch: () => calls++ })
+    assert.equal(response.status, 403)
+    assert.equal(calls, 0)
+})
+
+test('direct interpreter page hides the recording panel for non-founder users', () => {
+    function Panel() {}
+    for (const canTranslate of [false, true]) {
+        const Page = load('src/app/dashboard/interpreter/page.tsx', {
+            '@/app/dashboard/tier-context': { useTier: () => ({ canTranslate, isLoading: false, hasFeature: () => true }) },
+            '@/components/UiLanguageProvider': { useUiLanguage: () => english },
+            '@/components/interpreter/InterpreterPanel': Panel,
+        }).default
+        const panels = nodes(Page(), node => node.type === Panel)
+        assert.equal(panels.length, canTranslate ? 1 : 0)
+    }
 })

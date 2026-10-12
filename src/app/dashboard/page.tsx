@@ -15,6 +15,7 @@ import PetSprite from '@/components/pet/PetSprite'
 import { PET_FEATURE_ENABLED, petDisplayName, selectPetCharacter } from '@/lib/pet/pet-selection.mjs'
 import AnimatedNumber from '@/components/motion/AnimatedNumber'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
+import { useTier } from '@/app/dashboard/tier-context'
 
 type LinkRow = { id?: string; title?: string; url?: string; is_active?: boolean }
 type DashProfile = {
@@ -70,6 +71,7 @@ function Impact({
 }
 
 export default function DashboardPage() {
+    const { canTranslate } = useTier()
     const { t, locale } = useUiLanguage()
     const numberLocale = locale === 'id' ? 'id-ID' : locale === 'zh-CN' ? 'zh-CN' : 'en-US'
     const router = useRouter()
@@ -391,7 +393,7 @@ export default function DashboardPage() {
                 <ArrowUpRight className="h-[18px] w-[18px] shrink-0 text-white/60" strokeWidth={2} />
             </Link>
 
-            {profile.tier !== 'FREE' && (
+            {canTranslate && (
                 <Link
                     href="/dashboard/interpreter"
                     className="mt-3 flex items-center gap-3.5 rounded-card-sm bg-surface p-4 shadow-row transition-transform active:scale-[0.99]"

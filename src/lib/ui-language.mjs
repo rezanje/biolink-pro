@@ -11,6 +11,7 @@ export function uiLanguage(value) {
 }
 
 export const UI_MESSAGES = {
+    'Live Translate is temporarily unavailable.': ['Terjemahan Langsung sementara tidak tersedia.', '实时翻译暂时不可用。'],
     'Refresh leads': ['Perbarui leads', '刷新联系人'],
     'Could not load contacts. Please refresh to try again.': ['Kontak gagal dimuat. Coba perbarui daftar.', '无法加载联系人。请刷新重试。'],
     'Translation is temporarily unavailable. Please try again later.': ['Terjemahan sementara tidak tersedia. Coba lagi nanti.', '翻译暂时不可用。请稍后重试。'],

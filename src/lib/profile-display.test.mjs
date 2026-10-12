@@ -18,11 +18,18 @@ assert.equal(isPublicTranslateEnabled({ public_translate_enabled: true }), true)
 assert.equal(isPublicTranslateEnabled({ public_translate_enabled: false }), false)
 
 for (const tier of ['PREMIUM', 'B2B']) {
-    assert.equal(canUsePublicTranslate({ tier }), true)
-    assert.equal(canUsePublicTranslate({ tier, theme: { public_translate_enabled: true } }), true)
+    assert.equal(canUsePublicTranslate({ tier }), false)
+    assert.equal(canUsePublicTranslate({ tier, theme: { public_translate_enabled: true } }), false)
     assert.equal(canUsePublicTranslate({ tier, theme: { public_translate_enabled: false } }), false)
     assert.equal(canUsePublicTranslate({ tier, is_public: false }), false)
 }
 assert.equal(canUsePublicTranslate({ tier: 'FREE', theme: { public_translate_enabled: true } }), false)
 assert.equal(canUsePublicTranslate(null), false)
 assert.equal(canUsePublicTranslate(undefined), false)
+
+assert.equal(typeof profileDisplay.canUseInterpreter, 'function')
+const founder = '47a89ca1-a84b-429d-a7d4-cabb92b5508e'
+assert.equal(profileDisplay.canUseInterpreter(founder), true)
+for (const user of [undefined, null, '', 'another-user', 'rezarezanje@gmail.com', '53702a75-c7b3-41f9-8ec6-7571fa4518fc', { id: founder }]) {
+    assert.equal(profileDisplay.canUseInterpreter(user), false)
+}

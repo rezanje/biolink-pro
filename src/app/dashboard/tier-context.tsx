@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { canUseInterpreter } from '@/lib/profile-display.mjs'
 
 type Tier = 'FREE' | 'PREMIUM' | 'B2B'
 
@@ -13,6 +13,7 @@ interface TierConfigs {
 interface TierContextType {
     tier: Tier
     isLoading: boolean
+    canTranslate: boolean
     hasFeature: (feature: string) => boolean
     features: TierConfigs
 }
@@ -20,6 +21,7 @@ interface TierContextType {
 const TierContext = createContext<TierContextType>({
     tier: 'FREE',
     isLoading: true,
+    canTranslate: false,
     hasFeature: () => false,
     features: {}
 })
@@ -32,13 +34,15 @@ export function TierProvider({ children }: { children: React.ReactNode }) {
         B2B: {}
     })
     const [isLoading, setIsLoading] = useState(true)
+    const [canTranslate, setCanTranslate] = useState(false)
     const supabase = createClient()
 
     useEffect(() => {
         const init = async () => {
             try {
                 // 1. Get current user
-                const { data: { user } } = await supabase.auth.getUser()
+                const { data: { user }, error: authError } = await supabase.auth.getUser()
+                setCanTranslate(!authError && canUseInterpreter(user?.id))
 
                 if (user) {
                     // 2. Get profile tier
@@ -71,8 +75,8 @@ export function TierProvider({ children }: { children: React.ReactNode }) {
                     .select('*')
 
                 if (configs) {
-                    const configMap: any = {}
-                    configs.forEach((c: any) => {
+                    const configMap: Record<Tier, TierConfigs> = { FREE: {}, PREMIUM: {}, B2B: {} }
+                    configs.forEach((c: { tier: Tier; features: TierConfigs }) => {
                         configMap[c.tier] = c.features
                     })
                     setTierConfigs(configMap)
@@ -104,6 +108,7 @@ export function TierProvider({ children }: { children: React.ReactNode }) {
         <TierContext.Provider value={{
             tier,
             isLoading,
+            canTranslate,
             hasFeature,
             features: tierConfigs[tier] || {}
         }}>
