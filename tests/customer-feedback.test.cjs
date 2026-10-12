@@ -284,3 +284,68 @@ test('free provider capacity and malformed answers fail safely', async () => {
         assert.ok(!(await response.text()).includes('Private account details'))
     }
 })
+
+function speechHarness(run) {
+    const previous = { window: global.window, fetch: global.fetch, setTimeout: global.setTimeout, clearTimeout: global.clearTimeout, SpeechSynthesisUtterance: global.SpeechSynthesisUtterance }
+    const sessions = []; const timers = new Map(); const events = []; let timerId = 0; let requests = 0
+    class Recognition {
+        constructor() { sessions.push(this) }
+        start() { events.push('start') }
+        stop() { events.push('stop') }
+        abort() { events.push('abort') }
+    }
+    global.window = { webkitSpeechRecognition: Recognition, speechSynthesis: {
+        cancel() { events.push('cancel') }, speak() { events.push('speak') },
+    } }
+    global.SpeechSynthesisUtterance = class { constructor(text) { this.text = text } }
+    global.fetch = async () => { requests++; return new Response(JSON.stringify({ translatedText: '早上好' })) }
+    global.setTimeout = fn => { const id = ++timerId; timers.set(id, fn); return id }
+    global.clearTimeout = id => timers.delete(id)
+    const panel = componentHarness('src/components/interpreter/InterpreterPanel.tsx', {
+        '@/components/UiLanguageProvider': { useUiLanguage: () => english },
+    })
+    const microphone = () => nodes(panel.render({}), node => node.type === 'button' && !node.props['aria-label'])[0]
+    return Promise.resolve().then(() => run({ panel, sessions, events, timers, microphone, requests: () => requests }))
+        .finally(() => Object.assign(global, previous))
+}
+
+test('speech sessions release microphone before playback and cancel playback before the next recording', () => speechHarness(async ({panel,sessions,events,microphone,requests}) => {
+    microphone().props.onClick()
+    sessions[0].onresult({results: [[{transcript: 'Selamat pagi'}]]})
+    sessions[0].onend()
+    await flush()
+    assert.ok(events.includes('abort'), 'Completed recognizer must release the audio session before playback')
+    nodes(panel.render({}), node => node.props?.['aria-label'] === 'Play translation')[0].props.onClick()
+    microphone().props.onClick()
+    assert.deepEqual(events.slice(-2), ['cancel','start'])
+    sessions[1].onresult({results: [[{transcript: 'Berapa harganya?'}]]})
+    sessions[1].onend()
+    await flush()
+    assert.equal(requests(), 2)
+    assert.equal(microphone().props.disabled, false)
+}))
+
+test('a silent browser stop cannot leave microphone stuck and late events cannot end a new session', () => speechHarness(async ({sessions,timers,microphone,requests}) => {
+    microphone().props.onClick()
+    const lateEnd = sessions[0].onend
+    for (let round = 0; round < 3 && timers.size; round++) {
+        const callbacks = [...timers.values()]; timers.clear(); callbacks.forEach(fn => fn())
+    }
+    const idle = microphone()
+    assert.ok(renderToStaticMarkup(idle).includes('Tap to speak'))
+    assert.equal(requests(), 0)
+    idle.props.onClick()
+    lateEnd()
+    sessions[1].onresult({results: [[{transcript: 'Percobaan kedua'}]]})
+    sessions[1].onend()
+    await flush()
+    assert.equal(requests(), 1)
+}))
+
+test('microphone errors without an end event allow another recording', () => speechHarness(({sessions,microphone}) => {
+    microphone().props.onClick()
+    sessions[0].onerror({error:'audio-capture'})
+    assert.ok(renderToStaticMarkup(microphone()).includes('Tap to speak'))
+    microphone().props.onClick()
+    assert.equal(sessions.length, 2)
+}))
