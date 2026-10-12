@@ -11,6 +11,7 @@ import MeetingManager from '@/components/meetings/MeetingManager'
 import ConciergeManager from '@/components/assistant/ConciergeManager'
 import TranslateManager from '@/components/interpreter/TranslateManager'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
+import { canUseInterpreter } from '@/lib/profile-display.mjs'
 
 // Halaman Asisten: pilih karakter pet, kasih nama, nyalakan/matikan.
 // Mengikuti pola simpan dan gaya Kabut yang dipakai halaman dashboard lain.
@@ -92,7 +93,7 @@ export default function AssistantPage() {
                         {t('Choose which AI and translation features visitors can use on your card.')}
                     </p>
                 </header>
-                <TranslateManager eligible={profile?.tier === 'PREMIUM' || profile?.tier === 'B2B'} />
+                <TranslateManager eligible={canUseInterpreter(userId)} />
                 <ConciergeManager />
                 <MeetingManager eligible={profile?.tier === 'PREMIUM' || profile?.tier === 'B2B'} />
             </div>
@@ -118,7 +119,7 @@ export default function AssistantPage() {
                 </p>
             </header>
 
-            <TranslateManager eligible={profile?.tier === 'PREMIUM' || profile?.tier === 'B2B'} />
+            <TranslateManager eligible={canUseInterpreter(userId)} />
             <ConciergeManager />
                 <MeetingManager eligible={profile?.tier === 'PREMIUM' || profile?.tier === 'B2B'} />
 

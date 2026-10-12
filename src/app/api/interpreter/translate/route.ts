@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { canUsePublicTranslate } from '@/lib/profile-display.mjs'
+import { canUseInterpreter } from '@/lib/profile-display.mjs'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -27,23 +27,12 @@ export async function POST(req: Request) {
         const sourceText = clean(body.sourceText, 2000)
         const sourceLanguage = clean(body.sourceLanguage, 60)
         const targetLanguage = clean(body.targetLanguage, 60)
-        const slug = clean(body.slug, 100)
         const languages = ['Indonesian', 'English', 'Mandarin Chinese', 'Japanese', 'Korean']
         if (!sourceText || !languages.includes(sourceLanguage) || !languages.includes(targetLanguage)) return NextResponse.json({ error: 'Sentence is incomplete.' }, { status: 400 })
 
         const supabase = await createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        const { data: ownerProfile } = user
-            ? await supabase.from('profiles').select('tier').eq('user_id', user.id).maybeSingle()
-            : { data: null }
-        const ownerCanTranslate = ownerProfile?.tier === 'PREMIUM' || ownerProfile?.tier === 'B2B'
-
-        if (slug) {
-            const { data: profile } = await supabase.from('profiles').select('tier,is_public,theme').eq('slug', slug).maybeSingle()
-            if (!canUsePublicTranslate(profile)) return NextResponse.json({ error: 'Live Translate is not available on this card.' }, { status: 403 })
-        } else if (!ownerCanTranslate) {
-            return NextResponse.json({ error: 'Live Interpreter is available on Premium and B2B plans.' }, { status: 403 })
-        }
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !canUseInterpreter(user?.id)) return NextResponse.json({ error: 'Live Translate is temporarily unavailable.' }, { status: 403 })
 
         const apiKey = process.env.GOOGLE_GEMINI_API_KEY
         if (!apiKey) return NextResponse.json({ error: 'Live Interpreter is not ready yet.' }, { status: 503 })

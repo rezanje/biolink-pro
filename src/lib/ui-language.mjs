@@ -11,6 +11,7 @@ export function uiLanguage(value) {
 }
 
 export const UI_MESSAGES = {
+    'Live Translate is temporarily unavailable.': ['Terjemahan Langsung sementara tidak tersedia.', '实时翻译暂时不可用。'],
     'Refresh leads': ['Perbarui leads', '刷新联系人'],
     'Could not load contacts. Please refresh to try again.': ['Kontak gagal dimuat. Coba perbarui daftar.', '无法加载联系人。请刷新重试。'],
     'Translation is temporarily unavailable. Please try again later.': ['Terjemahan sementara tidak tersedia. Coba lagi nanti.', '翻译暂时不可用。请稍后重试。'],
@@ -437,7 +438,7 @@ export const UI_MESSAGES = {
     'Leads': ['Leads', '潜在客户'],
     'Keep your cards and leads together.': ['Koleksi kartu dan leads lo dalam satu tempat.', '在同一页面管理名片收藏与潜在客户。'],
     'Cards Collection': ['Koleksi Kartu', '名片收藏'],
-    'Your network, organized your way.': ['Atur koleksi relasi sesuai kebutuhan lo.', '按自己的方式整理人脉。'],
+    'Saved digital cards from fellow Gentanala NFC card owners.': ['Koleksi kartu digital sesama pemilik kartu NFC Gentanala.', '你保存的其他 Gentanala NFC 名片持有者的数字名片。'],
     'New folder': ['Bikin folder', '新建文件夹'],
     'Unfiled': ['Belum masuk folder', '未分类'],
     '{count} cards': ['{count} kartu', '{count} 张名片'],
