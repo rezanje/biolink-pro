@@ -25,6 +25,7 @@ type SpeechRecognitionLike = {
     onend: (() => void) | null
     start: () => void
     stop: () => void
+    abort: () => void
 }
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike
 type SpeechRecognitionWindow = Window & {
@@ -46,8 +47,13 @@ export default function InterpreterPanel({ profileSlug }: { profileSlug?: string
 
     useEffect(() => () => {
         if (stopTimer.current) clearTimeout(stopTimer.current)
-        if (recognition.current) recognition.current.onend = null
-        recognition.current?.stop()
+        if (recognition.current) {
+            recognition.current.onend = null
+            recognition.current.onresult = null
+            recognition.current.onerror = null
+            recognition.current.abort()
+        }
+        window.speechSynthesis?.cancel()
     }, [])
 
     const translate = async (text: string, from: Language, to: Language) => {
@@ -67,10 +73,17 @@ export default function InterpreterPanel({ profileSlug }: { profileSlug?: string
     }
 
     const stopListening = () => {
-        recognition.current?.stop()
+        const current = recognition.current
+        if (!current) return
+        if (stopTimer.current) clearTimeout(stopTimer.current)
+        // Safari can stop sending events after playback; always release the session.
+        stopTimer.current = setTimeout(() => current.onend?.(), 1500)
+        try { current.stop() } catch { current.onend?.() }
     }
 
     const startListening = () => {
+        if (recognition.current || processing) return
+        window.speechSynthesis?.cancel()
         const browser = window as SpeechRecognitionWindow
         const Recognition = browser.SpeechRecognition || browser.webkitSpeechRecognition
         if (!Recognition) {
@@ -94,9 +107,17 @@ export default function InterpreterPanel({ profileSlug }: { profileSlug?: string
             if (event.error === 'not-allowed' || event.error === 'service-not-allowed') setNotice(t('Microphone access was not allowed.'))
             else if (event.error === 'no-speech') setNotice(t('No speech detected. Tap to try again.'))
             else setNotice(t('Could not hear your voice. Tap to try again.'))
+            nextRecognition.onend?.()
         }
         nextRecognition.onend = () => {
+            if (recognition.current !== nextRecognition) return
             if (stopTimer.current) clearTimeout(stopTimer.current)
+            stopTimer.current = null
+            nextRecognition.onend = null
+            nextRecognition.onresult = null
+            nextRecognition.onerror = null
+            // Release iOS audio before playback, then create a fresh recorder next turn.
+            nextRecognition.abort()
             recognition.current = null
             setListening(false)
             if (!failed && transcript.trim()) void translate(transcript.trim(), source, target)
@@ -108,14 +129,15 @@ export default function InterpreterPanel({ profileSlug }: { profileSlug?: string
             setListening(true)
             stopTimer.current = setTimeout(stopListening, 15_000)
         } catch {
-            recognition.current = null
+            failed = true
+            nextRecognition.onend?.()
             setNotice(t('Could not start the microphone. Tap to try again.'))
         }
     }
 
     const swapLanguages = () => { setSource(target); setTarget(source); setSourceText(''); setTranslatedText('') }
     const speak = () => {
-        if (!translatedText || !('speechSynthesis' in window)) return
+        if (recognition.current || processing || !translatedText || !('speechSynthesis' in window)) return
         window.speechSynthesis.cancel()
         const utterance = new SpeechSynthesisUtterance(translatedText)
         utterance.lang = target.speech
@@ -135,7 +157,7 @@ export default function InterpreterPanel({ profileSlug }: { profileSlug?: string
         {notice && <p className="mt-4 rounded-row bg-coral-soft px-3 py-2 text-[12px] text-coral-soft-ink">{notice}</p>}
         <section className="mt-3 space-y-3">
             <Result label={t('Original')} value={sourceText} placeholder={t('Your spoken sentence will appear here.')} />
-            <div className="rounded-card bg-ink p-5 text-white shadow-ink"><div className="flex items-center justify-between gap-3"><p className="text-[11px] font-medium uppercase tracking-wider text-white/55">{t('Translation')}</p>{translatedText && <button type="button" onClick={speak} className="rounded-full bg-white/12 p-2" aria-label={t('Play translation')}><Volume2 className="h-4 w-4" /></button>}</div><p className="mt-3 text-[22px] font-semibold leading-snug tracking-[-0.02em]">{translatedText || t('Translation will appear here.')}</p></div>
+            <div className="rounded-card bg-ink p-5 text-white shadow-ink"><div className="flex items-center justify-between gap-3"><p className="text-[11px] font-medium uppercase tracking-wider text-white/55">{t('Translation')}</p>{translatedText && <button type="button" onClick={speak} className="rounded-full bg-white/12 p-2" aria-label={t('Play translation')} disabled={listening || processing}><Volume2 className="h-4 w-4" /></button>}</div><p className="mt-3 text-[22px] font-semibold leading-snug tracking-[-0.02em]">{translatedText || t('Translation will appear here.')}</p></div>
         </section>
     </>
 }
