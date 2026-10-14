@@ -11,6 +11,22 @@ export function uiLanguage(value) {
 }
 
 export const UI_MESSAGES = {
+    'Notifications': ['Notifikasi', '通知'],
+    'People who saved your card. Saving back is optional.': ['Orang yang menyimpan kartu lo. Simpan balik kalau lo mau.', '有人收藏了你的名片。你可以选择回存。'],
+    '{name} saved your card.': ['{name} menyimpan kartu lo.', '{name} 收藏了你的名片。'],
+    'Save back': ['Simpan balik', '回存名片'],
+    'Already saved': ['Sudah tersimpan', '已收藏'],
+    'View card': ['Lihat kartu', '查看名片'],
+    'Unread': ['Belum dibaca', '未读'],
+    'Mark as read': ['Tandai sudah dibaca', '标为已读'],
+    'A Gentanala member': ['Anggota Gentanala', '一位 Gentanala 会员'],
+    'This member has no public card available.': ['Anggota ini belum punya kartu publik yang tersedia.', '该会员暂无可查看的公开名片。'],
+    'Refresh notifications': ['Perbarui notifikasi', '刷新通知'],
+    'No card saves yet.': ['Belum ada yang menyimpan kartu lo.', '暂无名片收藏通知。'],
+    'Could not load notifications. Please try again.': ['Notifikasi gagal dimuat. Coba lagi.', '无法加载通知。请重试。'],
+    'Could not update notification. Please try again.': ['Notifikasi gagal diperbarui. Coba lagi.', '无法更新通知。请重试。'],
+    'Could not save this card. Please refresh and try again.': ['Kartu gagal disimpan. Perbarui dan coba lagi.', '无法收藏名片。请刷新后重试。'],
+    'Showing the latest 100 notifications.': ['Menampilkan 100 notifikasi terbaru.', '显示最近 100 条通知。'],
     'Live Translate is temporarily unavailable.': ['Terjemahan Langsung sementara tidak tersedia.', '实时翻译暂时不可用。'],
     'Refresh leads': ['Perbarui leads', '刷新联系人'],
     'Could not load contacts. Please refresh to try again.': ['Kontak gagal dimuat. Coba perbarui daftar.', '无法加载联系人。请刷新重试。'],
