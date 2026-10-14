@@ -60,7 +60,9 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
     LEFT JOIN LATERAL (
         SELECT p.id, p.slug, p.display_name FROM public.profiles p
         WHERE p.user_id = n.actor_id AND p.is_public IS DISTINCT FROM false
-        ORDER BY p.is_master DESC NULLS LAST, p.created_at ASC NULLS LAST, p.id ASC
+        -- Older setup scripts lack is_master; absence means non-master.
+        ORDER BY COALESCE((to_jsonb(p)->>'is_master')::boolean, false) DESC,
+            p.created_at ASC NULLS LAST, p.id ASC
         LIMIT 1
     ) p ON true
     WHERE n.recipient_id = auth.uid()

@@ -26,7 +26,7 @@ Delivery is best effort: there is no automatic retry or historical backfill.
 
 Migration `supabase/migrations/022_saved_card_notifications.sql` is prepared only.
 Review it against the actual Supabase schema and grants, particularly migrations
-019 and 021 and the existing `profiles.is_master` field. Apply first in a disposable
+019 and 021. `profiles.is_master` is optional: missing means non-master. Apply first in a disposable
 or staging environment; then test two real authenticated accounts there before
 approving production rollout. Migration and app deployment remain separate review
 steps. No production database, merge, deployment, PR, or live outreach was performed.
@@ -96,6 +96,58 @@ real authorization and trigger behavior are verified separately by the SQL suite
   Turbopack; dependencies were copied into the isolated worktree before retrying.
 - `git diff --check`: passed.
 
-Remaining validation: full Supabase schema integration and two-account staging
+Remaining validation: live schema/grant comparison and two-account staging
 smoke test after migration review. Production migration/deployment and a draft PR
 require separate authorization.
+
+## Full repository schema integration follow-up
+
+`bash scripts/test-saved-card-notifications-full-schema.sh` now passes against
+unchanged repository `complete-setup.sql`, PLG initialization, tier configuration,
+B2B RBAC, profile RLS migration 003, and migrations 019, 021, and 022 in disposable
+PostgreSQL 16. The auth schema and Supabase default grants are a local contract;
+all product tables and legacy policies come from the repository scripts.
+
+The first replay correctly failed because `complete-setup.sql` omits
+`profiles.is_master`. Migration 022 was repaired to treat an absent optional field
+as false using a JSON projection. The full replay now passes without altering
+existing profile columns, while the original multi-card tests still verify public
+master preference and deterministic fallback when the field exists.
+
+Additional verified behavior includes the real signup trigger creating
+`public.users`, the repository's unique profile-per-user constraint, enum-based
+tiers, legacy permissive profile RLS, Supabase default anonymous grants, immediate
+and duplicate saves, explicit save back, marking read, and private actor projection
+suppression. Inbox grants explicitly revoke anonymous access even when defaults
+are permissive.
+
+**Existing correctness/privacy risks:** both `complete-setup.sql` and profile RLS
+migration 003 use `FOR SELECT USING (TRUE)`; B2B RBAC adds another similarly open
+policy. The local full-schema test confirms an anonymous query can read an
+`is_public = false` profile. Migration 022's explicit public filter prevents this
+leak through the notification inbox, but it does not repair existing profile or
+Saved Cards reads. A card becoming private after an inbox view may remain readable
+through the existing public page if the deployed database retains these policies.
+Audit actual deployed policies before rollout; a global RLS repair should be a
+separate reviewed change because existing admin and owner flows rely on them.
+
+Other repository bootstrap scripts are not a canonical clean-install sequence:
+`schema.sql` references `companies` before creating it, and the extension block in
+`gentanala-schema.sql` contains procedural IF statements without an opening DO
+block. These pre-existing script issues were not changed. The complete-setup route
+above is executable and was tested; a deployed schema may differ from all snapshots.
+
+**Unavailable staging access:** no staging URL, staging project credentials, or
+two authenticated staging accounts were supplied. Consequently, PostgREST API
+integration with real JWTs, cookie/login behavior across two accounts, actual
+schema/grants comparison, and notification visibility in the deployed app remain
+unexecuted. No attempt was made against production. These are pending validation,
+not denied operations. Local PostgreSQL role/JWT-claim tests and intercepted browser
+tests are complete and repeatable.
+
+**Rollout requirements:** review 022 and deployed prerequisites/grants; resolve or
+explicitly scope the pre-existing profile privacy policies; apply 022 to an
+approved staging project; verify A saves B immediately, B sees A's public card and
+can optionally save back, repeats stay idempotent, private/missing actors stay
+hidden, and delivery failure preserves saving. Then seek separate production
+migration/deployment approval. No branch push or PR was performed.
