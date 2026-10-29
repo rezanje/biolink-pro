@@ -9,7 +9,6 @@ import { useUiLanguage } from '@/components/UiLanguageProvider'
 import CardFolderTile, { type CardPreview } from './CardFolderTile'
 
 type SavedCard = { profile_id: string; folder_id: string | null; created_at: string; profile: CardPreview | null }
-type SavedCardRow = Omit<SavedCard, 'profile'> & { profile: CardPreview | CardPreview[] | null }
 type CardFolder = { id: string; name: string; created_at: string }
 type FolderAction = { kind: 'create' } | { kind: 'rename' | 'delete'; folder: CardFolder }
 
@@ -36,13 +35,18 @@ export default function SavedCardCollection() {
             if (!user) { window.location.assign('/login?next=/dashboard/analytics'); return }
             setUserId(user.id)
             const [saved, folderResult] = await Promise.all([
-                supabase.from('saved_profiles').select('profile_id,folder_id,created_at,profile:profiles(slug,display_name,company,job_title,avatar_url)').eq('user_id', user.id).order('created_at', { ascending: false }),
+                supabase.from('saved_profiles').select('profile_id,folder_id,created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
                 supabase.from('card_folders').select('id,name,created_at').eq('user_id', user.id).order('created_at', { ascending: true }),
             ])
             if (saved.error) throw saved.error
             if (folderResult.error) throw folderResult.error
-            const rows = (saved.data || []) as unknown as SavedCardRow[]
-            setCards(rows.map(({ profile, ...card }) => ({ ...card, profile: Array.isArray(profile) ? profile[0] || null : profile })))
+            const rows = saved.data || []
+            const ids = [...new Set(rows.map(row => row.profile_id))]
+            const publicCards = ids.length ? await supabase.from('public_card_profiles')
+                .select('id,slug,display_name,company,job_title,avatar_url').in('id', ids) : { data: [], error: null }
+            if (publicCards.error) throw publicCards.error
+            const previews = new Map((publicCards.data || []).map(card => [card.id, card as CardPreview]))
+            setCards(rows.map(card => ({ ...card, profile: previews.get(card.profile_id) || null })))
             const nextFolders = folderResult.data || []
             setFolders(nextFolders)
             setSelectedFolder(current => current && current !== 'unfiled' && !nextFolders.some(folder => folder.id === current) ? null : current)
