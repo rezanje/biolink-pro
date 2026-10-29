@@ -18,7 +18,8 @@ BEGIN
     -- Entitlements and the role fields used by the admin API require service role.
     IF TG_OP = 'INSERT' THEN
         IF current_user NOT IN ('service_role', 'postgres')
-            AND (NEW.cny_design_enabled = true OR NEW.role IS DISTINCT FROM 'user') THEN
+            AND (NEW.cny_design_enabled = true OR NEW.role IS DISTINCT FROM 'user'
+                OR NEW.company_id IS NOT NULL OR NEW.user_id IS DISTINCT FROM auth.uid()) THEN
             RAISE EXCEPTION 'Admin-managed profile fields cannot be inserted by this role' USING ERRCODE = '42501';
         END IF;
     ELSIF current_user NOT IN ('service_role', 'postgres') THEN

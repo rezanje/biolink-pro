@@ -20,6 +20,7 @@ FOR EACH ROW EXECUTE FUNCTION public.enforce_cny_custom_design_access();
 
 GRANT SELECT, INSERT, UPDATE ON cny_access_probe TO authenticated;
 SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', true);
 
 DO $$
 BEGIN
@@ -50,7 +51,23 @@ BEGIN
         RAISE EXCEPTION 'User inserted their own CNY grant';
     EXCEPTION WHEN insufficient_privilege THEN NULL;
     END;
+    BEGIN
+        INSERT INTO cny_access_probe (id, user_id, role)
+        VALUES ('00000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000008', 'user');
+        RAISE EXCEPTION 'User inserted a profile for another identity';
+    EXCEPTION WHEN insufficient_privilege THEN NULL;
+    END;
+    BEGIN
+        INSERT INTO cny_access_probe (id, user_id, role, company_id)
+        VALUES ('00000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000002', 'user', '00000000-0000-0000-0000-000000000010');
+        RAISE EXCEPTION 'User inserted a forged company membership';
+    EXCEPTION WHEN insufficient_privilege THEN NULL;
+    END;
 END $$;
+
+-- The ordinary authenticated claim/onboarding insert is still permitted.
+INSERT INTO cny_access_probe (id, user_id, role)
+VALUES ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000002', 'user');
 
 RESET ROLE;
 UPDATE cny_access_probe SET cny_design_enabled = true;
