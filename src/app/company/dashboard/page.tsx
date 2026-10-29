@@ -1,125 +1,51 @@
 'use client'
 
-import AnimatedNumber from '@/components/motion/AnimatedNumber'
-
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { ArrowUpRight, Users, ContactRound, Clock3, CheckCheck } from 'lucide-react'
 import { useCompany } from '@/app/company/company-context'
-import {
-    Users,
-    Package,
-    ArrowUpRight,
-    TrendingUp,
-    Link as LinkIcon,
-    ShieldCheck
-} from 'lucide-react'
-import { motion } from 'framer-motion'
+
+interface Summary {
+    counts: { people: number; leads: number; new: number; contacted: number; converted: number }
+    recentLeads: { id: string; name: string; status: string; created_at: string; profiles: { display_name: string | null } }[]
+}
 
 export default function CompanyDashboardPage() {
     const { company } = useCompany()
-
-    const stats = [
-        { label: 'Total Assets', value: 124, icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { label: 'Active Employees', value: 98, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
-        { label: 'Total Scans', value: 12.4, decimals: 1, suffix: 'k', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-        { label: 'Green Impact', value: 450, suffix: 'kg', icon: ShieldCheck, color: 'text-orange-600', bg: 'bg-orange-50' },
+    const [summary, setSummary] = useState<Summary | null>(null)
+    const [error, setError] = useState(false)
+    useEffect(() => {
+        const controller = new AbortController()
+        fetch('/api/company/workspace?view=summary', { signal: controller.signal, cache: 'no-store' })
+            .then(async response => { if (!response.ok) throw Error('summary'); return response.json() })
+            .then(setSummary).catch(() => { if (!controller.signal.aborted) setError(true) })
+        return () => controller.abort()
+    }, [])
+    const cards = [
+        { label: 'Pemilik kartu', value: summary?.counts.people, icon: Users, href: '/company/users' },
+        { label: 'Total leads', value: summary?.counts.leads, icon: ContactRound, href: '/company/leads' },
+        { label: 'Leads baru', value: summary?.counts.new, icon: Clock3, href: '/company/leads?status=new' },
+        { label: 'Konversi', value: summary?.counts.converted, icon: CheckCheck, href: '/company/leads?status=converted' },
     ]
-
-    return (
-        <div className="space-y-8">
-            {/* Header */}
-            <div>
-                <h1 className="text-3xl font-bold text-zinc-900">Welcome, {company?.name}</h1>
-                <p className="text-zinc-500 mt-1">Manage your corporate assets and employee profiles from one central hub.</p>
-            </div>
-
-            {/* stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat, i) => (
-                    <motion.div
-                        key={stat.label}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm"
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <div className={`p-3 rounded-2xl ${stat.bg}`}>
-                                <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                            </div>
-                            <span className="flex items-center text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-                                +12% <ArrowUpRight className="w-3 h-3 ml-1" />
-                            </span>
-                        </div>
-                        <p className="text-zinc-500 text-sm font-medium">{stat.label}</p>
-                        <p className="text-2xl font-bold text-zinc-900 mt-1"><AnimatedNumber value={stat.value} decimals={stat.decimals} suffix={stat.suffix} /></p>
-                    </motion.div>
-                ))}
-            </div>
-
-            {/* Main Content Sections */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Quick Access List */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
-                            <h3 className="font-bold text-zinc-900 text-lg">Recent Asset Activity</h3>
-                            <button className="text-sm font-medium text-blue-600 hover:text-blue-700">View All</button>
-                        </div>
-                        <div className="divide-y divide-zinc-50">
-                            {[1, 2, 3, 4, 5].map((i) => (
-                                <div key={i} className="p-4 flex items-center justify-between hover:bg-zinc-50 transition-colors">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center">
-                                            <LinkIcon className="w-5 h-5 text-zinc-400" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-zinc-900">Asset #SN-2024-00{i}</p>
-                                            <p className="text-xs text-zinc-400">Assigned to: Employee Name</p>
-                                        </div>
-                                    </div>
-                                    <span className="text-xs text-zinc-400">2h ago</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Branding Preview */}
-                <div className="space-y-6">
-                    <div className="bg-zinc-900 p-8 rounded-3xl text-white relative overflow-hidden group">
-                        <div className="relative z-10">
-                            <h3 className="font-bold text-xl mb-2">Corporate Identity</h3>
-                            <p className="text-zinc-400 text-sm mb-6">Your branding is active across all employee profiles.</p>
-
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/10">
-                                    <div
-                                        className="w-8 h-8 rounded-lg shadow-inner"
-                                        style={{ backgroundColor: company?.theme?.primary || '#0F172A' }}
-                                    />
-                                    <div>
-                                        <p className="text-xs text-zinc-400 uppercase font-bold tracking-widest">Primary Color</p>
-                                        <p className="text-sm font-mono">{company?.theme?.primary || '#0F172A'}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/10">
-                                    <div
-                                        className="w-8 h-8 rounded-lg shadow-inner"
-                                        style={{ backgroundColor: company?.theme?.accent || '#3B82F6' }}
-                                    />
-                                    <div>
-                                        <p className="text-xs text-zinc-400 uppercase font-bold tracking-widest">Accent Color</p>
-                                        <p className="text-sm font-mono">{company?.theme?.accent || '#3B82F6'}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Decorative elements */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl -mr-10 -mt-10" />
-                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/10 blur-3xl -ml-10 -mb-10" />
-                    </div>
-                </div>
-            </div>
+    return <div className="space-y-9">
+        <div className="border-b border-[#ccd4ca] pb-7"><p className="uppercase tracking-[.22em] text-xs font-bold text-[var(--company-accent)]">Workspace perusahaan</p>
+            <h1 className="text-3xl sm:text-5xl font-semibold tracking-tight mt-3">Selamat datang, {company?.name}</h1>
+            <p className="text-[#637268] mt-3 max-w-xl">Pantau pemilik kartu digital dan tindak lanjut leads perusahaan Anda.</p>
         </div>
-    )
+        {error && <p role="alert" className="bg-red-50 text-red-800 rounded-lg p-4">Data belum bisa dimuat. Coba muat ulang halaman.</p>}
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-5">
+            {cards.map(({ label, value, icon: Icon, href }) => <Link key={label} href={href} className="bg-white border border-[#dce3d9] rounded-2xl p-5 sm:p-7 hover:border-[var(--company-accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--company-accent)]">
+                <div className="flex items-start justify-between"><Icon className="w-5 h-5 text-[var(--company-accent)]" aria-hidden="true" /><ArrowUpRight className="w-4 h-4 text-[#8a9c90]" aria-hidden="true" /></div>
+                <p className="text-3xl sm:text-4xl font-semibold mt-9 tabular-nums">{value ?? '—'}</p><p className="text-sm text-[#637268] mt-2">{label}</p>
+            </Link>)}
+        </div>
+        <div className="grid lg:grid-cols-[1.7fr_1fr] gap-5">
+            <section className="bg-white border border-[#dce3d9] rounded-2xl overflow-hidden">
+                <div className="p-6 flex items-center justify-between border-b border-[#edf0e9]"><h2 className="text-xl font-semibold">Leads terbaru</h2><Link href="/company/leads" className="text-sm font-semibold text-[var(--company-accent)] hover:underline">Lihat semua</Link></div>
+                {summary?.recentLeads.length ? <ul className="divide-y divide-[#edf0e9]">{summary.recentLeads.map(lead => <li key={lead.id} className="p-5 sm:px-6 flex items-center justify-between gap-4"><div className="min-w-0"><p className="font-semibold truncate">{lead.name}</p><p className="text-xs text-[#68776d] mt-1 truncate">{lead.profiles?.display_name || 'Kartu perusahaan'} · {new Date(lead.created_at).toLocaleDateString('id-ID')}</p></div><span className="text-xs uppercase tracking-wide text-[#526358] shrink-0">{lead.status}</span></li>)}</ul> :
+                    <p className="p-8 text-[#637268]">{summary ? 'Belum ada leads yang masuk.' : 'Memuat leads…'}</p>}
+            </section>
+            <section className="bg-[var(--company-primary)] text-white rounded-2xl p-7 sm:p-8 flex flex-col justify-between min-h-64"><div><p className="uppercase tracking-[.2em] text-xs text-white/60">Alur leads</p><h2 className="text-2xl font-semibold mt-4">Dari pertemuan ke tindak lanjut.</h2><p className="text-white/70 text-sm mt-3">Lihat kontak dari kartu perusahaan, perbarui status, dan ikuti progresnya.</p></div><Link href="/company/leads" className="mt-8 w-fit inline-flex items-center gap-2 border-b border-white pb-1 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-white">Kelola leads <ArrowUpRight className="w-4 h-4" /></Link></section>
+        </div>
+    </div>
 }
