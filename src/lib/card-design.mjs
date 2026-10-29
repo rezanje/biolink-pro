@@ -5,7 +5,7 @@ export const CARD_TEMPLATES = [
     { id: 'portrait', name: 'Portrait', description: 'Bold portrait and rounded white panels' },
     { id: 'voyage', name: 'Voyage', description: 'Sunny yellow and forest-green headlines' },
     { id: 'statement', name: 'Statement', description: 'Oversized type and a fresh green accent' },
-    { id: 'cny', name: 'CNY', description: 'Forest-dark editorial profile' },
+    { id: 'cny', name: 'CNY', description: 'Forest-dark editorial profile', category: 'custom' },
 ]
 
 export const CARD_FONTS = [
@@ -46,6 +46,14 @@ export function cardAccent(value) {
 export function canUsePremiumDesign(tier, validUntil, now = Date.now()) {
     if (tier === 'B2B') return true
     return tier === 'PREMIUM' && (!validUntil || new Date(validUntil).getTime() >= now)
+}
+
+export function canSelectCardTemplate(value, { premium = false, cnyEnabled = false } = {}) {
+    const template = cardTemplate(value)
+    if (template !== value) return false
+    if (template === 'classic') return true
+    if (template === 'cny') return cnyEnabled === true
+    return premium === true
 }
 
 const TEMPLATE_PRESETS = {

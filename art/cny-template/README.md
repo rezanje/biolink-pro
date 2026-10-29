@@ -1,6 +1,6 @@
 # CNY digital profile preview
 
-These screenshots show the `cny` layout in the existing public profile renderer. They use a local Playwright mock profile with the company name, venture builder description, and official website published at [candranayalestari.com](https://www.candranayalestari.com/). No production profile row was changed.
+These screenshots show the `cny` layout in the existing public profile renderer. They use a local Playwright mock profile with a simulated CNY grant, plus the company name, venture builder description, and official website published at [candranayalestari.com](https://www.candranayalestari.com/). No production profile row or real user's entitlement was changed.
 
 - [Mobile, full page](mobile-full.png) and [mobile, first viewport](mobile-viewport.png): 390 × 844 viewport.
 - [Desktop, full page](desktop-full.png) and [desktop, first viewport](desktop-viewport.png): 1440 × 900 viewport with the app's 430px profile card.
