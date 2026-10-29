@@ -8,7 +8,7 @@ PR #34 adds a per-profile CNY entitlement. `023_cny_custom_design_access.sql` is
 2. Run the **read-only** preflight queries below. Compare all `super_admin` and `company_admin` identities with the approved admin roster; an existing role may have been self-assigned under the old owner-update policy. Resolve mismatches before enabling this admin API. Check the active production policy definitions, since tracked SQL may differ from the deployed database.
 3. Apply migration 023 in a reviewed transaction using the team's normal production migration mechanism. No user grants are part of it. Confirm postchecks before deploying PR #34.
 4. Deploy the reviewed PR after required CI and branch-protection checks pass. Confirm an ordinary owner cannot direct-save CNY, a company admin cannot grant it, and the global admin control is visible to verified super admins. Do not change the live `/rezanje` profile or grant any user during smoke testing.
-5. Migration `024_company_portal_security.sql` belongs to the **separate dashboard PR** and requires its own review. It is not part of the CNY entitlement release.
+5. The separate company rollout stages are additive `024_public_card_projection.sql` in compatibility PR #36, then access-tightening `025_company_portal_security.sql` in dashboard PR #35. Each requires its own review. Neither is part of the CNY entitlement release.
 
 ### Read-only preflight SQL
 
