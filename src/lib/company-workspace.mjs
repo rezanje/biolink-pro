@@ -1,5 +1,9 @@
 export const COMPANY_LEAD_STATUSES = ['new', 'contacted', 'converted', 'failed']
 
+export function companyWorkspaceEnabled(value) {
+    return value === 'true'
+}
+
 export function canAccessCompanyWorkspace(actor) {
     return actor?.role === 'company_admin' && typeof actor.companyId === 'string' && actor.companyId.length > 0
 }

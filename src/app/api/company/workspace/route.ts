@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server'
 import { adminSession } from '@/lib/admin-session'
 import { createClient as createSessionClient } from '@/lib/supabase/server'
-import { companyWorkspaceStatus, companyPage, isCompanyLeadStatus } from '@/lib/company-workspace.mjs'
+import { companyWorkspaceEnabled, companyWorkspaceStatus, companyPage, isCompanyLeadStatus } from '@/lib/company-workspace.mjs'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const PAGE_SIZE = 25
 const PRIVATE_HEADERS = { 'Cache-Control': 'private, no-store' }
 
 async function workspaceSession() {
+    if (!companyWorkspaceEnabled(process.env.COMPANY_WORKSPACE_ENABLED)) return { status: 503 as const }
     const session = await adminSession()
     const status = companyWorkspaceStatus(session)
     if (status !== 200 || !session) return { status: status as 401 | 403 }
@@ -15,7 +16,7 @@ async function workspaceSession() {
 }
 
 function errorResponse(status: number) {
-    return NextResponse.json({ error: status === 401 ? 'Unauthorized' : 'Forbidden' }, { status, headers: PRIVATE_HEADERS })
+    return NextResponse.json({ error: status === 401 ? 'Unauthorized' : status === 403 ? 'Forbidden' : 'Company workspace unavailable' }, { status, headers: PRIVATE_HEADERS })
 }
 
 export async function GET(request: Request) {

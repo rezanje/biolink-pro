@@ -13,7 +13,8 @@ DO $$ DECLARE n integer; BEGIN
   IF n <> 3 THEN RAISE EXCEPTION 'Public card view omitted a public card or exposed a private card'; END IF;
   SELECT count(*) INTO n FROM public.public_card_profiles v
     WHERE to_jsonb(v) ?| ARRAY['role','company_id','user_id','admin_id','subscription_valid_until']
-       OR v.theme ?| ARRAY['view_count','private_future_key'];
+       OR v.theme ?| ARRAY['view_count','private_future_key']
+       OR v.company_brand->'theme' ? 'secret';
   IF n <> 0 THEN RAISE EXCEPTION 'Public card view exposed private fields'; END IF;
   SELECT count(*) INTO n FROM public.public_card_by_owner('00000000-0000-0000-0000-000000000303');
   IF n <> 0 THEN RAISE EXCEPTION 'Private card available through public owner lookup'; END IF;

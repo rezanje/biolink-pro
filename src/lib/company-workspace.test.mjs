@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict'
-import { canAccessCompanyWorkspace, companyWorkspaceStatus, isCompanyLeadStatus, companyPage } from './company-workspace.mjs'
+import { canAccessCompanyWorkspace, companyWorkspaceEnabled, companyWorkspaceStatus, isCompanyLeadStatus, companyPage } from './company-workspace.mjs'
+
+assert.equal(companyWorkspaceEnabled(undefined), false)
+assert.equal(companyWorkspaceEnabled('false'), false)
+assert.equal(companyWorkspaceEnabled('true'), true)
 
 assert.equal(canAccessCompanyWorkspace(null), false)
 assert.equal(canAccessCompanyWorkspace({ role: 'user', companyId: 'company-a' }), false)
