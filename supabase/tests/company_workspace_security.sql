@@ -81,6 +81,10 @@ DO $$ DECLARE n integer; BEGIN
   UPDATE public.profiles SET display_name = 'forged' WHERE id = '00000000-0000-0000-0000-000000000202';
   GET DIAGNOSTICS n = ROW_COUNT;
   IF n <> 0 THEN RAISE EXCEPTION 'Company B admin changed company A profile'; END IF;
+  IF NOT public.company_update_lead_status('00000000-0000-0000-0000-000000000402', 'converted') THEN
+    RAISE EXCEPTION 'Company B admin cannot update own company lead'; END IF;
+  IF public.company_update_lead_status('00000000-0000-0000-0000-000000000401', 'converted') THEN
+    RAISE EXCEPTION 'Company B admin updated company A lead'; END IF;
 END $$;
 
 SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000304', true);
