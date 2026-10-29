@@ -24,7 +24,7 @@ import { usePetSpriteReady } from '@/components/pet/PetSprite'
 import { PET_FEATURE_ENABLED, selectPetCharacter } from '@/lib/pet/pet-selection.mjs'
 import { getSelectedSpecialGreetingAnimation, getWelcomeCloseDelay, shouldShowSpecialGreetingAnimation } from '@/lib/special-greeting.mjs'
 import { activeRedirectUrl, normalizeUrl } from '@/lib/redirect-mode.mjs'
-import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview } from '@/lib/card-design.mjs'
+import { cardTemplate, cardFont, cardAccent, accentTextColor, cardThemeForPreview } from '@/lib/card-design.mjs'
 import { canUsePublicTranslate } from '@/lib/profile-display.mjs'
 import { UiLanguageProvider, UiLanguageSelect, useUiLanguage } from '@/components/UiLanguageProvider'
 
@@ -102,7 +102,7 @@ function PublicProfileInner() {
             if (!slug) return
 
             const { data: dbProfile, error } = await supabase
-                .from('profiles')
+                .from('public_card_profiles')
                 .select('*')
                 .eq('slug', slug)
                 .single()
@@ -122,7 +122,7 @@ function PublicProfileInner() {
                 const canPreviewLayout = designPreview && thumbnailTemplate !== null && cardTemplate(thumbnailTemplate) === thumbnailTemplate
                     && (thumbnailTemplate !== 'cny' || cnyDesignEnabled)
                 const selectedTemplate = cardTemplate(renderedTheme.template_id)
-                const canRenderSelectedTemplate = canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until)
+                const canRenderSelectedTemplate = dbProfile.premium_design_enabled === true
                     || (selectedTemplate === 'cny' && cnyDesignEnabled) || canPreviewLayout
                 const processedProfile = {
                     ...dbProfile,
@@ -156,20 +156,6 @@ function PublicProfileInner() {
                 // Analytics: Track Page View
                 trackProfileView(dbProfile.id)
 
-                // Analytics: increment view count (Legacy)
-                const sessionKey = `viewed_${slug}`
-                if (!sessionStorage.getItem(sessionKey)) {
-                    try {
-                        const currentViews = (uiTheme.view_count || 0) + 1
-                        await supabase
-                            .from('profiles')
-                            .update({ theme: { ...uiTheme, view_count: currentViews } })
-                            .eq('slug', slug)
-                    } catch (err) {
-                        console.error('Analytics error:', err)
-                    }
-                    sessionStorage.setItem(sessionKey, 'true')
-                }
                 return
             }
 
@@ -188,10 +174,9 @@ function PublicProfileInner() {
         if (!profile || designPreview) return
 
         // Check if lead capture is enabled for this profile
-        const leadCaptureEnabled = profile.lead_capture_enabled || false
+        const leadCaptureEnabled = profile.lead_capture_available || false
 
         // REVISION: Only allow lead capture for non-FREE users
-        if (profile.tier === 'FREE') return
 
         // Check if user has already submitted a lead for this profile
         const hasSubmitted = localStorage.getItem(`has_submitted_lead_${profile.id}`)
@@ -403,24 +388,6 @@ function PublicProfileInner() {
             console.error('Analytics tracking error:', err)
         }
 
-        // Legacy Tracking (kept for compatibility)
-        try {
-            const { data: currentProfile } = await supabase
-                .from('profiles')
-                .select('theme')
-                .eq('slug', profile.slug)
-                .single()
-            if (currentProfile?.theme) {
-                const theme = currentProfile.theme
-                const currentClicks = (theme.link_clicks || 0) + 1
-                await supabase
-                    .from('profiles')
-                    .update({ theme: { ...theme, link_clicks: currentClicks } })
-                    .eq('slug', profile.slug)
-            }
-        } catch (err) {
-            console.error('Link click tracking error:', err)
-        }
     }
 
     const handleSaveContact = () => {

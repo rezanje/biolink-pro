@@ -33,6 +33,20 @@ const DEFAULT_PRODUCT = {
     }
 }
 
+type PublicTapCard = {
+    slug: string
+    bio?: string | null
+    avatar_url?: string | null
+    social_links?: unknown[]
+    theme?: Record<string, unknown>
+    company_brand?: {
+        bio?: string | null
+        avatar_url?: string | null
+        social_links?: unknown[]
+        theme?: { primary?: string; accent?: string }
+    } | null
+}
+
 export default function TapPage() {
     const params = useParams()
     const router = useRouter()
@@ -97,11 +111,10 @@ export default function TapPage() {
 
             // 3. Handle Branding Sync & Profile Loading
             if (dbSerial.is_claimed && dbSerial.owner_id) {
-                const { data: ownerProfile } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('user_id', dbSerial.owner_id)
+                const { data: ownerProfileData } = await supabase
+                    .rpc('public_card_by_owner', { p_owner_id: dbSerial.owner_id })
                     .single()
+                const ownerProfile = ownerProfileData as PublicTapCard | null
 
                 const isSynced = dbSerial.sync_enabled !== false
                 console.log('--- TAP DEBUG ---')
@@ -121,7 +134,7 @@ export default function TapPage() {
                 // Use a dedicated profile link if it exists
                 if (!isSynced && dbSerial.profile_id) {
                     const { data: independentProfile } = await supabase
-                        .from('profiles')
+                        .from('public_card_profiles')
                         .select('*')
                         .eq('id', dbSerial.profile_id)
                         .single()
@@ -140,12 +153,8 @@ export default function TapPage() {
                 // CASE B: Branding Sync Mode (B2B or Personal)
                 if (isSynced) {
                     // B2B: Merge Company Branding if user is in a company
-                    if (ownerProfile.company_id) {
-                        const { data: company } = await supabase
-                            .from('companies')
-                            .select('*')
-                            .eq('id', ownerProfile.company_id)
-                            .single()
+                    if (ownerProfile.company_brand) {
+                        const company = ownerProfile.company_brand
 
                         if (company) {
                             // MERGE LOGIC: Company theme/links + User name/title
