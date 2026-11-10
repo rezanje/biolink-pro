@@ -127,6 +127,7 @@ export function UnclaimedView({ serial }: UnclaimedViewProps) {
             const trialEndsAt = new Date()
             trialEndsAt.setDate(trialEndsAt.getDate() + 30) // 30 Days Trial
 
+            // Keep existing contact form preferences; new profiles use the database default.
             const { error: profileError } = await supabase
                 .from('profiles')
                 .upsert({
@@ -137,7 +138,6 @@ export function UnclaimedView({ serial }: UnclaimedViewProps) {
                     email: userEmail,
                     tier: 'PREMIUM', // Grant Premium
                     subscription_valid_until: trialEndsAt.toISOString(), // Set Expiry
-                    lead_capture_enabled: true // Enable features by default
                 }, { onConflict: 'user_id' })
 
             if (profileError) {

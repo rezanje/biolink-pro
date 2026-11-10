@@ -67,7 +67,6 @@ export async function GET(request: Request) {
                                 email: user.email,
                                 tier: 'PREMIUM',
                                 subscription_valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 Days Trial
-                                lead_capture_enabled: true,
                                 special_edition: targetSpecialEdition,
                                 special_editions: targetSpecialEditions
                             })
