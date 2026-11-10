@@ -73,6 +73,7 @@ interface SerialWithProfile {
     user_tag: string | null
     special_edition: string | null
     special_editions: string[]
+    cny_design_enabled: boolean
     selected_special_greeting_anim: string | null
     company_id: string | null
     company_name: string | null
@@ -152,6 +153,8 @@ export default function AdminPage() {
 
     // Edit Modal State
     const [editUser, setEditUser] = useState<any | null>(null)
+    const [cnyAccessSaving, setCnyAccessSaving] = useState(false)
+    const [cnyAccessError, setCnyAccessError] = useState('')
     const [editCompany, setEditCompany] = useState<any | null>(null)
 
     useEffect(() => {
@@ -271,6 +274,7 @@ export default function AdminPage() {
                 user_tag: profile?.user_tag || null,
                 special_edition: specialEditions[0] || s.special_edition || profile?.special_edition || null,
                 special_editions: specialEditions,
+                cny_design_enabled: profile?.cny_design_enabled === true,
                 selected_special_greeting_anim: profile?.selected_special_greeting_anim || null,
                 company_id: serialCompanyId || null,
                 company_name: serialCompanyId ? companyMap.get(serialCompanyId)?.name : null,
@@ -722,6 +726,7 @@ export default function AdminPage() {
                                                             {serial.user_tag}
                                                         </span>
                                                     )}
+                                                    {serial.cny_design_enabled && <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-800 font-medium">CNY Custom Design</span>}
                                                     {serial.special_editions.length > 0 && (
                                                         <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-100 text-indigo-700 font-medium">
                                                             ✨ {getSpecialEditionLabels(serial.special_editions)}
@@ -734,7 +739,7 @@ export default function AdminPage() {
                                                     </span>
                                                 )}
                                                 <button
-                                                    onClick={() => setEditUser(serial)}
+                                                    onClick={() => { setEditUser(serial); setCnyAccessError('') }}
                                                     className="text-[10px] text-blue-600 font-medium hover:underline w-fit"
                                                 >
                                                     Manage Sub
@@ -1479,6 +1484,42 @@ export default function AdminPage() {
                                                 <option key={c.id} value={c.id}>{c.name}</option>
                                             ))}
                                         </select>
+                                    </div>
+                                )}
+
+                                {adminRole === 'super_admin' && editUser.is_claimed && editUser.user_id && (
+                                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                                        <p className="text-xs font-semibold uppercase text-zinc-600">Custom Design Access</p>
+                                        <p className="mt-1 text-xs text-zinc-500">CNY is unavailable until you grant this user access. Revoking access returns a selected CNY profile to Classic.</p>
+                                        <div className="mt-3 flex items-center justify-between gap-3">
+                                            <span className="text-sm font-medium text-zinc-800">CNY · {editUser.cny_design_enabled ? 'Granted' : 'Not granted'}</span>
+                                            <button type="button" disabled={cnyAccessSaving}
+                                                onClick={async () => {
+                                                    const enabled = !editUser.cny_design_enabled
+                                                    setCnyAccessSaving(true)
+                                                    setCnyAccessError('')
+                                                    try {
+                                                        const response = await fetch('/api/admin/custom-designs', {
+                                                            method: 'POST',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ userId: editUser.user_id, design: 'cny', enabled }),
+                                                        })
+                                                        const result = await response.json()
+                                                        if (!response.ok) throw new Error(result.error || 'Could not update access')
+                                                        setEditUser((current: SerialWithProfile | null) => current ? { ...current, cny_design_enabled: result.cny_design_enabled } : current)
+                                                        setSerials(current => current.map(serial => serial.user_id === editUser.user_id
+                                                            ? { ...serial, cny_design_enabled: result.cny_design_enabled } : serial))
+                                                    } catch (error) {
+                                                        setCnyAccessError(error instanceof Error ? error.message : 'Could not update access')
+                                                    } finally {
+                                                        setCnyAccessSaving(false)
+                                                    }
+                                                }}
+                                                className="rounded-lg bg-zinc-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">
+                                                {cnyAccessSaving ? 'Saving...' : editUser.cny_design_enabled ? 'Revoke CNY' : 'Grant CNY'}
+                                            </button>
+                                        </div>
+                                        {cnyAccessError && <p role="alert" className="mt-2 text-xs text-red-700">{cnyAccessError}</p>}
                                     </div>
                                 )}
 

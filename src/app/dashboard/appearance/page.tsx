@@ -16,7 +16,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import PublicCardPreview from '@/components/dashboard/PublicCardPreview'
 import ThemeCardPreview from '@/components/dashboard/ThemeCardPreview'
-import { CARD_TEMPLATES, CARD_FONTS, CARD_COLORS, cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForTemplate, cardThemeForPreview } from '@/lib/card-design.mjs'
+import { CARD_TEMPLATES, CARD_FONTS, CARD_COLORS, cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, canSelectCardTemplate, cardThemeForTemplate, cardThemeForPreview } from '@/lib/card-design.mjs'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 export default function AppearancePage() {
@@ -31,6 +31,7 @@ export default function AppearancePage() {
     const layoutRailRef = useRef<HTMLDivElement>(null)
     const [fontPair, setFontPair] = useState('classic')
     const [userTier, setUserTier] = useState<string>('FREE')
+    const [cnyDesignEnabled, setCnyDesignEnabled] = useState(false)
     const [previewSlug, setPreviewSlug] = useState('')
     const [previewExpanded, setPreviewExpanded] = useState(false)
     const [saveError, setSaveError] = useState('')
@@ -66,20 +67,24 @@ export default function AppearancePage() {
 
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('theme, tier, subscription_valid_until, slug')
+                .select('theme, tier, subscription_valid_until, slug, cny_design_enabled')
                 .eq('user_id', user.id)
                 .single()
 
             if (profile) {
                 const t = profile.theme || {}
-                const initial = { mode: t.theme_mode || 'dark', filter: t.image_filter || 'normal', color: cardAccent(t.primary), template: cardTemplate(t.template_id), font: cardFont(t.font_pair) }
+                const premium = canUsePremiumDesign(profile.tier, profile.subscription_valid_until)
+                const granted = profile.cny_design_enabled === true
+                const selectedTemplate = cardTemplate(t.template_id)
+                const initial = { mode: t.theme_mode || 'dark', filter: t.image_filter || 'normal', color: cardAccent(t.primary), template: canSelectCardTemplate(selectedTemplate, { premium, cnyEnabled: granted }) ? selectedTemplate : 'classic', font: cardFont(t.font_pair) }
                 setPrimaryColor(initial.color)
                 setThemeMode(initial.mode)
                 setImageFilter(initial.filter)
                 setTemplate(initial.template)
                 setFontPair(initial.font)
                 setSavedAppearance(initial)
-                setUserTier(canUsePremiumDesign(profile.tier, profile.subscription_valid_until) ? profile.tier : 'FREE')
+                setUserTier(premium ? profile.tier : 'FREE')
+                setCnyDesignEnabled(granted)
                 if (profile.slug) {
                     sessionStorage.setItem(`gentanala_design_preview_${profile.slug}`, JSON.stringify({
                         theme_mode: initial.mode, image_filter: initial.filter, primary: initial.color,
@@ -141,6 +146,7 @@ export default function AppearancePage() {
     }
 
     const handleTemplateChange = (value: string) => {
+        if (!canSelectCardTemplate(value, { premium: userTier !== 'FREE', cnyEnabled: cnyDesignEnabled })) return
         const safeTemplate = cardTemplate(value)
         const preset = cardThemeForTemplate(safeTemplate, { theme_mode: themeMode, primary: primaryColor, font_pair: fontPair })
         setSaveError('')
@@ -181,20 +187,34 @@ export default function AppearancePage() {
         // Get existing profile theme data
         const { data: profile } = await supabase
             .from('profiles')
-            .select('theme')
+            .select('theme, tier, subscription_valid_until, cny_design_enabled')
             .eq('user_id', user.id)
             .single()
 
-        const existingTheme = profile?.theme || {}
+        if (!profile) {
+            setSaveError(t('Could not save appearance settings. Your draft is still here; please try again.'))
+            setIsLoading(false)
+            return
+        }
+        const existingTheme = profile.theme || {}
+        const premium = canUsePremiumDesign(profile.tier, profile.subscription_valid_until)
+        const granted = profile.cny_design_enabled === true
+        setCnyDesignEnabled(granted)
+        if (template === 'cny' && !granted) {
+            setSaveError('CNY Custom Design access has been revoked. Choose another layout.')
+            setIsLoading(false)
+            return
+        }
+        const canSaveDesignSettings = premium || (template === 'cny' && granted)
 
         // Merge appearance settings into existing theme
         const updatedTheme = {
             ...existingTheme,
-            primary: userTier === 'FREE' ? '#3B82F6' : primaryColor,
-            theme_mode: userTier === 'FREE' ? 'light' : themeMode,
-            image_filter: userTier === 'FREE' ? 'normal' : imageFilter,
-            template_id: userTier === 'FREE' ? 'classic' : cardTemplate(template),
-            font_pair: userTier === 'FREE' ? 'classic' : cardFont(fontPair),
+            primary: canSaveDesignSettings ? primaryColor : '#3B82F6',
+            theme_mode: canSaveDesignSettings ? themeMode : 'light',
+            image_filter: canSaveDesignSettings ? imageFilter : 'normal',
+            template_id: canSelectCardTemplate(template, { premium, cnyEnabled: granted }) ? template : 'classic',
+            font_pair: canSaveDesignSettings ? cardFont(fontPair) : 'classic',
         }
 
         const { error } = await supabase
@@ -250,7 +270,7 @@ export default function AppearancePage() {
                 </div>
                 <p className="mt-3 text-[11px] text-ink-2">{t('Swipe to browse, tap to choose')}</p>
                 <div ref={layoutRailRef} role="region" aria-label={t('Card Layout')} tabIndex={0} className="relative mt-2 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain p-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-2 focus-visible:outline-offset-2">
-                    {CARD_TEMPLATES.map(option => (
+                    {CARD_TEMPLATES.filter(option => option.category !== 'custom').map(option => (
                         <button
                             key={option.id}
                             type="button"
@@ -277,6 +297,21 @@ export default function AppearancePage() {
                 </div>
                 {userTier === 'FREE' && <p className="mt-3 text-[11px] text-ink-2">{t('Additional layouts are available on Premium.')}</p>}
             </section>
+
+            {cnyDesignEnabled && <section className="mt-5 rounded-card bg-surface p-5 shadow-card">
+                <h2 className="text-[15px] font-semibold">Custom Design</h2>
+                <p className="mt-1 text-[12px] text-ink-2">Designs assigned to your profile by Gentanala admin.</p>
+                {CARD_TEMPLATES.filter(option => option.category === 'custom').map(option => (
+                    <button key={option.id} type="button" onClick={() => handleTemplateChange(option.id)}
+                        aria-pressed={template === option.id}
+                        className={`mt-4 w-full max-w-[224px] rounded-2xl border p-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2 ${template === option.id ? 'border-ink ring-1 ring-ink' : 'border-black/10 hover:border-ink-3'}`}>
+                        <ThemeCardPreview slug={previewSlug} template={option.id} name={option.name}
+                            revision={`${previewRevision}-${option.id}`} />
+                        <span className="mt-2 block text-[12px] font-semibold">{option.name}</span>
+                        <span className="block text-[10px] leading-tight text-ink-2">{option.description}</span>
+                    </button>
+                ))}
+            </section>}
 
             {/* Tema kartu publik */}
             <section className="mt-5 rounded-card bg-surface p-5 shadow-card">

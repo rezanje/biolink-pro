@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, type CSSProperties } from 'react'
 import { notFound, useParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Instagram, Twitter, Linkedin, Globe, ChevronRight, Mail, Phone, Download, Share2, Copy, Check, X, FileText, Image as ImageIcon, ExternalLink, QrCode, Gift, Heart, HelpCircle, Briefcase, ChevronDown, Send, Sparkles, MapPin, Search } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
@@ -117,7 +118,12 @@ function PublicProfileInner() {
                 const thumbnailTemplate = designPreview ? new URLSearchParams(window.location.search).get('template-preview') : null
                 const renderedTheme = cardThemeForPreview(uiTheme, draftTheme, designPreview, thumbnailTemplate)
                 // Locked layouts can be demonstrated in the picker; saved public cards retain tier restrictions.
+                const cnyDesignEnabled = dbProfile.cny_design_enabled === true
                 const canPreviewLayout = designPreview && thumbnailTemplate !== null && cardTemplate(thumbnailTemplate) === thumbnailTemplate
+                    && (thumbnailTemplate !== 'cny' || cnyDesignEnabled)
+                const selectedTemplate = cardTemplate(renderedTheme.template_id)
+                const canRenderSelectedTemplate = canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until)
+                    || (selectedTemplate === 'cny' && cnyDesignEnabled) || canPreviewLayout
                 const processedProfile = {
                     ...dbProfile,
                     whatsapp: renderedTheme.whatsapp || '',
@@ -130,8 +136,8 @@ function PublicProfileInner() {
                     welcome_word: uiTheme.welcome_word || 'hello',
                     welcome_duration: uiTheme.welcome_duration,
                     primary_color: cardAccent(renderedTheme.primary),
-                    template_id: canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until) || canPreviewLayout ? cardTemplate(renderedTheme.template_id) : 'classic',
-                    font_pair: canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until) || canPreviewLayout ? cardFont(renderedTheme.font_pair) : 'classic',
+                    template_id: canRenderSelectedTemplate && (selectedTemplate !== 'cny' || cnyDesignEnabled) ? selectedTemplate : 'classic',
+                    font_pair: canRenderSelectedTemplate ? cardFont(renderedTheme.font_pair) : 'classic',
                     active_mode: designPreview ? 'profile' : uiTheme.active_mode || 'profile',
                     redirect_url: uiTheme.redirect_url || '',
                     redirect_type: uiTheme.redirect_type || 'direct',
@@ -372,8 +378,11 @@ function PublicProfileInner() {
     const isPortrait = templateId === 'portrait'
     const isVoyage = templateId === 'voyage'
     const isStatement = templateId === 'statement'
+    const isCny = templateId === 'cny'
+    const hasCnyIdentity = ['candra naya lestari', 'pt candra naya lestari', 'cny'].includes((profile.company || profile.display_name || '').trim().toLowerCase())
+    const showCompanyInRole = profile.company && (!isCny || profile.company.trim().toLowerCase() !== profile.display_name?.trim().toLowerCase())
     const isPosterTheme = isVoyage || isStatement
-    const isLightMode = profile.theme_mode === 'light' || profile.theme_mode === 'liquid_glass'
+    const isLightMode = !isCny && (profile.theme_mode === 'light' || profile.theme_mode === 'liquid_glass')
     const isLiquidGlass = profile.theme_mode === 'liquid_glass'
     const isGrayscale = profile.image_filter === 'grayscale'
     const primaryColor = cardAccent(profile.primary_color)
@@ -510,12 +519,12 @@ function PublicProfileInner() {
     return (
         <>
             {/* Desktop background */}
-            <div className={`hidden md:block fixed inset-0 -z-10 ${isVoyage ? isLightMode ? 'bg-[#a7b58c]' : 'bg-[#15281c]' : isStatement ? isLightMode ? 'bg-[#40ce7a]' : 'bg-[#103526]' : isPortrait ? isLightMode ? 'bg-[#f1eadb]' : 'bg-[#24211e]' : 'bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900'}`} />
+            <div className={`hidden md:block fixed inset-0 -z-10 ${isCny ? 'bg-[#111811]' : isVoyage ? isLightMode ? 'bg-[#a7b58c]' : 'bg-[#15281c]' : isStatement ? isLightMode ? 'bg-[#40ce7a]' : 'bg-[#103526]' : isPortrait ? isLightMode ? 'bg-[#f1eadb]' : 'bg-[#24211e]' : 'bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900'}`} />
 
             <div
                 data-card-template={templateId}
                 data-card-expanded={isPortrait && portraitExpanded ? 'true' : 'false'}
-                style={isPortrait || isPosterTheme ? { '--portrait-accent': primaryColor, '--poster-accent': primaryColor } as CSSProperties : undefined}
+                style={isPortrait || isPosterTheme || isCny ? { '--portrait-accent': primaryColor, '--poster-accent': primaryColor, '--cny-accent': primaryColor } as CSSProperties : undefined}
                 data-card-font={fontPair}
                 data-card-mode={profile.theme_mode}
                 onClickCapture={designPreview ? event => {
@@ -594,9 +603,13 @@ function PublicProfileInner() {
                 <div ref={cardScrollRef} className={`card-scroll h-screen md:h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden relative ${isLiquidGlass ? 'bg-[radial-gradient(circle_at_20%_0%,rgba(125,211,252,0.24),transparent_34%),radial-gradient(circle_at_85%_22%,rgba(216,180,254,0.20),transparent_30%),linear-gradient(180deg,#edf7ff_0%,#f7fbff_48%,#eaf1f8_100%)]' : isLightMode ? 'bg-zinc-100' : 'bg-zinc-950'}`}>
 
                     {isVoyage && <header className="card-voyage-header"><span title={profile.company || profile.display_name}>{profile.company || profile.display_name}</span><UiLanguageSelect /></header>}
+                    {isCny && <header className="card-cny-header">
+                        {hasCnyIdentity ? <Image src="/cny-logo.png" alt="Candra Naya Lestari" width={126} height={103} /> : <span className="card-cny-wordmark">{profile.company || profile.display_name}</span>}
+                        <UiLanguageSelect />
+                    </header>}
 
                     {/* Hero Photo — STICKY, stays fixed while card scrolls over it */}
-                    <div className="card-hero sticky top-0 w-full z-0" style={{ height: '55vh' }}>
+                    <div className="card-hero sticky top-0 w-full z-0" style={{ height: isCny ? 'min(32vh, 300px)' : '55vh' }}>
                         {profile.avatar_url ? (
                             <div className="relative w-full h-full">
                                 <img
@@ -606,6 +619,10 @@ function PublicProfileInner() {
                                 />
                                 {/* Subtle bottom gradient */}
                                 {!(isPortrait || isPosterTheme) && <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />}
+                            </div>
+                        ) : isCny && hasCnyIdentity ? (
+                            <div className="relative h-full w-full">
+                                <Image src="/cny-sprouts.jpg" alt="Sprouts growing in soil" fill sizes="(min-width: 768px) 430px, 100vw" className="object-cover" priority />
                             </div>
                         ) : (
                             <div className={`w-full h-full flex items-center justify-center ${isLightMode ? 'bg-zinc-200' : 'bg-zinc-900'}`}>
@@ -655,15 +672,15 @@ function PublicProfileInner() {
                                 <div className={`card-role flex items-center justify-center gap-2 text-sm mb-4 ${textSecondary}`}>
                                     {isPortrait && <Briefcase className="h-3.5 w-3.5 shrink-0" />}
                                     {profile.job_title && <span>{profile.job_title}</span>}
-                                    {profile.job_title && profile.company && <span className="opacity-50">•</span>}
-                                    {profile.company && <span>{profile.company}</span>}
+                                    {profile.job_title && showCompanyInRole && <span className="opacity-50">•</span>}
+                                    {showCompanyInRole && <span>{profile.company}</span>}
                                 </div>
                             )}
 
                             {profile.bio && (
                                 <div className="px-2">
-                                    <p className={`text-base leading-relaxed ${textSecondary} ${!(bioExpanded || isPosterTheme || (isPortrait && portraitExpanded)) ? 'line-clamp-3' : ''}`}>{profile.bio}</p>
-                                    {profile.bio.length > 150 && !isPosterTheme && !(isPortrait && portraitExpanded) && (
+                                    <p className={`text-base leading-relaxed ${textSecondary} ${!(bioExpanded || isPosterTheme || isCny || (isPortrait && portraitExpanded)) ? 'line-clamp-3' : ''}`}>{profile.bio}</p>
+                                    {profile.bio.length > 150 && !isPosterTheme && !isCny && !(isPortrait && portraitExpanded) && (
                                         <button onClick={() => setBioExpanded(!bioExpanded)} className={`mt-2 text-sm font-medium ${textMuted} underline underline-offset-2`}>
                                             {bioExpanded ? t('Show Less') : t('Read More')}
                                         </button>
@@ -795,8 +812,10 @@ function PublicProfileInner() {
                         <div className={`card-tabs flex items-center justify-center gap-2 mb-8 rounded-2xl p-1.5 ${isLiquidGlass ? 'lg-tabs' : isLightMode ? 'bg-zinc-100/80' : 'bg-zinc-900/70'}`}>
                             {['links', 'gallery', 'files'].map(tab => (
                                 <button
+                                    type="button"
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
+                                    aria-pressed={activeTab === tab}
                                     className={`text-sm font-bold uppercase tracking-widest transition-all duration-300 rounded-xl px-4 py-2.5 ${getTabStyle(tab)}`}
                                 >
                                     {t(tab === 'links' ? 'Links' : tab === 'gallery' ? 'Gallery' : 'Files')}
@@ -836,9 +855,9 @@ function PublicProfileInner() {
                             <div className="grid grid-cols-2 gap-3">
                                 {profile.gallery && profile.gallery.length > 0 ? (
                                     profile.gallery.map((item: any) => (
-                                        <div key={item.id} className={`aspect-square rounded-2xl overflow-hidden cursor-zoom-in backdrop-blur-md ${isLiquidGlass ? 'lg-item' : isLightMode ? 'bg-white/50 border border-white/40' : 'bg-zinc-900/75 shadow-[0_12px_28px_rgba(0,0,0,0.24)]'}`} onClick={() => setSelectedImage(item.url)}>
-                                            <img src={item.url} alt={item.caption} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
-                                        </div>
+                                        <button key={item.id} type="button" aria-label={item.caption || t('Open photo')} className={`card-gallery aspect-square rounded-2xl overflow-hidden cursor-zoom-in backdrop-blur-md ${isLiquidGlass ? 'lg-item' : isLightMode ? 'bg-white/50 border border-white/40' : 'bg-zinc-900/75 shadow-[0_12px_28px_rgba(0,0,0,0.24)]'}`} onClick={() => setSelectedImage(item.url)}>
+                                            <img src={item.url} alt={item.caption || ''} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
+                                        </button>
                                     ))
                                 ) : (
                                     <div className={`col-span-2 text-center py-12 ${textMuted}`}>
@@ -856,7 +875,7 @@ function PublicProfileInner() {
                                     profile.files.map((file: any) => (
                                         <a key={file.id} href={file.url} target="_blank" rel="noopener noreferrer"
                                             onClick={() => handleLinkClick(file.id)}
-                                            className={`block w-full p-5 rounded-2xl flex items-center gap-4 transition-all active:scale-[0.99] ${glassItem}`}
+                                            className={`card-file block w-full p-5 rounded-2xl flex items-center gap-4 transition-all active:scale-[0.99] ${glassItem}`}
                                         >
                                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isLiquidGlass ? 'bg-white/30 text-zinc-600' : isLightMode ? 'bg-zinc-100/80 text-zinc-600' : 'bg-amber-500/10 text-amber-400'}`} style={{ position: 'relative', zIndex: 2 }}>
                                                 <FileText className="w-6 h-6" />
@@ -879,7 +898,7 @@ function PublicProfileInner() {
 
                         {/* Footer */}
                         <div className="mt-12 pb-8 text-center">
-                            <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isLightMode ? 'text-zinc-300' : 'text-white/15'}`}>{t('Powered by Gentanala')}</p>
+                            <p className={`card-footer text-[10px] font-bold uppercase tracking-[0.2em] ${isLightMode ? 'text-zinc-300' : 'text-white/15'}`}>{t('Powered by Gentanala')}</p>
                         </div>
                     </motion.div>
                 </div>

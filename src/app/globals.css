@@ -1270,3 +1270,268 @@ textarea:focus {
     transition: none;
   }
 }
+
+/* Candra Naya Lestari: a forest-dark editorial digital profile. */
+.public-card[data-card-template='cny'] {
+  --cny-forest: #171e18;
+  --cny-panel: #202a22;
+  --cny-line: #48594a;
+  --cny-cream: #f5f3e9;
+  background: var(--cny-forest);
+  color: var(--cny-cream);
+  border-color: var(--cny-line);
+  font-family: var(--font-inter), Arial, sans-serif;
+}
+
+.public-card[data-card-template='cny'] .card-scroll {
+  background: var(--cny-forest);
+}
+
+.public-card[data-card-template='cny'] .card-cny-header {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 108px;
+  padding: 13px 26px;
+  background: var(--cny-forest);
+  border-bottom: 1px solid var(--cny-line);
+}
+
+.public-card[data-card-template='cny'] .card-cny-header img {
+  width: 110px;
+  height: auto;
+  max-height: 90px;
+  object-fit: contain;
+}
+
+.public-card[data-card-template='cny'] .card-cny-wordmark {
+  max-width: 70%;
+  color: var(--cny-cream);
+  font-family: Georgia, serif;
+  font-size: 22px;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.public-card[data-card-template='cny'] .card-cny-header select {
+  max-width: 112px;
+  background: var(--cny-panel);
+  color: var(--cny-cream);
+  border: 1px solid var(--cny-line);
+}
+
+.public-card[data-card-template='cny'] .card-hero {
+  position: relative;
+  min-height: 220px;
+  max-height: 300px;
+  background: radial-gradient(circle at 65% 35%, #425d40 0, #253d2b 35%, #101b17 85%);
+  overflow: hidden;
+}
+
+.public-card[data-card-template='cny'] .card-hero img {
+  object-position: center 35%;
+  filter: saturate(.8) contrast(1.06);
+}
+
+.public-card[data-card-template='cny'] .card-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(16, 28, 19, .1), rgba(16, 28, 19, .55));
+}
+
+.public-card[data-card-template='cny'] .card-content {
+  min-height: 0;
+  margin-top: 0;
+  padding: 34px 26px 42px;
+  background: var(--cny-forest);
+  color: var(--cny-cream);
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.public-card[data-card-template='cny'] .card-pull-indicator,
+.public-card[data-card-template='cny'] .card-language {
+  display: none;
+}
+
+.public-card[data-card-template='cny'] .card-info {
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.public-card[data-card-template='cny'] .card-info::before {
+  content: 'DIGITAL PROFILE';
+  display: block;
+  margin-bottom: 18px;
+  color: #d6aa9f;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .25em;
+}
+
+.public-card[data-card-template='cny'] .card-title {
+  margin-bottom: 16px;
+  color: var(--cny-cream);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.5rem, 10vw, 3.5rem);
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: -.045em;
+  overflow-wrap: anywhere;
+}
+
+.public-card[data-card-template='cny'] .card-handle {
+  display: none;
+}
+
+.public-card[data-card-template='cny'] .card-role {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  color: #e9e5d8;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .035em;
+  overflow-wrap: anywhere;
+}
+
+.public-card[data-card-template='cny'] .card-info > div.px-2 {
+  padding: 0;
+}
+
+.public-card[data-card-template='cny'] .card-info > div.px-2 > p {
+  color: #d6dccf;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.public-card[data-card-template='cny'] .card-socials {
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.public-card[data-card-template='cny'] .card-socials a,
+.public-card[data-card-template='cny'] .card-actions > button:not(:first-child) {
+  color: var(--cny-cream);
+  background: var(--cny-panel);
+  border: 1px solid var(--cny-line);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.public-card[data-card-template='cny'] .card-socials a:hover,
+.public-card[data-card-template='cny'] .card-actions > button:not(:first-child):hover {
+  background: #314336;
+}
+
+.public-card[data-card-template='cny'] .card-actions {
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+
+.public-card[data-card-template='cny'] .card-actions > button:first-child {
+  flex-basis: 100%;
+  background: var(--cny-accent, #d73a2b) !important;
+  border: 0 !important;
+  border-radius: 2px;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.public-card[data-card-template='cny'] .card-tabs {
+  gap: 0;
+  margin-bottom: 22px;
+  padding: 0;
+  background: transparent;
+  border-bottom: 1px solid var(--cny-line);
+  border-radius: 0;
+}
+
+.public-card[data-card-template='cny'] .card-tabs button {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 5px;
+  color: #cbd4c7;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 11px;
+  letter-spacing: .07em;
+}
+
+.public-card[data-card-template='cny'] .card-tabs button:hover,
+.public-card[data-card-template='cny'] .card-tabs button:focus-visible {
+  color: #fff;
+}
+
+.public-card[data-card-template='cny'] .card-tabs button[aria-pressed='true'] {
+  color: #fff;
+  border-bottom-color: var(--cny-accent, #d73a2b);
+}
+
+.public-card[data-card-template='cny'] :is(.card-link, .card-file, .card-gallery) {
+  min-width: 0;
+  padding: 14px 15px;
+  background: var(--cny-panel);
+  border: 1px solid var(--cny-line);
+  border-radius: 3px;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.public-card[data-card-template='cny'] :is(.card-link, .card-file, .card-gallery):hover {
+  background: #2b3a2e;
+}
+
+.public-card[data-card-template='cny'] .card-link > div {
+  min-width: 0;
+  gap: 12px;
+}
+
+.public-card[data-card-template='cny'] .card-link > div > div:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.public-card[data-card-template='cny'] .card-link > svg {
+  flex-shrink: 0;
+  color: var(--cny-cream);
+}
+
+.public-card[data-card-template='cny'] .card-link :is(h4, p) {
+  color: var(--cny-cream);
+}
+
+.public-card[data-card-template='cny'] .card-link p {
+  opacity: .7;
+}
+
+.public-card[data-card-template='cny'] .card-gallery {
+  padding: 0;
+}
+
+.public-card[data-card-template='cny'] .card-file :is(h4, p, svg),
+.public-card[data-card-template='cny'] .card-footer {
+  color: #cbd4c7;
+}
+
+.public-card[data-card-template='cny'] :is(a, button, select):focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 360px) {
+  .public-card[data-card-template='cny'] .card-content {
+    padding-inline: 20px;
+  }
+}
