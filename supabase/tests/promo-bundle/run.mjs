@@ -55,7 +55,12 @@ await c.query(`
   ALTER TABLE public.profiles ALTER COLUMN tier TYPE public.user_tier USING tier::public.user_tier;
   ALTER TABLE public.profiles ALTER COLUMN tier SET DEFAULT 'FREE';
   ALTER TABLE public.profiles ADD COLUMN theme jsonb DEFAULT '{}'::jsonb, ADD COLUMN social_links jsonb DEFAULT '[]'::jsonb, ADD COLUMN avatar_url text;
-  ALTER TABLE public.ownership_logs ADD COLUMN transferred_at timestamptz DEFAULT now();
+  -- Sama dengan produksi: tidak ada ownership_logs, special_editions jsonb.
+  DROP TABLE public.ownership_logs;
+  ALTER TABLE public.profiles ALTER COLUMN special_editions TYPE jsonb USING coalesce(to_jsonb(special_editions), '[]'::jsonb);
+  ALTER TABLE public.profiles ALTER COLUMN special_editions SET DEFAULT '[]'::jsonb;
+  ALTER TABLE public.serial_numbers ALTER COLUMN special_editions TYPE jsonb USING coalesce(to_jsonb(special_editions), '[]'::jsonb);
+  ALTER TABLE public.serial_numbers ALTER COLUMN special_editions SET DEFAULT '[]'::jsonb;
   CREATE TABLE public.tier_configs (tier public.user_tier PRIMARY KEY, features jsonb NOT NULL DEFAULT '{}', updated_at timestamptz DEFAULT now());
   ALTER TABLE public.tier_configs ENABLE ROW LEVEL SECURITY;
   CREATE POLICY "Allow public read-only access" ON public.tier_configs FOR SELECT USING (true);
@@ -70,10 +75,10 @@ await c.query(`
   INSERT INTO public.profiles (user_id, slug, display_name, email, tier) VALUES ('${U.b2b}', 'b2b-dummy', 'B2B', 'b2b@example.test', 'B2B');
   UPDATE public.profiles SET bio = 'Bio lama owner' WHERE user_id = '${U.owner}';
   INSERT INTO public.serial_numbers (serial_uuid, product_id, special_editions) VALUES
-   ('${S(10)}', 'd0000000-0000-0000-0000-000000000001', '{}'), ('${S(11)}', 'd0000000-0000-0000-0000-000000000001', '{}'),
-   ('${S(12)}', 'd0000000-0000-0000-0000-000000000001', '{aruna}'), ('${S(13)}', 'd0000000-0000-0000-0000-000000000001', '{}'),
-   ('${S(14)}', 'd0000000-0000-0000-0000-000000000001', '{}'), ('${S(15)}', 'd0000000-0000-0000-0000-000000000001', '{}'),
-   ('${S(16)}', 'd0000000-0000-0000-0000-000000000001', '{}'), ('${S(17)}', 'd0000000-0000-0000-0000-000000000001', '{}');
+   ('${S(10)}', 'd0000000-0000-0000-0000-000000000001', '[]'), ('${S(11)}', 'd0000000-0000-0000-0000-000000000001', '[]'),
+   ('${S(12)}', 'd0000000-0000-0000-0000-000000000001', '["aruna"]'), ('${S(13)}', 'd0000000-0000-0000-0000-000000000001', '[]'),
+   ('${S(14)}', 'd0000000-0000-0000-0000-000000000001', '[]'), ('${S(15)}', 'd0000000-0000-0000-0000-000000000001', '[]'),
+   ('${S(16)}', 'd0000000-0000-0000-0000-000000000001', '[]'), ('${S(17)}', 'd0000000-0000-0000-0000-000000000001', '[]');
 `)
 await c.query(M023)
 await c.query(M024)
@@ -81,7 +86,7 @@ await c.query(M025)
 check('setup', 'migrasi 025 jalan di atas 023 + 024', true)
 
 // ---------- Kunci tier ----------
-let r = await as('authenticated', U.owner, `UPDATE public.profiles SET tier = 'PREMIUM', subscription_valid_until = now() + interval '99 years', unlocked_templates = '{neon}', feature_grants = '{ai_bot}', special_editions = '{aruna}' WHERE user_id = $1`, [U.owner])
+let r = await as('authenticated', U.owner, `UPDATE public.profiles SET tier = 'PREMIUM', subscription_valid_until = now() + interval '99 years', unlocked_templates = '{neon}', feature_grants = '{ai_bot}', special_editions = '["aruna"]' WHERE user_id = $1`, [U.owner])
 let p = await prof(U.owner)
 check('tier', 'pemilik tidak bisa menaikkan tier/masa berlaku/template/fitur/edisi sendiri', !r.error && p.tier === 'FREE' && !p.v && p.t.length === 0 && p.f.length === 0 && (p.e || []).length === 0, JSON.stringify(p))
 r = await as('authenticated', U.owner, `UPDATE public.profiles SET display_name = 'Owner Edit', bio = 'Bio lama owner' WHERE user_id = $1`, [U.owner])
@@ -186,8 +191,14 @@ check('bundle', 'super admin memasangkan jam + kartu jadi satu bundel', r.rows[0
 r = await as('anon', null, `SELECT public.nfc_claim_serial($1, $2) j`, [S(11), U.newbie])
 const bundle = await q(`SELECT serial_uuid::text u, owner_id::text o, is_claimed FROM public.serial_numbers WHERE serial_uuid IN ($1, $2)`, [S(10), S(11)])
 check('bundle', 'sekali aktivasi di salah satu: dua-duanya jadi milik orang yang sama', r.rows[0]?.j?.success && r.rows[0].j.bundle_claimed === 1 && bundle.every(b => b.o === U.newbie && b.is_claimed), JSON.stringify(r.rows[0]?.j))
-const logs = await q(`SELECT count(*)::int n FROM public.ownership_logs WHERE to_user_id = $1`, [U.newbie])
-check('bundle', 'riwayat kepemilikan tercatat untuk kedua perangkat', logs[0].n === 3)
+await q(`CREATE TABLE public.ownership_logs (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), serial_id uuid, to_user_id uuid, transfer_type text)`)
+await q(`UPDATE public.serial_numbers SET bundle_id = '99999999-0000-0000-0000-000000000001' WHERE serial_uuid IN ($1, $2)`, [S(15), S(17)])
+r = await as('authenticated', U.promo, `SELECT public.nfc_claim_serial($1) j`, [S(17)])
+const logs = await q(`SELECT count(*)::int n FROM public.ownership_logs WHERE to_user_id = $1`, [U.promo])
+check('bundle', 'kalau tabel riwayat kepemilikan ada, kedua perangkat bundel tercatat', r.rows[0]?.j?.success && logs[0].n === 2, JSON.stringify(r))
+await q(`UPDATE public.serial_numbers SET is_claimed = false, owner_id = NULL, bundle_id = NULL WHERE serial_uuid IN ($1, $2)`, [S(15), S(17)])
+await q(`DELETE FROM public.promo_grants WHERE serial_id IN (SELECT id FROM public.serial_numbers WHERE serial_uuid IN ($1, $2))`, [S(15), S(17)])
+await q(`DROP TABLE public.ownership_logs`)
 const ng = await q(`SELECT count(*)::int n FROM public.promo_grants WHERE user_id = $1`, [U.newbie])
 check('bundle', 'hak paket diberikan sekali per bundel, bukan per perangkat', ng[0].n === 2) // 1 dari S3, 1 dari bundel
 r = await as('anon', null, `SELECT public.nfc_get_serial($1) j`, [S(10)])

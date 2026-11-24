@@ -174,7 +174,7 @@ BEGIN
         NEW.tier := 'FREE';
         NEW.subscription_valid_until := NULL;
         NEW.special_edition := NULL;
-        NEW.special_editions := '{}';
+        NEW.special_editions := '[]'::jsonb;
         NEW.unlocked_templates := '{}';
         NEW.feature_grants := '{}';
         IF NEW.slug IS NOT NULL AND public.nfc_is_reserved_slug(NEW.slug) THEN
@@ -379,6 +379,28 @@ BEGIN
 END;
 $$;
 
+-- special_editions di produksi bertipe jsonb (array). Nilai lain dianggap kosong.
+CREATE OR REPLACE FUNCTION public.nfc_json_array(p_value jsonb)
+RETURNS jsonb
+LANGUAGE sql IMMUTABLE SET search_path = ''
+AS $$
+    SELECT CASE WHEN jsonb_typeof(p_value) = 'array' THEN p_value ELSE '[]'::jsonb END;
+$$;
+
+-- Catat riwayat kepemilikan kalau tabel ownership_logs ada (tidak ada di
+-- semua lingkungan).
+CREATE OR REPLACE FUNCTION public.nfc_log_claim(p_serial_id uuid, p_user_id uuid)
+RETURNS void
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+    IF to_regclass('public.ownership_logs') IS NOT NULL THEN
+        EXECUTE 'INSERT INTO public.ownership_logs (serial_id, to_user_id, transfer_type) VALUES ($1, $2, $3)'
+        USING p_serial_id, p_user_id, 'claim';
+    END IF;
+END;
+$$;
+
 -- Setelah nomor seri berpindah ke pemilik: klaim sisa bundel, pastikan
 -- profil ada, gabung edisi spesial, beri hak paket promo.
 CREATE OR REPLACE FUNCTION public.nfc_after_claim(p_user_id uuid, p_serial_id uuid, p_new_claim boolean)
@@ -388,6 +410,7 @@ AS $$
 DECLARE
     v_bundle uuid;
     v_bundle_count int := 0;
+    v_bundle_ids uuid[];
     v_editions text[];
     v_promo jsonb;
     v_slug text;
@@ -401,21 +424,21 @@ BEGIN
             WHERE bundle_id = v_bundle AND id <> p_serial_id
               AND is_claimed IS NOT TRUE AND owner_id IS NULL
             RETURNING id
-        ), l AS (
-            INSERT INTO public.ownership_logs (serial_id, to_user_id, transfer_type)
-            SELECT id, p_user_id, 'claim' FROM c
-            RETURNING 1
         )
-        SELECT count(*) INTO v_bundle_count FROM l;
+        SELECT count(*), coalesce(array_agg(id), '{}') INTO v_bundle_count, v_bundle_ids FROM c;
+
+        FOR i IN 1 .. coalesce(array_length(v_bundle_ids, 1), 0) LOOP
+            PERFORM public.nfc_log_claim(v_bundle_ids[i], p_user_id);
+        END LOOP;
     END IF;
 
     PERFORM public.nfc_ensure_profile(p_user_id);
 
     SELECT ARRAY(
         SELECT DISTINCT e FROM (
-            SELECT unnest(coalesce(p.special_editions, '{}')) e FROM public.profiles p WHERE p.user_id = p_user_id
+            SELECT jsonb_array_elements_text(public.nfc_json_array(p.special_editions)) e FROM public.profiles p WHERE p.user_id = p_user_id
             UNION SELECT p.special_edition FROM public.profiles p WHERE p.user_id = p_user_id
-            UNION SELECT unnest(coalesce(s.special_editions, '{}')) FROM public.serial_numbers s
+            UNION SELECT jsonb_array_elements_text(public.nfc_json_array(s.special_editions)) FROM public.serial_numbers s
                   WHERE s.id = p_serial_id OR (v_bundle IS NOT NULL AND s.bundle_id = v_bundle AND s.owner_id = p_user_id)
             UNION SELECT s.special_edition FROM public.serial_numbers s
                   WHERE s.id = p_serial_id OR (v_bundle IS NOT NULL AND s.bundle_id = v_bundle AND s.owner_id = p_user_id)
@@ -424,7 +447,7 @@ BEGIN
 
     IF cardinality(v_editions) > 0 THEN
         UPDATE public.profiles
-        SET special_editions = v_editions,
+        SET special_editions = to_jsonb(v_editions),
             special_edition = coalesce(special_edition, v_editions[1])
         WHERE user_id = p_user_id;
     END IF;
@@ -485,8 +508,7 @@ BEGIN
     END IF;
 
     IF v_new THEN
-        INSERT INTO public.ownership_logs (serial_id, to_user_id, transfer_type)
-        VALUES (v_id, v_uid, 'claim');
+        PERFORM public.nfc_log_claim(v_id, v_uid);
     END IF;
 
     v_after := public.nfc_after_claim(v_uid, v_id, v_new);
@@ -603,6 +625,7 @@ REVOKE ALL ON FUNCTION public.nfc_ensure_profile(uuid) FROM PUBLIC, anon, authen
 REVOKE ALL ON FUNCTION public.nfc_promo_for_serial(uuid) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.nfc_apply_promo(uuid, uuid) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.nfc_after_claim(uuid, uuid, boolean) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.nfc_log_claim(uuid, uuid) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.nfc_record_slug_history() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.nfc_claim_serial(text, uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.claim_serial_number(uuid, uuid) FROM PUBLIC, anon;

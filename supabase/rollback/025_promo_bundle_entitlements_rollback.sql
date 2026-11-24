@@ -22,6 +22,8 @@ DROP FUNCTION IF EXISTS public.nfc_after_claim(uuid, uuid, boolean);
 DROP FUNCTION IF EXISTS public.nfc_apply_promo(uuid, uuid);
 DROP FUNCTION IF EXISTS public.nfc_promo_for_serial(uuid);
 DROP FUNCTION IF EXISTS public.nfc_ensure_profile(uuid);
+DROP FUNCTION IF EXISTS public.nfc_log_claim(uuid, uuid);
+DROP FUNCTION IF EXISTS public.nfc_json_array(jsonb);
 
 -- Klaim versi 023
 CREATE OR REPLACE FUNCTION public.nfc_claim_serial(p_serial_uuid text, p_new_user_id uuid DEFAULT NULL)
@@ -75,21 +77,9 @@ $$;
 REVOKE ALL ON FUNCTION public.nfc_claim_serial(text, uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.nfc_claim_serial(text, uuid) TO anon, authenticated;
 
--- Klaim lama (gentanala-schema.sql)
-CREATE OR REPLACE FUNCTION public.claim_serial_number(p_serial_uuid uuid, p_user_id uuid)
-RETURNS jsonb AS $$
-DECLARE v_serial record;
-BEGIN
-    SELECT * INTO v_serial FROM public.serial_numbers WHERE serial_uuid = p_serial_uuid FOR UPDATE;
-    IF NOT FOUND THEN RETURN jsonb_build_object('success', false, 'error', 'Serial not found'); END IF;
-    IF v_serial.is_claimed THEN RETURN jsonb_build_object('success', false, 'error', 'Already claimed'); END IF;
-    UPDATE public.serial_numbers SET owner_id = p_user_id, is_claimed = true, claimed_at = now() WHERE id = v_serial.id;
-    INSERT INTO public.ownership_logs (serial_id, to_user_id, transfer_type) VALUES (v_serial.id, p_user_id, 'claim');
-    RETURN jsonb_build_object('success', true, 'serial_id', v_serial.id);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-REVOKE ALL ON FUNCTION public.claim_serial_number(uuid, uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.claim_serial_number(uuid, uuid) TO authenticated;
+-- claim_serial_number tidak ada di produksi sebelum 025 (dibuat 025 sebagai
+-- jalur kompatibilitas), jadi dihapus lagi.
+DROP FUNCTION IF EXISTS public.claim_serial_number(uuid, uuid);
 
 -- Kado versi 023
 CREATE OR REPLACE FUNCTION public.nfc_mark_gift_opened(p_serial_uuid text)
