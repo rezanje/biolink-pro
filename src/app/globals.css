@@ -1270,3 +1270,212 @@ textarea:focus {
     transition: none;
   }
 }
+
+/* Neon Coast: senja pink-oranye, palem, dan cahaya neon jalan malam. */
+.public-card[data-card-template='neon'] {
+  --neon-pink: #ff2e88;
+  --neon-orange: #ff8a3d;
+  --neon-cyan: #22e4f2;
+  --neon-night: #12051f;
+  --neon-plum: #1d0a35;
+  --neon-text: #f6e9ff;
+  --neon-muted: #c8a8e6;
+  background: var(--neon-night);
+}
+
+.public-card[data-card-template='neon'] .card-scroll {
+  background: var(--neon-night);
+}
+
+.public-card[data-card-template='neon'] .card-hero {
+  height: 48vh !important;
+  background: linear-gradient(180deg, #2b0f4c 0%, #7a1e6c 50%, #ff4f7b 80%, #ff9a3d 100%);
+}
+
+.public-card[data-card-template='neon'] .card-hero img {
+  filter: saturate(1.15) contrast(1.05);
+}
+
+/* Rona senja di atas foto */
+.public-card[data-card-template='neon'] .card-hero > div::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(43, 15, 76, 0.15) 0%, rgba(255, 46, 136, 0.22) 55%, rgba(18, 5, 31, 0.85) 100%);
+  mix-blend-mode: normal;
+  pointer-events: none;
+}
+
+.public-card[data-card-template='neon'] .card-neon-skyline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 46%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.public-card[data-card-template='neon'] .card-hero > div > .card-neon-skyline:first-child {
+  height: 100%;
+}
+
+.public-card[data-card-template='neon'] .card-content {
+  margin-top: -1.5rem;
+  background: linear-gradient(180deg, var(--neon-plum) 0%, var(--neon-night) 60%);
+  border-top: 0;
+  box-shadow: 0 -18px 40px rgba(255, 46, 136, 0.25);
+  backdrop-filter: none;
+}
+
+/* Garis neon di tepi atas kartu */
+.public-card[data-card-template='neon'] .card-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink), var(--neon-orange));
+  box-shadow: 0 0 12px rgba(255, 46, 136, 0.8);
+}
+
+.public-card[data-card-template='neon'] .card-pull-indicator > div {
+  background: rgba(34, 228, 242, 0.45);
+}
+
+.public-card[data-card-template='neon'] .card-title {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 0 6px;
+  font-family: var(--font-archivo-black), var(--font-inter), sans-serif;
+  font-size: clamp(2.3rem, 11vw, 3.1rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  transform: skewX(-9deg);
+  color: transparent;
+  background: linear-gradient(180deg, #ffe66d 0%, var(--neon-orange) 45%, var(--neon-pink) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 0 10px rgba(255, 46, 136, 0.55)) drop-shadow(0 2px 0 rgba(18, 5, 31, 0.9));
+}
+
+.public-card[data-card-template='neon'] .card-handle {
+  color: var(--neon-cyan);
+  letter-spacing: 0.32em;
+  text-shadow: 0 0 8px rgba(34, 228, 242, 0.7);
+}
+
+.public-card[data-card-template='neon'] .card-role,
+.public-card[data-card-template='neon'] .card-info > div.px-2 > p {
+  color: var(--neon-text);
+}
+
+.public-card[data-card-template='neon'] .card-info > div.px-2 > button {
+  color: var(--neon-muted);
+}
+
+.public-card[data-card-template='neon'] .card-socials a {
+  color: var(--neon-cyan);
+  background: rgba(34, 228, 242, 0.06);
+  border: 1.5px solid rgba(34, 228, 242, 0.7);
+  box-shadow: 0 0 12px rgba(34, 228, 242, 0.35), inset 0 0 8px rgba(34, 228, 242, 0.15);
+}
+
+.public-card[data-card-template='neon'] .card-socials a:hover {
+  color: #fff;
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 18px rgba(255, 46, 136, 0.6);
+}
+
+.public-card[data-card-template='neon'] .card-actions > button:first-child {
+  background: linear-gradient(100deg, var(--neon-pink) 0%, var(--neon-orange) 100%) !important;
+  color: #fff !important;
+  border: 0 !important;
+  box-shadow: 0 0 22px rgba(255, 46, 136, 0.55), 0 8px 24px rgba(255, 138, 61, 0.25) !important;
+  min-width: 0;
+  gap: 8px !important;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.public-card[data-card-template='neon'] .card-actions > button:not(:first-child),
+.public-card[data-card-template='neon'] .card-actions > div > button {
+  color: var(--neon-text);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 46, 136, 0.45);
+  box-shadow: none;
+}
+
+.public-card[data-card-template='neon'] .card-actions > div {
+  background: transparent;
+}
+
+.public-card[data-card-template='neon'] .card-tabs {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 46, 136, 0.25);
+}
+
+.public-card[data-card-template='neon'] .card-tabs button {
+  color: var(--neon-muted);
+  background: transparent;
+  box-shadow: none;
+}
+
+.public-card[data-card-template='neon'] .card-tabs button[data-active='true'] {
+  color: var(--neon-night);
+  background: linear-gradient(100deg, var(--neon-cyan), #8af3ff);
+  box-shadow: 0 0 14px rgba(34, 228, 242, 0.55);
+}
+
+.public-card[data-card-template='neon'] .card-link {
+  background: linear-gradient(90deg, rgba(255, 46, 136, 0.1), rgba(29, 10, 53, 0.6));
+  border: 1px solid rgba(255, 46, 136, 0.35);
+  box-shadow: none;
+}
+
+.public-card[data-card-template='neon'] .card-link:hover {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 16px rgba(34, 228, 242, 0.35);
+}
+
+.public-card[data-card-template='neon'] .card-link h4 {
+  color: var(--neon-text);
+}
+
+.public-card[data-card-template='neon'] .card-link p {
+  color: var(--neon-muted);
+}
+
+.public-card[data-card-template='neon'] .card-link > div > div:first-child {
+  color: var(--neon-pink);
+  background: rgba(255, 46, 136, 0.12);
+}
+
+.public-card[data-card-template='neon'] .card-link svg:last-child {
+  color: var(--neon-cyan);
+}
+
+.public-card[data-card-template='neon'] .card-language select {
+  color: var(--neon-text);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 46, 136, 0.35);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .public-card[data-card-template='neon'] .card-content::before {
+    animation: neon-flicker 6s infinite;
+  }
+}
+
+@keyframes neon-flicker {
+  0%, 92%, 100% { opacity: 1; }
+  93% { opacity: 0.55; }
+  94% { opacity: 1; }
+  96% { opacity: 0.7; }
+}

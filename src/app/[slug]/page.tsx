@@ -23,6 +23,7 @@ import { usePetSpriteReady } from '@/components/pet/PetSprite'
 import { PET_FEATURE_ENABLED, selectPetCharacter } from '@/lib/pet/pet-selection.mjs'
 import { getSelectedSpecialGreetingAnimation, getWelcomeCloseDelay, shouldShowSpecialGreetingAnimation } from '@/lib/special-greeting.mjs'
 import { activeRedirectUrl, normalizeUrl } from '@/lib/redirect-mode.mjs'
+import { NeonSkyline } from '@/components/profile/NeonSkyline'
 import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview } from '@/lib/card-design.mjs'
 import { canUsePublicTranslate } from '@/lib/profile-display.mjs'
 import { UiLanguageProvider, UiLanguageSelect, useUiLanguage } from '@/components/UiLanguageProvider'
@@ -372,6 +373,7 @@ function PublicProfileInner() {
     const isPortrait = templateId === 'portrait'
     const isVoyage = templateId === 'voyage'
     const isStatement = templateId === 'statement'
+    const isNeon = templateId === 'neon'
     const isPosterTheme = isVoyage || isStatement
     const isLightMode = profile.theme_mode === 'light' || profile.theme_mode === 'liquid_glass'
     const isLiquidGlass = profile.theme_mode === 'liquid_glass'
@@ -510,7 +512,7 @@ function PublicProfileInner() {
     return (
         <>
             {/* Desktop background */}
-            <div className={`hidden md:block fixed inset-0 -z-10 ${isVoyage ? isLightMode ? 'bg-[#a7b58c]' : 'bg-[#15281c]' : isStatement ? isLightMode ? 'bg-[#40ce7a]' : 'bg-[#103526]' : isPortrait ? isLightMode ? 'bg-[#f1eadb]' : 'bg-[#24211e]' : 'bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900'}`} />
+            <div className={`hidden md:block fixed inset-0 -z-10 ${isNeon ? 'bg-[radial-gradient(circle_at_50%_0%,#5b1a6e_0%,#1a0830_55%,#0d0418_100%)]' : isVoyage ? isLightMode ? 'bg-[#a7b58c]' : 'bg-[#15281c]' : isStatement ? isLightMode ? 'bg-[#40ce7a]' : 'bg-[#103526]' : isPortrait ? isLightMode ? 'bg-[#f1eadb]' : 'bg-[#24211e]' : 'bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900'}`} />
 
             <div
                 data-card-template={templateId}
@@ -606,10 +608,12 @@ function PublicProfileInner() {
                                 />
                                 {/* Subtle bottom gradient */}
                                 {!(isPortrait || isPosterTheme) && <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />}
+                                {isNeon && <NeonSkyline />}
                             </div>
                         ) : (
-                            <div className={`w-full h-full flex items-center justify-center ${isLightMode ? 'bg-zinc-200' : 'bg-zinc-900'}`}>
-                                <span className="text-[200px] font-bold opacity-5">{profile.display_name?.[0]?.toUpperCase() || 'U'}</span>
+                            <div className={`relative w-full h-full flex items-center justify-center ${isLightMode ? 'bg-zinc-200' : 'bg-zinc-900'}`}>
+                                {isNeon && <NeonSkyline withSky />}
+                                <span className="relative text-[200px] font-bold opacity-5">{profile.display_name?.[0]?.toUpperCase() || 'U'}</span>
                             </div>
                         )}
                     </div>
@@ -796,6 +800,7 @@ function PublicProfileInner() {
                             {['links', 'gallery', 'files'].map(tab => (
                                 <button
                                     key={tab}
+                                    data-active={activeTab === tab ? 'true' : undefined}
                                     onClick={() => setActiveTab(tab)}
                                     className={`text-sm font-bold uppercase tracking-widest transition-all duration-300 rounded-xl px-4 py-2.5 ${getTabStyle(tab)}`}
                                 >

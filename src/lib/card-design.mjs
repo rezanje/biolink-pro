@@ -5,6 +5,7 @@ export const CARD_TEMPLATES = [
     { id: 'portrait', name: 'Portrait', description: 'Bold portrait and rounded white panels' },
     { id: 'voyage', name: 'Voyage', description: 'Sunny yellow and forest-green headlines' },
     { id: 'statement', name: 'Statement', description: 'Oversized type and a fresh green accent' },
+    { id: 'neon', name: 'Neon Coast', description: 'Sunset neon, palm silhouettes and night-drive glow' },
 ]
 
 export const CARD_FONTS = [
@@ -53,6 +54,7 @@ const TEMPLATE_PRESETS = {
     portrait: { theme_mode: 'light', primary: '#111111', font_pair: 'classic' },
     voyage: { theme_mode: 'light', primary: '#123D1B', font_pair: 'bold' },
     statement: { theme_mode: 'light', primary: '#16AE69', font_pair: 'condensed' },
+    neon: { theme_mode: 'dark', primary: '#FF2E88', font_pair: 'bold' },
 }
 
 export function cardThemeForTemplate(value, currentTheme) {
