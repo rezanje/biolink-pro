@@ -20,10 +20,7 @@ export default function GiftMemoryPage() {
         const load = async () => {
             const supabase = createClient()
             const { data } = await supabase
-                .from('serial_numbers')
-                .select('gift_enabled, gift_url, gift_message, gift_from')
-                .eq('serial_uuid', uuid)
-                .single()
+                .rpc('nfc_get_serial', { p_serial_uuid: uuid })
             setSerial(data)
             setLoading(false)
         }

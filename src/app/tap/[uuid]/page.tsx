@@ -66,12 +66,10 @@ export default function TapPage() {
 
             const supabase = createClient()
 
-            // 1. Query Supabase for this serial
+            // 1. Query Supabase for this serial. Tabel serial_numbers tertutup
+            // untuk publik; fungsi ini hanya mengembalikan data kartu ini.
             const { data: dbSerial, error } = await supabase
-                .from('serial_numbers')
-                .select('*, products(*)')
-                .eq('serial_uuid', cleanUuid)
-                .single()
+                .rpc('nfc_get_serial', { p_serial_uuid: cleanUuid })
 
             if (error || !dbSerial) {
                 console.log('Serial not found in Supabase:', cleanUuid)
@@ -89,9 +87,7 @@ export default function TapPage() {
             // mengubah kejutan yang sudah dilihat penerimanya.
             if (hasGift(dbSerial) && !dbSerial.gift_opened_at) {
                 supabase
-                    .from('serial_numbers')
-                    .update({ gift_opened_at: new Date().toISOString() })
-                    .eq('serial_uuid', cleanUuid)
+                    .rpc('nfc_mark_gift_opened', { p_serial_uuid: cleanUuid })
                     .then(() => console.log('Gift marked as opened'))
             }
 

@@ -34,10 +34,7 @@ export default function GiftEditorPage() {
     useEffect(() => {
         const load = async () => {
             const { data } = await supabase
-                .from('serial_numbers')
-                .select('id, serial_uuid, gift_url, gift_message, gift_from, gift_opened_at, is_claimed')
-                .eq('gift_token', token)
-                .single()
+                .rpc('nfc_get_gift_by_token', { p_token: token })
 
             if (data) {
                 setSerial(data)
@@ -56,14 +53,12 @@ export default function GiftEditorPage() {
         if (!serial) return
         setSaving(true)
         await supabase
-            .from('serial_numbers')
-            .update({
-                gift_enabled: true,
-                gift_url: form.url.trim(),
-                gift_message: form.message.trim() || null,
-                gift_from: form.from.trim() || null,
+            .rpc('nfc_save_gift', {
+                p_token: token,
+                p_url: form.url.trim(),
+                p_message: form.message.trim(),
+                p_from: form.from.trim(),
             })
-            .eq('id', serial.id)
         setSaving(false)
         setSaved(true)
         setTimeout(() => setSaved(false), 2500)

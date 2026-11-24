@@ -106,14 +106,9 @@ export function UnclaimedView({ serial }: UnclaimedViewProps) {
             }
 
             // 2. Claim Serial
-            const { error: claimError } = await supabase
-                .from('serial_numbers')
-                .update({
-                    is_claimed: true,
-                    owner_id: userId,
-                    claimed_at: new Date().toISOString(),
-                })
-                .eq('serial_uuid', serial.serial_uuid)
+            const { data: claimResult, error: claimRpcError } = await supabase
+                .rpc('nfc_claim_serial', { p_serial_uuid: serial.serial_uuid, p_new_user_id: userId })
+            const claimError = claimRpcError || (claimResult?.success ? null : claimResult)
 
             if (claimError) {
                 console.error('Claim error:', claimError)

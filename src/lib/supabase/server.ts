@@ -35,16 +35,13 @@ export async function createClient() {
 export async function getSerialByUuid(serialUuid: string): Promise<SerialWithOwner | null> {
     const supabase = await createClient()
 
-    const { data, error } = await supabase
-        .from('serial_numbers')
-        .select(`
-            *,
-            product:products(*)
-        `)
-        .eq('serial_uuid', serialUuid)
-        .single()
+    const { data: row, error } = await supabase
+        .rpc('nfc_get_serial', { p_serial_uuid: serialUuid })
 
-    if (error || !data) return null
+    if (error || !row) return null
+
+    const { products, ...serialFields } = row as Record<string, unknown>
+    const data = { ...serialFields, product: products ?? null } as unknown as SerialWithOwner
 
     // If claimed, fetch owner profile
     if (data.is_claimed && data.owner_id) {

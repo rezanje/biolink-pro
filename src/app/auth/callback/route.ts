@@ -22,10 +22,7 @@ export async function GET(request: Request) {
 
                 if (serialUuid) {
                     const { data: serialInfo } = await supabase
-                        .from('serial_numbers')
-                        .select('special_edition, special_editions')
-                        .eq('serial_uuid', serialUuid)
-                        .maybeSingle()
+                        .rpc('nfc_get_serial', { p_serial_uuid: serialUuid })
 
                     const targetSpecialEditions = normalizeSpecialEditions(
                         serialInfo?.special_editions?.length ? serialInfo.special_editions : serialInfo?.special_edition
@@ -40,13 +37,7 @@ export async function GET(request: Request) {
 
                     // 2. Claim the serial
                     await supabase
-                        .from('serial_numbers')
-                        .update({
-                            is_claimed: true,
-                            owner_id: user.id,
-                            claimed_at: new Date().toISOString(),
-                        })
-                        .eq('serial_uuid', serialUuid)
+                        .rpc('nfc_claim_serial', { p_serial_uuid: serialUuid })
 
                     // 3. Create profile if doesn't exist
                     const { data: existingProfile } = await supabase
