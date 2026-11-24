@@ -47,6 +47,8 @@ export const UI_MESSAGES = {
     'Bold portrait and rounded white panels': ['Foto dominan dan panel putih melengkung', '醒目人像与白色圆角面板'],
     'Choose a layout for your card': ['Pilih gaya tampilan kartu lo', '选择你的名片布局'],
     'Additional layouts are available on Premium.': ['Tema tambahan tersedia di Premium.', '更多布局可在高级版使用。'],
+    'Exclusive edition': ['Edisi khusus', '限定版'],
+    'Some layouts are exclusive to selected editions.': ['Beberapa tema khusus untuk edisi tertentu.', '部分布局为特定版本专享。'],
     'Expand profile': ['Buka detail profil', '展开个人资料'],
     'Show portrait': ['Tampilkan foto profil', '显示人像'],
     'Profiles': ['Profil sosial', '社交资料'],

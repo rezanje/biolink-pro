@@ -7,7 +7,7 @@ import { youtubeEmbedUrl } from '@/lib/gift.mjs'
 import { normalizeUrl } from '@/lib/redirect-mode.mjs'
 
 export type GiftContent = {
-    url: string
+    url?: string | null
     message?: string | null
     from?: string | null
 }
@@ -71,7 +71,7 @@ export default function GiftView({
                             </div>
                         )}
 
-                        <div className={gift.message ? 'mt-3' : ''}>
+                        {gift.url && <div className={gift.message ? 'mt-3' : ''}>
                             {embed ? (
                                 <div className="overflow-hidden rounded-card bg-ink shadow-card">
                                     <iframe
@@ -84,7 +84,7 @@ export default function GiftView({
                                 </div>
                             ) : (
                                 <a
-                                    href={normalizeUrl(gift.url)}
+                                    href={normalizeUrl(gift.url || '')}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center justify-center gap-2 rounded-card bg-surface p-6 text-[14px] font-medium shadow-card"
@@ -94,7 +94,7 @@ export default function GiftView({
                                     <ExternalLink className="h-3.5 w-3.5 text-ink-3" strokeWidth={1.8} />
                                 </a>
                             )}
-                        </div>
+                        </div>}
 
                         {onClaim && (
                             <div className="mt-7 rounded-card bg-surface p-6 text-center shadow-card">

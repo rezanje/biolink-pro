@@ -34,6 +34,8 @@ export function TierProvider({ children }: { children: React.ReactNode }) {
         B2B: {}
     })
     const [isLoading, setIsLoading] = useState(true)
+    // Fitur tambahan per pelanggan dari paket promo / admin, di luar tier.
+    const [featureGrants, setFeatureGrants] = useState<string[]>([])
     const [canTranslate, setCanTranslate] = useState(false)
     const supabase = createClient()
 
@@ -48,9 +50,11 @@ export function TierProvider({ children }: { children: React.ReactNode }) {
                     // 2. Get profile tier
                     const { data: profile } = await supabase
                         .from('profiles')
-                        .select('tier, subscription_valid_until')
+                        .select('tier, subscription_valid_until, feature_grants')
                         .eq('user_id', user.id)
                         .single()
+
+                    setFeatureGrants(Array.isArray(profile?.feature_grants) ? profile.feature_grants : [])
 
                     if (profile?.tier) {
                         let currentTier = profile.tier as Tier
@@ -100,8 +104,7 @@ export function TierProvider({ children }: { children: React.ReactNode }) {
         // Get features for current tier
         const tierFeatures = tierConfigs[tier] || {}
 
-        // Return feature flag
-        return tierFeatures[feature] === true
+        return tierFeatures[feature] === true || featureGrants.includes(feature)
     }
 
     return (
@@ -110,7 +113,10 @@ export function TierProvider({ children }: { children: React.ReactNode }) {
             isLoading,
             canTranslate,
             hasFeature,
-            features: tierConfigs[tier] || {}
+            features: {
+                ...(tierConfigs[tier] || {}),
+                ...Object.fromEntries(featureGrants.map(f => [f, true])),
+            }
         }}>
             {children}
         </TierContext.Provider>

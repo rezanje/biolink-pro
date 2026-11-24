@@ -16,7 +16,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import PublicCardPreview from '@/components/dashboard/PublicCardPreview'
 import ThemeCardPreview from '@/components/dashboard/ThemeCardPreview'
-import { CARD_TEMPLATES, CARD_FONTS, CARD_COLORS, cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForTemplate, cardThemeForPreview } from '@/lib/card-design.mjs'
+import { CARD_TEMPLATES, CARD_FONTS, CARD_COLORS, cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForTemplate, cardThemeForPreview, canUseCardTemplate, isExclusiveTemplate } from '@/lib/card-design.mjs'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 export default function AppearancePage() {
@@ -31,6 +31,8 @@ export default function AppearancePage() {
     const layoutRailRef = useRef<HTMLDivElement>(null)
     const [fontPair, setFontPair] = useState('classic')
     const [userTier, setUserTier] = useState<string>('FREE')
+    // Data hak tema: tier, masa berlaku, dan template eksklusif yang dibuka.
+    const [designAccess, setDesignAccess] = useState<{ tier?: string; subscription_valid_until?: string | null; unlocked_templates?: string[] }>({})
     const [previewSlug, setPreviewSlug] = useState('')
     const [previewExpanded, setPreviewExpanded] = useState(false)
     const [saveError, setSaveError] = useState('')
@@ -66,7 +68,7 @@ export default function AppearancePage() {
 
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('theme, tier, subscription_valid_until, slug')
+                .select('theme, tier, subscription_valid_until, slug, unlocked_templates')
                 .eq('user_id', user.id)
                 .single()
 
@@ -80,6 +82,7 @@ export default function AppearancePage() {
                 setFontPair(initial.font)
                 setSavedAppearance(initial)
                 setUserTier(canUsePremiumDesign(profile.tier, profile.subscription_valid_until) ? profile.tier : 'FREE')
+                setDesignAccess({ tier: profile.tier, subscription_valid_until: profile.subscription_valid_until, unlocked_templates: profile.unlocked_templates || [] })
                 if (profile.slug) {
                     sessionStorage.setItem(`gentanala_design_preview_${profile.slug}`, JSON.stringify({
                         theme_mode: initial.mode, image_filter: initial.filter, primary: initial.color,
@@ -187,14 +190,20 @@ export default function AppearancePage() {
 
         const existingTheme = profile?.theme || {}
 
-        // Merge appearance settings into existing theme
+        // Merge appearance settings into existing theme.
+        // Template eksklusif yang sudah dibuka (mis. Neon Coast batch awal) boleh
+        // dipakai lengkap dengan warnanya walau akun FREE.
+        const templateAllowed = canUseCardTemplate(template, designAccess)
+        const exclusivePreset = userTier === 'FREE' && templateAllowed && isExclusiveTemplate(cardTemplate(template))
+            ? cardThemeForTemplate(cardTemplate(template), {})
+            : null
         const updatedTheme = {
             ...existingTheme,
-            primary: userTier === 'FREE' ? '#3B82F6' : primaryColor,
-            theme_mode: userTier === 'FREE' ? 'light' : themeMode,
+            primary: exclusivePreset ? exclusivePreset.primary : userTier === 'FREE' ? '#3B82F6' : primaryColor,
+            theme_mode: exclusivePreset ? exclusivePreset.theme_mode : userTier === 'FREE' ? 'light' : themeMode,
             image_filter: userTier === 'FREE' ? 'normal' : imageFilter,
-            template_id: userTier === 'FREE' ? 'classic' : cardTemplate(template),
-            font_pair: userTier === 'FREE' ? 'classic' : cardFont(fontPair),
+            template_id: templateAllowed ? cardTemplate(template) : 'classic',
+            font_pair: exclusivePreset ? exclusivePreset.font_pair : userTier === 'FREE' ? 'classic' : cardFont(fontPair),
         }
 
         const { error } = await supabase
@@ -255,11 +264,11 @@ export default function AppearancePage() {
                             key={option.id}
                             type="button"
                             onClick={() => handleTemplateChange(option.id)}
-                            disabled={userTier === 'FREE' && option.id !== 'classic'}
+                            disabled={!canUseCardTemplate(option.id, designAccess)}
                             aria-label={t(option.name)}
                             aria-describedby={`card-layout-description-${option.id}`}
                             aria-pressed={template === option.id}
-                            className={`w-[80%] max-w-[224px] shrink-0 snap-center rounded-2xl border p-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${template === option.id ? 'border-ink ring-1 ring-ink' : 'border-black/10 hover:border-ink-3'} ${userTier === 'FREE' && option.id !== 'classic' ? 'cursor-not-allowed opacity-40' : ''}`}
+                            className={`w-[80%] max-w-[224px] shrink-0 snap-center rounded-2xl border p-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${template === option.id ? 'border-ink ring-1 ring-ink' : 'border-black/10 hover:border-ink-3'} ${!canUseCardTemplate(option.id, designAccess) ? 'cursor-not-allowed opacity-40' : ''}`}
                         >
                             <ThemeCardPreview
                                 slug={previewSlug}
@@ -270,12 +279,13 @@ export default function AppearancePage() {
                                     return `${preview.template_id}-${preview.theme_mode}-${preview.primary}-${preview.font_pair}-${preview.image_filter}`
                                 })()}
                             />
-                            <span className="mt-2 block text-[12px] font-semibold">{t(option.name)}</span>
+                            <span className="mt-2 block text-[12px] font-semibold">{t(option.name)}{isExclusiveTemplate(option.id) && <span className="ml-1.5 rounded-full bg-fill-subtle px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-ink-2">{t('Exclusive edition')}</span>}</span>
                             <span id={`card-layout-description-${option.id}`} className="block text-[10px] leading-tight text-ink-2">{t(option.description)}</span>
                         </button>
                     ))}
                 </div>
                 {userTier === 'FREE' && <p className="mt-3 text-[11px] text-ink-2">{t('Additional layouts are available on Premium.')}</p>}
+                {CARD_TEMPLATES.some(option => isExclusiveTemplate(option.id) && !canUseCardTemplate(option.id, designAccess)) && <p className="mt-1 text-[11px] text-ink-2">{t('Some layouts are exclusive to selected editions.')}</p>}
             </section>
 
             {/* Tema kartu publik */}

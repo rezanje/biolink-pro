@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { buildProfileUpdates, canOwnerUpdate } from './profile-updates.mjs'
+import { buildProfileUpdates, canOwnerUpdate, touchesSuperAdminFields } from './profile-updates.mjs'
 
 assert.deepEqual(
     buildProfileUpdates({
@@ -37,3 +37,10 @@ assert.equal(canOwnerUpdate({ tier: 'PREMIUM' }, null), false)
 assert.equal(canOwnerUpdate({ company_id: 'another' }, null), false)
 assert.equal(canOwnerUpdate({ special_editions: ['aruna'] }, null), false)
 assert.equal(canOwnerUpdate({ display_name: 'Reza' }, 'serial-id'), false)
+assert.equal(canOwnerUpdate({ subscription_valid_until: null }, null), false)
+assert.equal(canOwnerUpdate({ unlocked_templates: ['neon'] }, null), false)
+assert.equal(canOwnerUpdate({ feature_grants: ['ai_bot'] }, null), false)
+assert.equal(canOwnerUpdate({ slug: 'rani' }, null), true)
+assert.equal(touchesSuperAdminFields({ tier: 'B2B' }), true)
+assert.equal(touchesSuperAdminFields({ display_name: 'x' }), false)
+assert.deepEqual(buildProfileUpdates({ subscription_valid_until: null, unlocked_templates: ['neon'] }), { subscription_valid_until: null, unlocked_templates: ['neon'] })

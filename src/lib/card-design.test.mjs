@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview, cardThemeForTemplate } from './card-design.mjs'
+import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview, cardThemeForTemplate, isExclusiveTemplate, canUseCardTemplate, publicCardTemplate } from './card-design.mjs'
 
 assert.equal(cardTemplate(undefined), 'classic')
 assert.equal(cardTemplate('dial'), 'dial')
@@ -36,3 +36,17 @@ assert.deepEqual(cardThemeForPreview(saved, custom, false, 'statement'), saved)
 assert.deepEqual(cardThemeForPreview(saved, custom, true, 'invalid'), { ...saved, ...custom })
 assert.equal(cardThemeForTemplate('dial', custom).theme_mode, 'dark')
 assert.equal(cardThemeForTemplate('classic', custom).primary, '#EC4899')
+
+// Template eksklusif (Neon Coast) hanya untuk profil yang sudah dibuka.
+const NOW = Date.parse('2026-11-24T00:00:00Z')
+assert.equal(isExclusiveTemplate('neon'), true)
+assert.equal(isExclusiveTemplate('dial'), false)
+assert.equal(canUseCardTemplate('neon', { tier: 'PREMIUM', subscription_valid_until: null }, NOW), false)
+assert.equal(canUseCardTemplate('neon', { tier: 'B2B' }, NOW), false)
+assert.equal(canUseCardTemplate('neon', { tier: 'FREE', unlocked_templates: ['neon'] }, NOW), true)
+assert.equal(canUseCardTemplate('dial', { tier: 'FREE', unlocked_templates: ['neon'] }, NOW), false)
+assert.equal(canUseCardTemplate('dial', { tier: 'PREMIUM', subscription_valid_until: '2026-12-01T00:00:00Z' }, NOW), true)
+assert.equal(canUseCardTemplate('classic', null, NOW), true)
+assert.equal(publicCardTemplate('neon', { tier: 'PREMIUM' }, NOW), 'classic')
+assert.equal(publicCardTemplate('neon', { tier: 'PREMIUM', unlocked_templates: ['neon'] }, NOW), 'neon')
+assert.equal(publicCardTemplate('dial', { tier: 'FREE' }, NOW), 'classic')

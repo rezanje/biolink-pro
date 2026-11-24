@@ -47,6 +47,8 @@ import { QRCodeSVG } from 'qrcode.react'
 import { SPECIAL_EDITIONS, normalizeSpecialEditions } from '@/lib/special-greeting.mjs'
 import { newGiftToken } from '@/lib/gift.mjs'
 import { CatalogSettings, type CatalogItem } from '@/components/admin/CatalogSettings'
+import { PromoPackagesPanel, type PromoPackage } from '@/components/admin/PromoPackagesPanel'
+import { PROMO_TEMPLATES } from '@/lib/promo-packages.mjs'
 
 interface SerialWithProfile {
     id: string
@@ -84,6 +86,12 @@ interface SerialWithProfile {
     gift_from: string | null
     gift_token: string | null
     gift_opened_at: string | null
+    // Hak akses & paket
+    subscription_valid_until: string | null
+    unlocked_templates: string[]
+    feature_grants: string[]
+    bundle_id: string | null
+    promo_package_id: string | null
 }
 
 type SortField = 'created_at' | 'display_name' | 'nfc_tap_count' | 'view_count' | 'last_active'
@@ -116,7 +124,11 @@ export default function AdminPage() {
     const [adminCompanyId, setAdminCompanyId] = useState<string | null>(null)
     const [authCheckComplete, setAuthCheckComplete] = useState(false)
 
-    const [activeTab, setActiveTab] = useState<'profiles' | 'companies' | 'features' | 'settings'>('profiles')
+    const [activeTab, setActiveTab] = useState<'profiles' | 'companies' | 'features' | 'promos' | 'settings'>('profiles')
+    const [promoPackages, setPromoPackages] = useState<PromoPackage[]>([])
+    const [bulkBusy, setBulkBusy] = useState(false)
+    const [generatePromoId, setGeneratePromoId] = useState('')
+    const [generateBundleDeviceId, setGenerateBundleDeviceId] = useState('')
     const [userToDelete, setUserToDelete] = useState<any | null>(null)
     const [tierConfigs, setTierConfigs] = useState<any[]>([])
     const [serials, setSerials] = useState<SerialWithProfile[]>([])
@@ -211,6 +223,9 @@ export default function AdminPage() {
 
         const { data: companyData } = await companyQuery
         const { data: tierData } = await supabase.from('tier_configs').select('*').order('tier', { ascending: true })
+        const { data: promoData } = role === 'super_admin'
+            ? await supabase.from('promo_packages').select('*').order('created_at', { ascending: false })
+            : { data: [] }
 
         let loadedDevices: CatalogItem[] = []
         let loadedEvents: CatalogItem[] = []
@@ -280,7 +295,12 @@ export default function AdminPage() {
                 gift_message: s.gift_message || null,
                 gift_from: s.gift_from || null,
                 gift_token: s.gift_token || null,
-                gift_opened_at: s.gift_opened_at || null
+                gift_opened_at: s.gift_opened_at || null,
+                subscription_valid_until: profile?.subscription_valid_until || null,
+                unlocked_templates: Array.isArray(profile?.unlocked_templates) ? profile.unlocked_templates : [],
+                feature_grants: Array.isArray(profile?.feature_grants) ? profile.feature_grants : [],
+                bundle_id: s.bundle_id || null,
+                promo_package_id: s.promo_package_id || null
             }
         })
 
@@ -295,6 +315,7 @@ export default function AdminPage() {
 
         setCompanies(companyData || [])
         setTierConfigs(tierData || [])
+        setPromoPackages((promoData || []) as PromoPackage[])
         setLoading(false)
     }
 
@@ -304,7 +325,11 @@ export default function AdminPage() {
             return
         }
         const destination = generateSource === 'company' ? companies.find(c => c.id === generateCompanyId)?.name : generateSource === 'event' ? events.find(e => e.id === generateEventId)?.name : 'Personal / B2C'
-        if (!window.confirm(`Buat ${generateCount} serial ${deviceTypes.find(d => d.id === generateDeviceId)?.name} untuk ${destination}?`)) return
+        const bundleName = generateBundleDeviceId ? deviceTypes.find(d => d.id === generateBundleDeviceId)?.name : null
+        const what = bundleName
+            ? `${generateCount} paket (${deviceTypes.find(d => d.id === generateDeviceId)?.name} + ${bundleName}, total ${generateCount * 2} serial)`
+            : `${generateCount} serial ${deviceTypes.find(d => d.id === generateDeviceId)?.name}`
+        if (!window.confirm(`Buat ${what} untuk ${destination}?`)) return
         setGenerating(true)
 
         try {
@@ -316,7 +341,9 @@ export default function AdminPage() {
                     company_id: generateSource === 'company' ? generateCompanyId : null,
                     event_id: generateSource === 'event' ? generateEventId : null,
                     device_type_id: generateDeviceId,
-                    special_edition: generateSpecialEdition || null
+                    special_edition: generateSpecialEdition || null,
+                    promo_package_id: generatePromoId || null,
+                    bundle_device_type_id: generateBundleDeviceId || null
                 })
             })
 
@@ -330,6 +357,7 @@ export default function AdminPage() {
                 setGenerateEventId('')
                 setGenerateCompanyId('')
                 setGenerateSpecialEdition('')
+                setGenerateBundleDeviceId('')
             }
         } catch (err: any) {
             alert('Network error: ' + err.message)
@@ -348,6 +376,32 @@ export default function AdminPage() {
             setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n })
         }
         setDeleteConfirm(null)
+    }
+
+    // Pasangkan / lepas bundel (jam + kartu: aktivasi sekali di salah satunya).
+    const setBundle = async (pair: boolean) => {
+        const ids = Array.from(selectedIds)
+        if (pair && ids.length < 2) { alert('Pilih minimal 2 serial untuk dijadikan satu paket'); return }
+        if (pair && !window.confirm(`Jadikan ${ids.length} serial ini satu paket? Aktivasi salah satunya akan mengaktifkan semuanya ke pemilik yang sama.`)) return
+        setBulkBusy(true)
+        const { data, error } = await createClient().rpc('nfc_admin_set_bundle', { p_serial_ids: ids, p_pair: pair })
+        setBulkBusy(false)
+        if (error || !data?.success) { alert('Gagal: ' + (data?.error || error?.message || 'Unknown error')); return }
+        setSelectedIds(new Set())
+        if (adminRole) await loadAllData(adminRole, adminCompanyId)
+    }
+
+    // Pasang paket promo ke serial terpilih ('' = lepas paket).
+    const setSerialPromo = async (packageId: string) => {
+        const ids = Array.from(selectedIds)
+        const pkg = promoPackages.find(p => p.id === packageId)
+        if (!window.confirm(pkg ? `Pasang paket "${pkg.name}" ke ${ids.length} serial? Berlaku saat serial itu diaktifkan (serial yang sudah aktif tidak berubah).` : `Lepas paket promo dari ${ids.length} serial?`)) return
+        setBulkBusy(true)
+        const { error } = await createClient().from('serial_numbers').update({ promo_package_id: packageId || null }).in('id', ids)
+        setBulkBusy(false)
+        if (error) { alert('Gagal: ' + error.message); return }
+        setSelectedIds(new Set())
+        if (adminRole) await loadAllData(adminRole, adminCompanyId)
     }
 
     const bulkDelete = async () => {
@@ -674,6 +728,14 @@ export default function AdminPage() {
                                             </button>
                                             <span className="text-xs text-zinc-600">{serial.product_name}</span>
                                             {serial.event_name && <span className="text-xs text-purple-600">Event: {serial.event_name}</span>}
+                                            {serial.bundle_id && (
+                                                <span className="text-[10px] text-teal-700" title={`Paket ${serial.bundle_id}`}>
+                                                    🔗 Paket: {serials.filter(o => o.bundle_id === serial.bundle_id && o.id !== serial.id).map(o => o.product_name).join(', ') || '—'}
+                                                </span>
+                                            )}
+                                            {serial.promo_package_id && (
+                                                <span className="text-[10px] text-pink-700">🎁 {promoPackages.find(p => p.id === serial.promo_package_id)?.name || 'Promo'}</span>
+                                            )}
                                             {serial.company_name && (
                                                 <span className="text-[9px] text-blue-500 font-medium truncate max-w-[140px]" title={serial.company_name}>
                                                     🏢 {serial.company_name}
@@ -725,6 +787,11 @@ export default function AdminPage() {
                                                     {serial.special_editions.length > 0 && (
                                                         <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-100 text-indigo-700 font-medium">
                                                             ✨ {getSpecialEditionLabels(serial.special_editions)}
+                                                        </span>
+                                                    )}
+                                                    {serial.tier === 'PREMIUM' && (
+                                                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-purple-50 text-purple-600" title="Premium berlaku sampai">
+                                                            {serial.subscription_valid_until ? `s/d ${new Date(serial.subscription_valid_until).toLocaleDateString('id-ID')}` : 'tanpa batas'}
                                                         </span>
                                                     )}
                                                 </div>
@@ -1161,7 +1228,7 @@ export default function AdminPage() {
             <div className="max-w-7xl mx-auto px-6 py-8">
                 {/* Tabs */}
                 <div className="flex items-center gap-1 p-1 bg-zinc-100/50 backdrop-blur-sm rounded-xl w-fit mb-8 border border-zinc-200/50">
-                    {['profiles', 'companies', 'features', 'settings']
+                    {['profiles', 'companies', 'features', 'promos', 'settings']
                         .filter(tab => adminRole === 'super_admin' || tab === 'profiles')
                         .map((tab) => (
                             <button
@@ -1178,6 +1245,16 @@ export default function AdminPage() {
                 </div>
 
                 {catalogError && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">{catalogError}</p>}
+                {activeTab === 'promos' && adminRole === 'super_admin' && (
+                    <PromoPackagesPanel
+                        packages={promoPackages}
+                        serialCounts={serials.reduce<Record<string, number>>((acc, s) => {
+                            if (s.promo_package_id) acc[s.promo_package_id] = (acc[s.promo_package_id] || 0) + 1
+                            return acc
+                        }, {})}
+                        onSaved={() => loadAllData(adminRole, adminCompanyId)}
+                    />
+                )}
                 {activeTab === 'settings' && adminRole === 'super_admin' && (
                     <div className="grid gap-5 md:grid-cols-2">
                         <CatalogSettings kind="device_types" title="Jenis Device" items={deviceTypes} onSaved={() => loadAllData(adminRole, adminCompanyId)} />
@@ -1251,6 +1328,18 @@ export default function AdminPage() {
                                         <option value="aruna">Aruna Series</option>
                                         <option value="prabowo">Prabowo Series</option>
                                     </select>
+                                    <label className="text-xs text-zinc-500">Paket dengan:
+                                        <select aria-label="Pasangan paket" value={generateBundleDeviceId} onChange={e => setGenerateBundleDeviceId(e.target.value)} className="ml-2 rounded-lg border border-zinc-200 bg-white px-2 py-1.5">
+                                            <option value="">Tidak (satuan)</option>
+                                            {deviceTypes.filter(d => d.is_active).map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                        </select>
+                                    </label>
+                                    <label className="text-xs text-zinc-500">Promo:
+                                        <select aria-label="Paket promo" value={generatePromoId} onChange={e => setGeneratePromoId(e.target.value)} className="ml-2 rounded-lg border border-zinc-200 bg-white px-2 py-1.5">
+                                            <option value="">Ikut paket umum</option>
+                                            {promoPackages.map(p => <option key={p.id} value={p.id}>{p.name}{p.is_active ? '' : ' (mati)'}</option>)}
+                                        </select>
+                                    </label>
                                     <button
                                         onClick={generateSerials}
                                         disabled={generating || !!catalogError || !generateDeviceId || (generateSource === 'company' && !generateCompanyId) || (generateSource === 'event' && !generateEventId)}
@@ -1273,6 +1362,13 @@ export default function AdminPage() {
                             {selectedIds.size > 0 && adminRole === 'super_admin' && (
                                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-2 ml-auto">
                                     <span className="text-sm text-zinc-500 font-medium">{selectedIds.size} selected</span>
+                                    <button onClick={() => setBundle(true)} disabled={bulkBusy} className="px-3 py-2.5 bg-white/60 border border-zinc-200 hover:bg-white rounded-xl text-sm font-medium text-zinc-700 disabled:opacity-50">Jadikan paket</button>
+                                    <button onClick={() => setBundle(false)} disabled={bulkBusy} className="px-3 py-2.5 bg-white/60 border border-zinc-200 hover:bg-white rounded-xl text-sm font-medium text-zinc-700 disabled:opacity-50">Lepas paket</button>
+                                    <select aria-label="Set paket promo" value="" disabled={bulkBusy} onChange={e => { if (e.target.value !== '__') void setSerialPromo(e.target.value === '__none' ? '' : e.target.value) }} className="px-3 py-2.5 bg-white/60 border border-zinc-200 rounded-xl text-sm text-zinc-700">
+                                        <option value="" disabled>Set promo…</option>
+                                        {promoPackages.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        <option value="__none">Lepas promo</option>
+                                    </select>
                                     <button onClick={() => setBulkDeleteConfirm(true)} className="flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 hover:bg-red-100 text-red-600 rounded-xl transition-colors font-medium">
                                         <Trash2 className="w-4 h-4" />
                                         Delete Selected
@@ -1407,7 +1503,12 @@ export default function AdminPage() {
                                                     <label className="text-xs font-semibold text-zinc-500 uppercase">Tier</label>
                                                     <select
                                                         value={editUser.tier || 'FREE'}
-                                                        onChange={e => setEditUser({ ...editUser, tier: e.target.value })}
+                                                        onChange={e => {
+                                                            const tier = e.target.value
+                                                            // Naik ke Premium dengan tanggal lama yang sudah lewat: mulai dari tanpa batas.
+                                                            const expired = editUser.subscription_valid_until && new Date(editUser.subscription_valid_until) < new Date()
+                                                            setEditUser({ ...editUser, tier, subscription_valid_until: tier === 'PREMIUM' && expired ? null : editUser.subscription_valid_until })
+                                                        }}
                                                         className="w-full mt-1 p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
                                                     >
                                                         <option value="FREE">Free</option>
@@ -1415,6 +1516,55 @@ export default function AdminPage() {
                                                         <option value="B2B">B2B</option>
                                                     </select>
                                                 </div>
+                                                {editUser.tier === 'PREMIUM' && (
+                                                    <div>
+                                                        <label className="text-xs font-semibold text-zinc-500 uppercase">Premium berlaku sampai</label>
+                                                        <div className="mt-1 flex items-center gap-3">
+                                                            <input
+                                                                type="date"
+                                                                aria-label="Premium berlaku sampai"
+                                                                disabled={!editUser.subscription_valid_until}
+                                                                value={editUser.subscription_valid_until ? editUser.subscription_valid_until.slice(0, 10) : ''}
+                                                                onChange={e => setEditUser({ ...editUser, subscription_valid_until: e.target.value ? new Date(`${e.target.value}T23:59:59`).toISOString() : null })}
+                                                                className="flex-1 p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm outline-none disabled:opacity-50"
+                                                            />
+                                                            <label className="flex items-center gap-1.5 text-sm text-zinc-700">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={!editUser.subscription_valid_until}
+                                                                    onChange={e => setEditUser({ ...editUser, subscription_valid_until: e.target.checked ? null : new Date(Date.now() + 30 * 86400000).toISOString() })}
+                                                                />
+                                                                Tanpa batas
+                                                            </label>
+                                                        </div>
+                                                        {editUser.subscription_valid_until && new Date(editUser.subscription_valid_until) < new Date() && (
+                                                            <p className="mt-1 text-[11px] text-amber-600">Tanggal ini sudah lewat, jadi pelanggan diperlakukan Free.</p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {PROMO_TEMPLATES.length > 0 && (
+                                                    <div>
+                                                        <label className="text-xs font-semibold text-zinc-500 uppercase">Tema eksklusif</label>
+                                                        <div className="mt-2 flex flex-wrap gap-2">
+                                                            {PROMO_TEMPLATES.map((template: { id: string; name: string }) => (
+                                                                <label key={template.id} className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={(editUser.unlocked_templates || []).includes(template.id)}
+                                                                        onChange={e => setEditUser({
+                                                                            ...editUser,
+                                                                            unlocked_templates: e.target.checked
+                                                                                ? Array.from(new Set([...(editUser.unlocked_templates || []), template.id]))
+                                                                                : (editUser.unlocked_templates || []).filter((id: string) => id !== template.id)
+                                                                        })}
+                                                                        className="h-4 w-4 rounded border-zinc-300 text-blue-600"
+                                                                    />
+                                                                    {template.name}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 <div>
                                                     <label className="text-xs font-semibold text-zinc-500 uppercase">Tag</label>
                                                     <select
@@ -1556,7 +1706,12 @@ export default function AdminPage() {
                                                 body: JSON.stringify({
                                                     userId: editUser.user_id || null,
                                                     serialId: editUser.id,
-                                                    tier: editUser.tier,
+                                                    // Hak berbayar hanya dikirim super admin untuk serial yang sudah dimiliki.
+                                                    ...(adminRole === 'super_admin' && editUser.user_id ? {
+                                                        tier: editUser.tier,
+                                                        subscription_valid_until: editUser.subscription_valid_until || null,
+                                                        unlocked_templates: editUser.unlocked_templates || [],
+                                                    } : {}),
                                                     user_tag: editUser.user_tag,
                                                     company_id: editUser.company_id || null,
                                                     special_edition: editUser.special_editions?.[0] || null,

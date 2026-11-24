@@ -1,6 +1,6 @@
 export function validateSerialAssignment(actor, input) {
     if (!Number.isInteger(input.count) || input.count < 1 || input.count > 100) return 'Count must be between 1 and 100'
-    for (const field of ['company_id', 'event_id', 'device_type_id']) {
+    for (const field of ['company_id', 'event_id', 'device_type_id', 'promo_package_id', 'bundle_device_type_id']) {
         if (input[field] != null && typeof input[field] !== 'string') return `Invalid ${field}`
     }
     if (input.company_id && input.event_id) return 'Choose either company or event'

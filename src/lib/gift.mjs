@@ -11,9 +11,14 @@
 
 import { normalizeUrl } from './redirect-mode.mjs'
 
-/** Kado dianggap siap tampil kalau dinyalakan dan tujuannya sudah diisi. */
+/** Isian kado sudah cukup kalau ada link/video atau ucapan. */
+export function hasGiftContent(url, message) {
+    return Boolean(String(url || '').trim() || String(message || '').trim())
+}
+
+/** Kado dianggap siap tampil kalau dinyalakan dan ada link/video atau ucapan. */
 export function hasGift(serial) {
-    return Boolean(serial?.gift_enabled && serial?.gift_url && String(serial.gift_url).trim())
+    return Boolean(serial?.gift_enabled && hasGiftContent(serial?.gift_url, serial?.gift_message))
 }
 
 /** Kunci rahasia halaman isian kado milik pembeli. */

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Check, Eye, Gift, Loader2, Lock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { youtubeEmbedUrl } from '@/lib/gift.mjs'
+import { hasGiftContent, youtubeEmbedUrl } from '@/lib/gift.mjs'
 import GiftView from '@/components/gift/GiftView'
 
 type GiftSerial = {
@@ -28,6 +28,7 @@ export default function GiftEditorPage() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
+    const [saveError, setSaveError] = useState('')
     const [preview, setPreview] = useState(false)
     const [form, setForm] = useState({ url: '', message: '', from: '' })
 
@@ -52,7 +53,8 @@ export default function GiftEditorPage() {
     const save = async () => {
         if (!serial) return
         setSaving(true)
-        await supabase
+        setSaveError('')
+        const { data, error } = await supabase
             .rpc('nfc_save_gift', {
                 p_token: token,
                 p_url: form.url.trim(),
@@ -60,6 +62,12 @@ export default function GiftEditorPage() {
                 p_from: form.from.trim(),
             })
         setSaving(false)
+        if (error || !data?.success) {
+            setSaveError(data?.error === 'Gift link is invalid or already opened'
+                ? 'Kadonya sudah dibuka penerima atau link isian sudah tidak berlaku.'
+                : 'Gagal menyimpan. Coba lagi sebentar lagi.')
+            return
+        }
         setSaved(true)
         setTimeout(() => setSaved(false), 2500)
     }
@@ -86,7 +94,7 @@ export default function GiftEditorPage() {
     // Kado yang sudah dibuka penerimanya tidak bisa diubah lagi.
     const locked = Boolean(serial.gift_opened_at)
 
-    if (preview && form.url.trim()) {
+    if (preview && hasGiftContent(form.url, form.message)) {
         return (
             <div className="relative">
                 <GiftView gift={{ url: form.url, message: form.message, from: form.from }} />
@@ -124,7 +132,7 @@ export default function GiftEditorPage() {
                 ) : null}
 
                 <section className="mt-4 rounded-card bg-surface p-5 shadow-card">
-                    <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Link video kejutan</label>
+                    <label className="text-[11px] font-medium uppercase tracking-wider text-ink-2">Link video kejutan <span className="normal-case tracking-normal text-ink-3">(opsional)</span></label>
                     <input
                         type="text"
                         value={form.url}
@@ -139,7 +147,7 @@ export default function GiftEditorPage() {
                             : 'Paling pas pakai link YouTube. Link lain tetap bisa, cuma dibuka di tab baru.'}
                     </p>
 
-                    <label className="mt-5 block text-[11px] font-medium uppercase tracking-wider text-ink-2">Pesan buat penerima</label>
+                    <label className="mt-5 block text-[11px] font-medium uppercase tracking-wider text-ink-2">Pesan buat penerima <span className="normal-case tracking-normal text-ink-3">(opsional)</span></label>
                     <textarea
                         value={form.message}
                         disabled={locked}
@@ -161,10 +169,14 @@ export default function GiftEditorPage() {
                     />
                 </section>
 
+                <p className="mt-3 text-center text-[11px] text-ink-3">Isi link video, ucapan, atau keduanya.</p>
+                {saveError && (
+                    <p role="alert" className="mt-2 text-center text-[12px] text-red-600">{saveError}</p>
+                )}
                 <div className="mt-4 flex gap-2.5">
                     <button
                         onClick={() => setPreview(true)}
-                        disabled={!form.url.trim()}
+                        disabled={!hasGiftContent(form.url, form.message)}
                         className="flex items-center justify-center gap-2 rounded-full bg-surface px-5 py-3.5 text-[13px] font-medium text-ink-2 shadow-row disabled:opacity-40"
                     >
                         <Eye className="h-4 w-4" strokeWidth={1.8} />
@@ -172,7 +184,7 @@ export default function GiftEditorPage() {
                     </button>
                     <button
                         onClick={save}
-                        disabled={locked || saving || !form.url.trim()}
+                        disabled={locked || saving || !hasGiftContent(form.url, form.message)}
                         className="flex flex-1 items-center justify-center gap-2 rounded-full bg-ink py-3.5 text-[13px] font-medium text-white shadow-ink transition-transform active:scale-[0.99] disabled:opacity-40"
                     >
                         {saving ? (

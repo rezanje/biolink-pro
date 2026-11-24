@@ -14,14 +14,24 @@ const PROFILE_UPDATE_FIELDS = [
     'enable_special_greeting_anim',
     'theme',
     'tier',
+    'subscription_valid_until',
+    'unlocked_templates',
+    'feature_grants',
     'user_tag',
     'company_id',
     'updated_at',
 ]
 
+// Hak akses berbayar: hanya super admin (bukan admin perusahaan, bukan pemilik).
+export const SUPER_ADMIN_ONLY_FIELDS = ['tier', 'subscription_valid_until', 'unlocked_templates', 'feature_grants']
+
 const OWNER_UPDATE_FIELDS = new Set(PROFILE_UPDATE_FIELDS.filter(field =>
-    !['tier', 'user_tag', 'company_id', 'special_edition', 'special_editions'].includes(field)
+    ![...SUPER_ADMIN_ONLY_FIELDS, 'user_tag', 'company_id', 'special_edition', 'special_editions'].includes(field)
 ))
+
+export function touchesSuperAdminFields(updates) {
+    return SUPER_ADMIN_ONLY_FIELDS.some(field => Object.prototype.hasOwnProperty.call(updates || {}, field))
+}
 
 export function canOwnerUpdate(updates, serialId) {
     return !serialId && Object.keys(updates).every(field => OWNER_UPDATE_FIELDS.has(field))

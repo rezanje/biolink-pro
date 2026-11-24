@@ -117,28 +117,9 @@ export function UnclaimedView({ serial }: UnclaimedViewProps) {
                 return
             }
 
-            // 3. Create or Update Profile with PREMIUM Trial
-            const slug = userEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Date.now().toString().slice(-4)
-            const trialEndsAt = new Date()
-            trialEndsAt.setDate(trialEndsAt.getDate() + 30) // 30 Days Trial
-
-            // Keep existing contact form preferences; new profiles use the database default.
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .upsert({
-                    user_id: userId,
-                    slug: slug,
-                    display_name: userEmail.split('@')[0],
-                    bio: 'Gentanala Owner',
-                    email: userEmail,
-                    tier: 'PREMIUM', // Grant Premium
-                    subscription_valid_until: trialEndsAt.toISOString(), // Set Expiry
-                }, { onConflict: 'user_id' })
-
-            if (profileError) {
-                console.error('Profile creation error:', profileError)
-                // Continue anyway, profile might exist
-            }
+            // 3. Profil dibuat server saat klaim kalau belum ada (profil lama
+            // tidak ditimpa). Hak Premium/tema datang dari paket promo di server.
+            const slug: string = claimResult?.slug || ''
 
             // 4. Set Local Storage for immediate Dashboard access (Optimistic)
             const profile = {
@@ -151,7 +132,6 @@ export function UnclaimedView({ serial }: UnclaimedViewProps) {
                 theme: { primary: '#3B82F6', background: '#0F172A', style: 'default' },
                 links: [],
                 email: userEmail,
-                tier: 'PREMIUM'
             }
             localStorage.setItem('genhub_profile', JSON.stringify(profile))
             localStorage.setItem('genhub_user', JSON.stringify({ id: userId, email: userEmail }))

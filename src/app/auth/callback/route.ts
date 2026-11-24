@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { normalizeSpecialEditions } from '@/lib/special-greeting.mjs'
 
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
@@ -21,62 +20,24 @@ export async function GET(request: Request) {
                 const serialUuid = tapMatch?.[1]
 
                 if (serialUuid) {
-                    const { data: serialInfo } = await supabase
-                        .rpc('nfc_get_serial', { p_serial_uuid: serialUuid })
-
-                    const targetSpecialEditions = normalizeSpecialEditions(
-                        serialInfo?.special_editions?.length ? serialInfo.special_editions : serialInfo?.special_edition
-                    )
-                    const targetSpecialEdition = targetSpecialEditions[0] || null
-
                     // 1. Auto-activate user
                     await supabase
                         .from('users')
                         .update({ is_activated: true, activated_at: new Date().toISOString() })
                         .eq('id', user.id)
 
-                    // 2. Claim the serial
-                    await supabase
+                    // 2. Klaim. Server membuat profil kalau belum ada (profil lama
+                    // tidak ditimpa), mengklaim pasangan bundel, menggabung edisi
+                    // spesial, dan memberi hak paket promo.
+                    const { data: claim } = await supabase
                         .rpc('nfc_claim_serial', { p_serial_uuid: serialUuid })
 
-                    // 3. Create profile if doesn't exist
-                    const { data: existingProfile } = await supabase
-                        .from('profiles')
-                        .select('id, special_edition, special_editions')
-                        .eq('user_id', user.id)
-                        .single()
-
-                    if (!existingProfile) {
-                        const slug = (user.email?.split('@')[0] || 'user').toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Date.now().toString().slice(-4)
-                        await supabase
-                            .from('profiles')
-                            .insert({
-                                user_id: user.id,
-                                slug: slug,
-                                display_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-                                bio: 'Gentanala Owner',
-                                email: user.email,
-                                tier: 'PREMIUM',
-                                subscription_valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 Days Trial
-                                special_edition: targetSpecialEdition,
-                                special_editions: targetSpecialEditions
-                            })
-                    } else if (targetSpecialEditions.length > 0) {
-                        const mergedSpecialEditions = Array.from(new Set([
-                            ...normalizeSpecialEditions(existingProfile.special_editions?.length ? existingProfile.special_editions : existingProfile.special_edition),
-                            ...targetSpecialEditions
-                        ]))
-
-                        await supabase
-                            .from('profiles')
-                            .update({
-                                special_edition: mergedSpecialEditions[0] || targetSpecialEdition,
-                                special_editions: mergedSpecialEditions
-                            })
-                            .eq('user_id', user.id)
+                    // Gagal (mis. sudah diklaim orang lain): kembali ke halaman tap.
+                    if (!claim?.success) {
+                        return NextResponse.redirect(`${origin}/tap/${serialUuid}`)
                     }
 
-                    // 4. Go straight to dashboard
+                    // 3. Go straight to dashboard
                     return NextResponse.redirect(`${origin}/dashboard?claim_success=true`)
                 }
             }

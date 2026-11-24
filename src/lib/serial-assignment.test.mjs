@@ -19,3 +19,7 @@ test('rejects invalid quantities and malformed identifiers', () => {
     for (const count of [0, 101, 1.5, '2']) assert.ok(validateSerialAssignment(superAdmin, { count }))
     assert.ok(validateSerialAssignment(superAdmin, { count: 1, device_type_id: {} }))
 })
+
+// Paket promo / pasangan bundel harus berupa id teks.
+assert.equal(validateSerialAssignment({ role: 'super_admin' }, { count: 1, promo_package_id: 5 }), 'Invalid promo_package_id')
+assert.equal(validateSerialAssignment({ role: 'super_admin' }, { count: 1, bundle_device_type_id: 'dev-card' }), null)

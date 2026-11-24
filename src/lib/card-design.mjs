@@ -5,7 +5,9 @@ export const CARD_TEMPLATES = [
     { id: 'portrait', name: 'Portrait', description: 'Bold portrait and rounded white panels' },
     { id: 'voyage', name: 'Voyage', description: 'Sunny yellow and forest-green headlines' },
     { id: 'statement', name: 'Statement', description: 'Oversized type and a fresh green accent' },
-    { id: 'neon', name: 'Neon Coast', description: 'Sunset neon, palm silhouettes and night-drive glow' },
+    // exclusive: hanya untuk pelanggan yang dibuka lewat paket promo / admin
+    // (profiles.unlocked_templates), tidak ikut Premium biasa.
+    { id: 'neon', name: 'Neon Coast', description: 'Sunset neon, palm silhouettes and night-drive glow', exclusive: true },
 ]
 
 export const CARD_FONTS = [
@@ -46,6 +48,29 @@ export function cardAccent(value) {
 export function canUsePremiumDesign(tier, validUntil, now = Date.now()) {
     if (tier === 'B2B') return true
     return tier === 'PREMIUM' && (!validUntil || new Date(validUntil).getTime() >= now)
+}
+
+export function isExclusiveTemplate(value) {
+    return CARD_TEMPLATES.some(template => template.id === value && template.exclusive)
+}
+
+/**
+ * Boleh dipakai di kartu publik? Classic selalu; template eksklusif hanya kalau
+ * sudah dibuka untuk profil ini (tetap berlaku walau Premium habis, karena itu
+ * bonus produk); template lain butuh Premium aktif atau B2B.
+ */
+export function canUseCardTemplate(value, profile, now = Date.now()) {
+    const template = cardTemplate(value)
+    if (template === 'classic') return true
+    if (isExclusiveTemplate(template)) {
+        return Array.isArray(profile?.unlocked_templates) && profile.unlocked_templates.includes(template)
+    }
+    return canUsePremiumDesign(profile?.tier, profile?.subscription_valid_until, now)
+}
+
+export function publicCardTemplate(value, profile, now = Date.now()) {
+    const template = cardTemplate(value)
+    return canUseCardTemplate(template, profile, now) ? template : 'classic'
 }
 
 const TEMPLATE_PRESETS = {

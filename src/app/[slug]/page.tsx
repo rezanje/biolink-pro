@@ -24,7 +24,7 @@ import { PET_FEATURE_ENABLED, selectPetCharacter } from '@/lib/pet/pet-selection
 import { getSelectedSpecialGreetingAnimation, getWelcomeCloseDelay, shouldShowSpecialGreetingAnimation } from '@/lib/special-greeting.mjs'
 import { activeRedirectUrl, normalizeUrl } from '@/lib/redirect-mode.mjs'
 import { NeonSkyline } from '@/components/profile/NeonSkyline'
-import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview } from '@/lib/card-design.mjs'
+import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview, publicCardTemplate, isExclusiveTemplate } from '@/lib/card-design.mjs'
 import { canUsePublicTranslate } from '@/lib/profile-display.mjs'
 import { UiLanguageProvider, UiLanguageSelect, useUiLanguage } from '@/components/UiLanguageProvider'
 
@@ -119,6 +119,8 @@ function PublicProfileInner() {
                 const renderedTheme = cardThemeForPreview(uiTheme, draftTheme, designPreview, thumbnailTemplate)
                 // Locked layouts can be demonstrated in the picker; saved public cards retain tier restrictions.
                 const canPreviewLayout = designPreview && thumbnailTemplate !== null && cardTemplate(thumbnailTemplate) === thumbnailTemplate
+                // Template eksklusif (mis. Neon Coast) hanya tampil kalau dibuka untuk profil ini.
+                const shownTemplate = canPreviewLayout ? cardTemplate(renderedTheme.template_id) : publicCardTemplate(renderedTheme.template_id, dbProfile)
                 const processedProfile = {
                     ...dbProfile,
                     whatsapp: renderedTheme.whatsapp || '',
@@ -131,8 +133,8 @@ function PublicProfileInner() {
                     welcome_word: uiTheme.welcome_word || 'hello',
                     welcome_duration: uiTheme.welcome_duration,
                     primary_color: cardAccent(renderedTheme.primary),
-                    template_id: canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until) || canPreviewLayout ? cardTemplate(renderedTheme.template_id) : 'classic',
-                    font_pair: canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until) || canPreviewLayout ? cardFont(renderedTheme.font_pair) : 'classic',
+                    template_id: shownTemplate,
+                    font_pair: canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until) || canPreviewLayout || isExclusiveTemplate(shownTemplate) ? cardFont(renderedTheme.font_pair) : 'classic',
                     active_mode: designPreview ? 'profile' : uiTheme.active_mode || 'profile',
                     redirect_url: uiTheme.redirect_url || '',
                     redirect_type: uiTheme.redirect_type || 'direct',
@@ -166,6 +168,15 @@ function PublicProfileInner() {
                     sessionStorage.setItem(sessionKey, 'true')
                 }
                 return
+            }
+
+            // Link lama (sebelum pemilik mengganti link profilnya) diarahkan ke link baru.
+            if (!designPreview) {
+                const { data: currentSlug } = await supabase.rpc('nfc_resolve_old_slug', { p_slug: slug })
+                if (typeof currentSlug === 'string' && currentSlug && currentSlug !== slug) {
+                    window.location.replace(`/${encodeURIComponent(currentSlug)}${window.location.search}`)
+                    return
+                }
             }
 
             // DEV NOTE: We removed localStorage fallback here.
