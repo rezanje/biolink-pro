@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Plus, Ticket } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { PROMO_FEATURES, PROMO_TEMPLATES, describePromoPackage, emptyPromoPackage, promoPackagePayload, promoPackageStatus } from '@/lib/promo-packages.mjs'
 
@@ -33,10 +34,10 @@ type PromoForm = {
 }
 
 const STATUS_LABEL: Record<string, { text: string; className: string }> = {
-    on: { text: 'Aktif', className: 'bg-emerald-100 text-emerald-700' },
-    off: { text: 'Mati', className: 'bg-zinc-100 text-zinc-500' },
-    scheduled: { text: 'Terjadwal', className: 'bg-amber-100 text-amber-700' },
-    ended: { text: 'Selesai', className: 'bg-zinc-100 text-zinc-500' },
+    on: { text: 'Aktif', className: 'bg-success-soft text-success-soft-ink' },
+    off: { text: 'Mati', className: 'bg-fill-subtle text-ink-2' },
+    scheduled: { text: 'Terjadwal', className: 'bg-butter/40 text-ink' },
+    ended: { text: 'Selesai', className: 'bg-fill-subtle text-ink-2' },
 }
 
 // datetime-local butuh "YYYY-MM-DDTHH:mm" dalam waktu lokal.
@@ -115,104 +116,129 @@ export function PromoPackagesPanel({ packages, serialCounts, onSaved }: {
         await onSaved()
     }
 
+    const FIELD = 'mt-1.5 w-full rounded-row bg-fill-subtle px-4 py-3 text-[13px] font-normal normal-case tracking-normal text-ink outline-none focus:bg-surface focus:ring-1 focus:ring-ink/15'
+    const LABEL = 'block text-[11px] font-medium uppercase tracking-wider text-ink-2'
+    const CHIP = (on: boolean) => `inline-flex cursor-pointer items-center gap-2 rounded-full px-3.5 py-2 text-[12.5px] font-medium normal-case tracking-normal transition-colors ${on ? 'bg-ink text-white' : 'bg-fill-subtle text-ink hover:bg-track'}`
+
     return (
-        <section className="rounded-2xl border border-zinc-200 bg-white/70 p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h2 className="text-lg font-semibold">Paket Promo</h2>
-                    <p className="mt-1 max-w-2xl text-sm text-zinc-500">
-                        Hak yang diberikan otomatis saat pelanggan mengaktifkan jam/kartu. Paket bisa dipasang ke nomor seri
-                        tertentu (tab Profiles → pilih seri → Set paket) atau berlaku untuk semua seri. Mematikan paket hanya
-                        menghentikan pemberian baru; hak yang sudah diberikan tetap.
-                    </p>
-                </div>
-                <button onClick={startNew} disabled={busy} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">Paket baru</button>
+        <div>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="max-w-2xl text-[12.5px] leading-relaxed text-ink-2">
+                    Pasang paket ke serial tertentu (tab Serial → centang serial → Set promo) atau berlakukan untuk semua serial.
+                    Mematikan paket hanya menghentikan pemberian baru; hak yang sudah diberikan tetap.
+                </p>
+                <button onClick={startNew} disabled={busy} className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-[13px] font-medium text-white shadow-ink disabled:opacity-40">
+                    <Plus className="h-4 w-4" strokeWidth={1.8} /> Paket baru
+                </button>
             </div>
 
-            {error && <p role="alert" className="mt-3 text-sm text-red-600">{error}</p>}
+            {error && <p role="alert" className="mb-4 rounded-row bg-coral-soft px-4 py-3 text-[12.5px] text-coral-soft-ink">{error}</p>}
 
             {editingId && (
-                <div className="mt-4 grid gap-3 rounded-xl border border-blue-200 bg-blue-50/40 p-4 md:grid-cols-2">
-                    <label className="text-xs font-semibold uppercase text-zinc-500">Nama paket
-                        <input value={form.name} maxLength={100} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Promo Awal Asta" className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-normal normal-case text-zinc-900" />
-                    </label>
-                    <label className="text-xs font-semibold uppercase text-zinc-500">Catatan
-                        <input value={form.description} maxLength={300} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Untuk pembeli batch awal" className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-normal normal-case text-zinc-900" />
-                    </label>
-                    <fieldset className="text-xs font-semibold uppercase text-zinc-500">Premium
-                        <div className="mt-1 flex flex-wrap items-center gap-3 text-sm font-normal normal-case text-zinc-800">
-                            {([['none', 'Tidak'], ['days', 'Beberapa hari'], ['unlimited', 'Tanpa batas']] as const).map(([mode, label]) => (
-                                <label key={mode} className="flex items-center gap-1.5">
-                                    <input type="radio" name="premium_mode" checked={form.premium_mode === mode} onChange={() => setForm({ ...form, premium_mode: mode })} /> {label}
-                                </label>
-                            ))}
-                            {form.premium_mode === 'days' && (
-                                <input type="number" min={1} max={3650} aria-label="Lama Premium (hari)" value={form.premium_days} onChange={e => setForm({ ...form, premium_days: parseInt(e.target.value) || 0 })} className="w-20 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-sm" />
-                            )}
+                <section className="mb-5 rounded-card bg-surface p-5 shadow-card">
+                    <div className="flex items-center gap-3">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-coral-soft text-coral-soft-ink"><Ticket className="h-[18px] w-[18px]" strokeWidth={1.8} /></span>
+                        <div>
+                            <h2 className="text-[15px] font-semibold">{editingId === 'new' ? 'Paket baru' : 'Ubah paket'}</h2>
+                            <p className="text-[12px] text-ink-2">Berlaku saat serial diaktifkan pelanggan</p>
                         </div>
-                        <p className="mt-1 text-[11px] font-normal normal-case text-zinc-400">Premium membuka ganti link sendiri, desain kartu, dan fitur Premium lain. Tidak pernah menurunkan pelanggan B2B atau Premium tanpa batas.</p>
-                    </fieldset>
-                    <fieldset className="text-xs font-semibold uppercase text-zinc-500">Tema & fitur tambahan
-                        <div className="mt-1 flex flex-wrap gap-3 text-sm font-normal normal-case text-zinc-800">
-                            {PROMO_TEMPLATES.map((template: { id: string; name: string }) => (
-                                <label key={template.id} className="flex items-center gap-1.5">
-                                    <input type="checkbox" checked={form.templates.includes(template.id)} onChange={e => setForm({ ...form, templates: toggle(form.templates, template.id, e.target.checked) })} /> Tema {template.name}
-                                </label>
-                            ))}
-                            {PROMO_FEATURES.map((feature: { key: string; label: string }) => (
-                                <label key={feature.key} className="flex items-center gap-1.5">
-                                    <input type="checkbox" checked={form.features.includes(feature.key)} onChange={e => setForm({ ...form, features: toggle(form.features, feature.key, e.target.checked) })} /> {feature.label}
-                                </label>
-                            ))}
-                        </div>
-                        <p className="mt-1 text-[11px] font-normal normal-case text-zinc-400">Tema eksklusif tetap bisa dipakai walau Premium-nya habis.</p>
-                    </fieldset>
-                    <label className="text-xs font-semibold uppercase text-zinc-500">Mulai (opsional)
-                        <input type="datetime-local" value={form.starts_at} onChange={e => setForm({ ...form, starts_at: e.target.value })} className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-normal text-zinc-900" />
-                    </label>
-                    <label className="text-xs font-semibold uppercase text-zinc-500">Selesai (opsional)
-                        <input type="datetime-local" value={form.ends_at} onChange={e => setForm({ ...form, ends_at: e.target.value })} className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-normal text-zinc-900" />
-                    </label>
-                    <label className="flex items-center gap-2 text-sm text-zinc-700">
-                        <input type="checkbox" checked={form.applies_to_all} onChange={e => setForm({ ...form, applies_to_all: e.target.checked })} />
-                        Berlaku untuk semua seri yang tidak punya paket khusus
-                    </label>
-                    <label className="flex items-center gap-2 text-sm text-zinc-700">
-                        <input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} />
-                        Aktif
-                    </label>
-                    <div className="flex gap-2 md:col-span-2">
-                        <button onClick={save} disabled={busy} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">Simpan paket</button>
-                        <button onClick={() => setEditingId(null)} disabled={busy} className="rounded-lg px-4 py-2 text-sm text-zinc-500">Batal</button>
                     </div>
-                </div>
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <label className={LABEL}>Nama paket
+                            <input value={form.name} maxLength={100} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Promo Awal Asta" className={FIELD} />
+                        </label>
+                        <label className={LABEL}>Catatan
+                            <input value={form.description} maxLength={300} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Untuk pembeli batch awal" className={FIELD} />
+                        </label>
+                        <fieldset className={LABEL}>Premium
+                            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                                {([['none', 'Tidak'], ['days', 'Beberapa hari'], ['unlimited', 'Tanpa batas']] as const).map(([mode, label]) => (
+                                    <label key={mode} className={CHIP(form.premium_mode === mode)}>
+                                        <input type="radio" name="premium_mode" className="sr-only" checked={form.premium_mode === mode} onChange={() => setForm({ ...form, premium_mode: mode })} /> {label}
+                                    </label>
+                                ))}
+                                {form.premium_mode === 'days' && (
+                                    <span className="inline-flex items-center gap-2 text-[12.5px] font-normal normal-case tracking-normal text-ink-2">
+                                        <input type="number" min={1} max={3650} aria-label="Lama Premium (hari)" value={form.premium_days} onChange={e => setForm({ ...form, premium_days: parseInt(e.target.value) || 0 })} className="w-20 rounded-full bg-fill-subtle px-3 py-2 text-[13px] text-ink outline-none" /> hari
+                                    </span>
+                                )}
+                            </div>
+                            <p className="mt-1.5 text-[11px] font-normal normal-case leading-relaxed tracking-normal text-ink-3">Membuka ganti link sendiri, desain kartu, dan fitur Premium lain. Tidak pernah menurunkan pelanggan B2B atau Premium tanpa batas.</p>
+                        </fieldset>
+                        <fieldset className={LABEL}>Tema & fitur tambahan
+                            <div className="mt-1.5 flex flex-wrap gap-2">
+                                {PROMO_TEMPLATES.map((template: { id: string; name: string }) => (
+                                    <label key={template.id} className={CHIP(form.templates.includes(template.id))}>
+                                        <input type="checkbox" className="sr-only" checked={form.templates.includes(template.id)} onChange={e => setForm({ ...form, templates: toggle(form.templates, template.id, e.target.checked) })} /> Tema {template.name}
+                                    </label>
+                                ))}
+                                {PROMO_FEATURES.map((feature: { key: string; label: string }) => (
+                                    <label key={feature.key} className={CHIP(form.features.includes(feature.key))}>
+                                        <input type="checkbox" className="sr-only" checked={form.features.includes(feature.key)} onChange={e => setForm({ ...form, features: toggle(form.features, feature.key, e.target.checked) })} /> {feature.label}
+                                    </label>
+                                ))}
+                            </div>
+                            <p className="mt-1.5 text-[11px] font-normal normal-case tracking-normal text-ink-3">Tema eksklusif tetap bisa dipakai walau Premium-nya habis.</p>
+                        </fieldset>
+                        <label className={LABEL}>Mulai (opsional)
+                            <input type="datetime-local" value={form.starts_at} onChange={e => setForm({ ...form, starts_at: e.target.value })} className={FIELD} />
+                        </label>
+                        <label className={LABEL}>Selesai (opsional)
+                            <input type="datetime-local" value={form.ends_at} onChange={e => setForm({ ...form, ends_at: e.target.value })} className={FIELD} />
+                        </label>
+                        <label className="flex items-center gap-2.5 text-[13px]">
+                            <input type="checkbox" className="h-4 w-4 accent-ink" checked={form.applies_to_all} onChange={e => setForm({ ...form, applies_to_all: e.target.checked })} />
+                            Berlaku untuk semua serial yang tidak punya paket khusus
+                        </label>
+                        <label className="flex items-center gap-2.5 text-[13px]">
+                            <input type="checkbox" className="h-4 w-4 accent-ink" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} />
+                            Aktif
+                        </label>
+                    </div>
+                    <div className="mt-5 flex justify-end gap-2">
+                        <button onClick={() => setEditingId(null)} disabled={busy} className="rounded-full px-5 py-3 text-[13px] text-ink-2 hover:text-ink">Batal</button>
+                        <button onClick={save} disabled={busy} className="rounded-full bg-ink px-6 py-3 text-[13px] font-medium text-white shadow-ink disabled:opacity-40">Simpan paket</button>
+                    </div>
+                </section>
             )}
 
-            <div className="mt-4 divide-y divide-zinc-100">
-                {packages.map(pkg => {
-                    const status = STATUS_LABEL[promoPackageStatus(pkg)]
-                    return (
-                        <div key={pkg.id} className="flex flex-wrap items-center gap-3 py-3">
-                            <div className="min-w-[220px] flex-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <span className="font-medium text-zinc-900">{pkg.name}</span>
-                                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${status.className}`}>{status.text}</span>
-                                    {pkg.applies_to_all && <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">Semua seri</span>}
+            <div className="overflow-hidden rounded-card bg-surface shadow-card">
+                <ul className="divide-y divide-hairline">
+                    {packages.map(pkg => {
+                        const status = STATUS_LABEL[promoPackageStatus(pkg)]
+                        return (
+                            <li key={pkg.id} className="flex flex-wrap items-center gap-3 px-5 py-4">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-coral-soft text-coral-soft-ink"><Ticket className="h-[18px] w-[18px]" strokeWidth={1.8} /></span>
+                                <div className="min-w-[220px] flex-1">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                        <span className="text-[14px] font-semibold">{pkg.name}</span>
+                                        <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${status.className}`}>{status.text}</span>
+                                        {pkg.applies_to_all && <span className="rounded-full bg-sky/35 px-2 py-0.5 text-[10.5px] font-medium text-ink">Semua serial</span>}
+                                    </div>
+                                    <p className="mt-0.5 text-[12px] text-ink-2">{describePromoPackage(pkg)}</p>
+                                    <p className="mt-0.5 text-[11px] text-ink-3">
+                                        {serialCounts[pkg.id] || 0} serial dipasang · {grantCounts[pkg.id] || 0} kali diberikan
+                                        {pkg.starts_at && ` · mulai ${new Date(pkg.starts_at).toLocaleString('id-ID')}`}
+                                        {pkg.ends_at && ` · selesai ${new Date(pkg.ends_at).toLocaleString('id-ID')}`}
+                                    </p>
                                 </div>
-                                <p className="mt-0.5 text-xs text-zinc-500">{describePromoPackage(pkg)}</p>
-                                <p className="mt-0.5 text-[11px] text-zinc-400">
-                                    {serialCounts[pkg.id] || 0} seri dipasang · {grantCounts[pkg.id] || 0} kali diberikan
-                                    {pkg.starts_at && ` · mulai ${new Date(pkg.starts_at).toLocaleString('id-ID')}`}
-                                    {pkg.ends_at && ` · selesai ${new Date(pkg.ends_at).toLocaleString('id-ID')}`}
-                                </p>
-                            </div>
-                            <button onClick={() => startEdit(pkg)} disabled={busy} className="rounded-lg px-3 py-2 text-sm text-blue-600 disabled:opacity-50">Ubah</button>
-                            <button onClick={() => setActive(pkg, !pkg.is_active)} disabled={busy} className="rounded-lg bg-zinc-100 px-3 py-2 text-sm disabled:opacity-50">{pkg.is_active ? 'Matikan' : 'Nyalakan'}</button>
-                        </div>
-                    )
-                })}
-                {!packages.length && <p className="py-3 text-sm text-zinc-400">Belum ada paket.</p>}
+                                <button onClick={() => startEdit(pkg)} disabled={busy} className="rounded-full bg-fill-subtle px-4 py-2 text-[12px] font-medium hover:bg-track disabled:opacity-50">Ubah</button>
+                                <button
+                                    role="switch"
+                                    aria-checked={pkg.is_active}
+                                    aria-label={pkg.is_active ? `Matikan ${pkg.name}` : `Nyalakan ${pkg.name}`}
+                                    onClick={() => setActive(pkg, !pkg.is_active)}
+                                    disabled={busy}
+                                    className={`inline-flex h-[26px] w-[46px] items-center rounded-full p-[3px] transition-colors disabled:opacity-50 ${pkg.is_active ? 'bg-ink' : 'bg-track'}`}
+                                >
+                                    <span className={`h-5 w-5 rounded-full bg-white shadow-row transition-transform ${pkg.is_active ? 'translate-x-5' : 'translate-x-0'}`} />
+                                </button>
+                            </li>
+                        )
+                    })}
+                    {!packages.length && <li className="px-5 py-10 text-center text-[13px] text-ink-2">Belum ada paket.</li>}
+                </ul>
             </div>
-        </section>
+        </div>
     )
 }
