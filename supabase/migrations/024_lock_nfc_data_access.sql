@@ -55,6 +55,7 @@ CREATE POLICY nfc_serial_company_admin ON public.serial_numbers
     WITH CHECK (public.nfc_is_company_admin_for(owner_id));
 
 REVOKE ALL ON public.serial_numbers FROM anon;
+REVOKE TRUNCATE ON public.serial_numbers FROM authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.serial_numbers TO authenticated;
 
 -- Fungsi lama yang tetap dipakai aplikasi.
@@ -137,7 +138,8 @@ BEGIN
          || 'USING (public.nfc_is_super_admin()) WITH CHECK (public.nfc_is_super_admin())';
     EXECUTE 'CREATE POLICY nfc_company_admin_update ON public.companies FOR UPDATE TO authenticated '
          || 'USING (public.nfc_is_company_admin_of(id)) WITH CHECK (public.nfc_is_company_admin_of(id))';
-    EXECUTE 'REVOKE INSERT, UPDATE, DELETE ON public.companies FROM anon';
+    EXECUTE 'REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON public.companies FROM anon';
+    EXECUTE 'REVOKE TRUNCATE ON public.companies FROM authenticated';
 END $$;
 
 COMMIT;

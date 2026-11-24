@@ -23,7 +23,7 @@ CREATE TABLE public.profiles (
 CREATE TABLE public.products (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text, slug text);
 CREATE TABLE public.serial_numbers (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), serial_uuid uuid UNIQUE NOT NULL DEFAULT gen_random_uuid(),
-  product_id uuid REFERENCES public.products(id), owner_id uuid, is_claimed boolean DEFAULT false, claimed_at timestamptz,
+  product_id uuid REFERENCES public.products(id), variant_id uuid, owner_id uuid, activation_code text, is_claimed boolean DEFAULT false, claimed_at timestamptz,
   nfc_tap_count int DEFAULT 0, last_tapped_at timestamptz, sync_enabled boolean DEFAULT true, profile_id uuid,
   special_edition text, special_editions text[], company_id uuid, event_id uuid, device_type_id uuid,
   gift_enabled boolean DEFAULT false, gift_url text, gift_message text, gift_from text, gift_opened_at timestamptz,
@@ -93,3 +93,5 @@ INSERT INTO public.serial_numbers (serial_uuid, product_id, owner_id, is_claimed
  ('50000000-0000-0000-0000-000000000004', 'd0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000005', true, now(), false, NULL, NULL, NULL),
  ('50000000-0000-0000-0000-000000000005', 'd0000000-0000-0000-0000-000000000001', NULL, false, NULL, false, NULL, NULL, 'dummygifttoken0005'),
  ('50000000-0000-0000-0000-000000000006', 'd0000000-0000-0000-0000-000000000001', NULL, false, NULL, false, NULL, NULL, NULL);
+
+UPDATE public.serial_numbers SET activation_code = 'DUMMYCODE' WHERE serial_uuid = '50000000-0000-0000-0000-000000000002';

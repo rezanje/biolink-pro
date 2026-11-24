@@ -68,12 +68,13 @@ $$;
 -- 3. Fungsi untuk halaman publik dan klaim
 -- ---------------------------------------------------------------------------
 
--- Data satu nomor seri untuk halaman tap/kado. Tanpa gift_token.
+-- Data satu nomor seri untuk halaman tap/kado. Tanpa gift_token dan
+-- activation_code (rahasia, tidak dipakai halaman publik).
 CREATE OR REPLACE FUNCTION public.nfc_get_serial(p_serial_uuid text)
 RETURNS jsonb
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = ''
 AS $$
-    SELECT (to_jsonb(s) - 'gift_token')
+    SELECT (to_jsonb(s) - 'gift_token' - 'activation_code')
            || jsonb_build_object('products', to_jsonb(p))
     FROM public.serial_numbers s
     LEFT JOIN public.products p ON p.id = s.product_id
