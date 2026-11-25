@@ -7,6 +7,7 @@ import { useCompany } from '@/app/company/company-context'
 import { LEAD_STATUS_LABELS } from '@/lib/company-workspace.mjs'
 import { CARD_TEMPLATES } from '@/lib/card-design.mjs'
 import { leadStatusBadge } from '@/components/company/lead-status'
+import { companyDashboardTheme } from '@/lib/company-dashboard-theme.mjs'
 
 export default function CompanyDashboardPage() {
     const { data, companyParam } = useCompany()
@@ -17,15 +18,33 @@ export default function CompanyDashboardPage() {
     const personName = (id: string) => people.find(p => p.id === id)?.display_name || 'Tanpa nama'
     const maxWeek = Math.max(1, ...summary.weeks.map(w => w.count))
     const theme = CARD_TEMPLATES.find((t: { id: string }) => t.id === company.card_template) as { name: string } | undefined
+    const brand = companyDashboardTheme(company)
 
     return (
         <div>
-            <header className="mt-6">
-                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">{company.name}</h1>
-                <p className="mt-1.5 text-[13px] text-ink-2">
-                    Pantau kartu karyawan dan leads yang mereka dapat{theme ? ` · tema kartu ${theme.name}` : ''}
-                </p>
-            </header>
+            {brand?.hero ? (
+                <header className="relative mt-6 overflow-hidden rounded-card bg-surface shadow-card">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={brand.hero} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-canvas via-canvas/80 to-transparent" />
+                    <div className="relative flex min-h-[180px] flex-col justify-end p-6 sm:p-8">
+                        {brand.logo && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={brand.logo} alt={company.name} className="mb-4 h-14 w-auto max-w-[120px] object-contain object-left" />
+                        )}
+                        <p className="text-[10.5px] font-semibold uppercase tracking-[0.18em] text-coral">Portal perusahaan</p>
+                        <h1 className="company-heading mt-1.5 text-[32px] font-normal leading-tight tracking-[-0.02em]">{company.name}</h1>
+                        <p className="mt-1.5 text-[13px] text-ink-2">{brand.tagline ? `${brand.tagline} · ` : ''}Pantau kartu karyawan dan leads yang mereka dapat</p>
+                    </div>
+                </header>
+            ) : (
+                <header className="mt-6">
+                    <h1 className="company-heading text-[26px] font-semibold tracking-[-0.03em]">{company.name}</h1>
+                    <p className="mt-1.5 text-[13px] text-ink-2">
+                        Pantau kartu karyawan dan leads yang mereka dapat{theme ? ` · tema kartu ${theme.name}` : ''}
+                    </p>
+                </header>
+            )}
 
             <section className="mt-6 grid grid-cols-2 gap-y-6 rounded-card bg-surface px-3 py-6 shadow-card md:grid-cols-4">
                 {[

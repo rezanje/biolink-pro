@@ -57,7 +57,7 @@ export default function CompanyLeadsPage() {
         <div>
             <header className="mt-6 flex flex-wrap items-end justify-between gap-3">
                 <div>
-                    <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Leads</h1>
+                    <h1 className="company-heading text-[26px] font-semibold tracking-[-0.03em]">Leads</h1>
                     <p className="mt-1.5 text-[13px] text-ink-2">{data.leads.length} kontak dari kartu karyawan{data.leadsTruncated ? ' (2.000 terbaru)' : ''}</p>
                 </div>
                 <button onClick={exportCsv} disabled={!filtered.length} className="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2.5 text-[12.5px] font-medium shadow-row disabled:opacity-50">

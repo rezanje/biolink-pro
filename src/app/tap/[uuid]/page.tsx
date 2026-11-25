@@ -135,41 +135,9 @@ export default function TapPage() {
 
                 // CASE B: Branding Sync Mode (B2B or Personal)
                 if (isSynced) {
-                    // B2B: Merge Company Branding if user is in a company
-                    if (ownerProfile.company_id) {
-                        const { data: company } = await supabase
-                            .from('companies')
-                            .select('*')
-                            .eq('id', ownerProfile.company_id)
-                            .single()
-
-                        if (company) {
-                            // MERGE LOGIC: Company theme/links + User name/title
-                            const mergedProfile = {
-                                ...ownerProfile,
-                                // Overwrite specific fields with company branding if defined
-                                bio: company.bio || ownerProfile.bio,
-                                avatar_url: company.avatar_url || ownerProfile.avatar_url,
-                                social_links: (company.social_links && company.social_links.length > 0)
-                                    ? company.social_links
-                                    : ownerProfile.social_links,
-                                theme: {
-                                    ...ownerProfile.theme,
-                                    primary: company.theme?.primary || ownerProfile.theme?.primary,
-                                    background: company.theme?.accent || ownerProfile.theme?.background
-                                }
-                            }
-
-                            setSerial({
-                                ...dbSerial,
-                                product: dbSerial.products || DEFAULT_PRODUCT,
-                                owner: mergedProfile
-                            })
-                            setLoading(false)
-                            return
-                        }
-                    }
-
+                    // Anggota perusahaan (B2B) diperlakukan sama: diarahkan ke link profil
+                    // mereka sendiri. Tema perusahaan diterapkan di halaman profil itu;
+                    // bio, foto, dan link pribadi tidak ditimpa data perusahaan.
                     // Personal Sync Store: Redirect to primary slug (Existing behavior)
                     if (ownerProfile.slug) {
                         // INTERCEPT REDIRECT DIRECT: Mencegah double redirect delay

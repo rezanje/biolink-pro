@@ -6,6 +6,8 @@ import { Building2, IdCard, LayoutDashboard, LogOut, MessageSquareText, Users } 
 import PageMotion from '@/components/motion/PageMotion'
 import { useCompany } from '@/app/company/company-context'
 import { createClient } from '@/lib/supabase/client'
+import { companyDashboardTheme } from '@/lib/company-dashboard-theme.mjs'
+import type { CSSProperties } from 'react'
 
 const ITEMS = [
     { href: '/company/dashboard', icon: LayoutDashboard, label: 'Ringkasan' },
@@ -18,6 +20,9 @@ export default function CompanyShell({ children }: { children: React.ReactNode }
     const { data, companyParam } = useCompany()
     const pathname = usePathname()
     const router = useRouter()
+    // Dashboard ikut tema kartu perusahaan (mis. CNY: hijau hutan + merah).
+    const theme = companyDashboardTheme(data?.company)
+    const themeStyle = theme ? { ...theme.vars, '--company-heading-font': theme.headingFont || 'inherit' } as unknown as CSSProperties : undefined
     const suffix = companyParam ? `?company=${encodeURIComponent(companyParam)}` : ''
 
     const signOut = async () => {
@@ -26,16 +31,21 @@ export default function CompanyShell({ children }: { children: React.ReactNode }
     }
 
     return (
-        <div className="min-h-screen bg-canvas font-kabut text-ink">
+        <div className="min-h-screen bg-canvas font-kabut text-ink" data-company-mode={theme?.mode} data-company-template={theme?.template} style={themeStyle}>
             <div className="mx-auto max-w-[1200px] px-5 pb-[140px] pt-5">
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2.5 rounded-full bg-surface py-1.5 pl-1.5 pr-4 shadow-row">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-fill-subtle text-ink-2">
-                            {data?.company.logo_url
-                                // eslint-disable-next-line @next/next/no-img-element
-                                ? <img src={data.company.logo_url} alt="" className="h-full w-full object-contain" />
-                                : <Building2 className="h-4 w-4" strokeWidth={1.8} />}
-                        </span>
+                        {theme?.logo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={theme.logo} alt="" className="ml-2 h-8 w-auto max-w-[72px] object-contain" />
+                        ) : (
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-fill-subtle text-ink-2">
+                                {data?.company.logo_url
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    ? <img src={data.company.logo_url} alt="" className="h-full w-full object-contain" />
+                                    : <Building2 className="h-4 w-4" strokeWidth={1.8} />}
+                            </span>
+                        )}
                         <span className="truncate text-[12.5px] font-medium">{data?.company.name}</span>
                         <span className="hidden text-[11px] text-ink-3 sm:inline">· Portal perusahaan</span>
                     </div>
@@ -55,7 +65,7 @@ export default function CompanyShell({ children }: { children: React.ReactNode }
             </div>
 
             <div className="fixed bottom-6 left-[22px] right-[22px] z-50 md:left-1/2 md:w-[300px] md:-translate-x-1/2">
-                <nav aria-label="Navigasi perusahaan" className="h-[68px] rounded-full border border-white/80 bg-white/[0.72] px-2 shadow-nav backdrop-blur-[26px] backdrop-saturate-[1.7]">
+                <nav aria-label="Navigasi perusahaan" className="company-nav h-[68px] rounded-full border border-white/80 bg-white/[0.72] px-2 shadow-nav backdrop-blur-[26px] backdrop-saturate-[1.7]">
                     <ul className="flex h-full items-center justify-around">
                         {ITEMS.map(item => {
                             const active = pathname === item.href

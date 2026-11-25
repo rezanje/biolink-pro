@@ -30,7 +30,7 @@ export default function CompanyUsersPage() {
     return (
         <div>
             <header className="mt-6">
-                <h1 className="text-[26px] font-semibold tracking-[-0.03em]">Karyawan</h1>
+                <h1 className="company-heading text-[26px] font-semibold tracking-[-0.03em]">Karyawan</h1>
                 <p className="mt-1.5 text-[13px] text-ink-2">{data.people.length} pemegang kartu di {data.company.name}</p>
             </header>
 
