@@ -52,6 +52,7 @@ import { newGiftToken } from '@/lib/gift.mjs'
 import { CatalogSettings, type CatalogItem } from '@/components/admin/CatalogSettings'
 import { PromoPackagesPanel, type PromoPackage } from '@/components/admin/PromoPackagesPanel'
 import { PROMO_TEMPLATES } from '@/lib/promo-packages.mjs'
+import { CARD_TEMPLATES } from '@/lib/card-design.mjs'
 
 interface SerialWithProfile {
     id: string
@@ -1030,8 +1031,9 @@ export default function AdminPage() {
                             </span>
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-[14px] font-semibold">{c.name}</p>
-                                <p className="truncate text-[11.5px] text-ink-2">{c.website || 'Tanpa website'} · {serials.filter(s => s.company_id === c.id).length} perangkat</p>
+                                <p className="truncate text-[11.5px] text-ink-2">{c.website || 'Tanpa website'} · {serials.filter(s => s.company_id === c.id).length} perangkat{c.card_template ? ` · tema ${CARD_TEMPLATES.find((t: { id: string; name: string }) => t.id === c.card_template)?.name || c.card_template}` : ''}</p>
                             </div>
+                            <Link href={`/company/dashboard?company=${c.id}`} className="rounded-full bg-fill-subtle px-4 py-2 text-[12px] font-medium hover:bg-track">Dashboard</Link>
                             <button onClick={() => setEditCompany(c)} className="rounded-full bg-fill-subtle px-4 py-2 text-[12px] font-medium hover:bg-track">Ubah</button>
                             <button onClick={() => deleteCompany(c.id)} aria-label={`Hapus ${c.name}`} className="rounded-full p-2 text-ink-3 hover:bg-coral-soft hover:text-coral-soft-ink"><Trash2 className="h-4 w-4" strokeWidth={1.8} /></button>
                         </li>
@@ -1739,6 +1741,21 @@ export default function AdminPage() {
                                             </div>
                                         </div>
                                         <div>
+                                            <label className="text-xs font-semibold text-ink-2 uppercase ml-1">Tema kartu perusahaan</label>
+                                            <select
+                                                aria-label="Tema kartu perusahaan"
+                                                value={editCompany.card_template || ''}
+                                                onChange={e => setEditCompany({ ...editCompany, card_template: e.target.value || null })}
+                                                className="w-full mt-1.5 p-3.5 bg-fill-subtle border border-hairline focus:border-ink-3 focus:ring-1 focus:ring-ink/10 transition-all rounded-row text-sm outline-none"
+                                            >
+                                                <option value="">Tanpa tema (tiap karyawan pilih sendiri)</option>
+                                                {CARD_TEMPLATES.map((template: { id: string; name: string; company?: boolean }) => (
+                                                    <option key={template.id} value={template.id}>{template.name}{template.company ? ' — khusus perusahaan' : ''}</option>
+                                                ))}
+                                            </select>
+                                            <p className="text-[11px] text-ink-3 mt-1.5 ml-1">Semua kartu & jam karyawan perusahaan ini tampil dengan tema ini, apa pun pilihan pribadinya.</p>
+                                        </div>
+                                        <div>
                                             <label className="text-xs font-semibold text-ink-2 uppercase ml-1">Profile Avatar B2B Fallback</label>
                                             <input
                                                 type="text"
@@ -1866,6 +1883,7 @@ export default function AdminPage() {
                                                 logo_url: editCompany.logo_url,
                                                 bio: editCompany.bio,
                                                 avatar_url: editCompany.avatar_url,
+                                                card_template: editCompany.card_template || null,
                                                 social_links: typeof editCompany.social_links === 'string' ? JSON.parse(editCompany.social_links) : editCompany.social_links
                                             }).eq('id', companyId)
 
@@ -1880,6 +1898,7 @@ export default function AdminPage() {
                                                 logo_url: editCompany.logo_url,
                                                 bio: editCompany.bio,
                                                 avatar_url: editCompany.avatar_url,
+                                                card_template: editCompany.card_template || null,
                                                 social_links: typeof editCompany.social_links === 'string' ? JSON.parse(editCompany.social_links) : (editCompany.social_links || [])
                                             }).select().single()
 

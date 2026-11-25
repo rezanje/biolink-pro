@@ -48,6 +48,8 @@ export const UI_MESSAGES = {
     'Choose a layout for your card': ['Pilih gaya tampilan kartu lo', '选择你的名片布局'],
     'Additional layouts are available on Premium.': ['Tema tambahan tersedia di Premium.', '更多布局可在高级版使用。'],
     'Exclusive edition': ['Edisi khusus', '限定版'],
+    'Company portal': ['Portal perusahaan', '企业门户'],
+    'Your public card uses your company theme ({theme}) from {company}. Layout changes here apply only if your company removes its theme.': ['Kartu publik kamu memakai tema perusahaan ({theme}) dari {company}. Pilihan tema di sini baru berlaku kalau perusahaan melepas temanya.', '你的公开名片使用 {company} 的企业主题（{theme}）。只有企业取消主题后，这里的布局选择才会生效。'],
     'Some layouts are exclusive to selected editions.': ['Beberapa tema khusus untuk edisi tertentu.', '部分布局为特定版本专享。'],
     'Expand profile': ['Buka detail profil', '展开个人资料'],
     'Show portrait': ['Tampilkan foto profil', '显示人像'],

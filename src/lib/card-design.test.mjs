@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview, cardThemeForTemplate, isExclusiveTemplate, canUseCardTemplate, publicCardTemplate } from './card-design.mjs'
+import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview, cardThemeForTemplate, isExclusiveTemplate, canUseCardTemplate, publicCardTemplate, isCompanyTemplate, PERSONAL_CARD_TEMPLATES } from './card-design.mjs'
 
 assert.equal(cardTemplate(undefined), 'classic')
 assert.equal(cardTemplate('dial'), 'dial')
@@ -50,3 +50,11 @@ assert.equal(canUseCardTemplate('classic', null, NOW), true)
 assert.equal(publicCardTemplate('neon', { tier: 'PREMIUM' }, NOW), 'classic')
 assert.equal(publicCardTemplate('neon', { tier: 'PREMIUM', unlocked_templates: ['neon'] }, NOW), 'neon')
 assert.equal(publicCardTemplate('dial', { tier: 'FREE' }, NOW), 'classic')
+
+// Tema perusahaan (CNY): tidak bisa dipilih perorangan, selalu menang lewat perusahaan.
+assert.equal(isCompanyTemplate('cny'), true)
+assert.equal(PERSONAL_CARD_TEMPLATES.some(t => t.id === 'cny'), false)
+assert.equal(canUseCardTemplate('cny', { tier: 'B2B', unlocked_templates: ['cny'] }, NOW), false)
+assert.equal(publicCardTemplate('cny', { tier: 'PREMIUM' }, NOW), 'classic')
+assert.equal(publicCardTemplate('dial', { tier: 'FREE' }, NOW, 'cny'), 'cny')
+assert.equal(publicCardTemplate('dial', { tier: 'PREMIUM' }, NOW, 'bogus'), 'dial')

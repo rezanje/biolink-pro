@@ -1,76 +1,113 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 
-interface Company {
+export interface CompanyPerson {
     id: string
-    name: string
-    logo_url: string
-    theme: {
-        primary: string
-        accent: string
+    display_name: string | null
+    email: string | null
+    job_title: string | null
+    slug: string | null
+    avatar_url: string | null
+    role: string | null
+    updated_at: string | null
+}
+
+export interface CompanyLead {
+    id: string
+    profile_id: string
+    created_at: string
+    name: string | null
+    email: string | null
+    whatsapp: string | null
+    company: string | null
+    job_title: string | null
+    status: string | null
+}
+
+export interface PersonStats {
+    id: string
+    devices: number
+    taps: number
+    views30: number
+    clicks30: number
+    leads: number
+    leadsNew: number
+    leadsConverted: number
+    lastTap: string | null
+    lastLead: string | null
+}
+
+export interface CompanyWorkspace {
+    company: { id: string; name: string; logo_url: string | null; website: string | null; card_template: string | null }
+    viewerRole: string
+    people: CompanyPerson[]
+    summary: {
+        counts: { people: number; devices: number; taps: number; views30: number; leads: number; leads30: number; conversion: number; unclaimed: number }
+        status: Record<string, number>
+        weeks: { start: string; count: number }[]
+        perPerson: PersonStats[]
+        topPeople: PersonStats[]
     }
+    leads: CompanyLead[]
+    leadsTruncated: boolean
 }
 
 interface CompanyContextType {
-    company: Company | null
+    data: CompanyWorkspace | null
     isLoading: boolean
-    isB2BAdmin: boolean
+    error: string | null
+    companyParam: string | null
+    reload: () => Promise<void>
+    updateLeadStatus: (leadId: string, status: string) => Promise<boolean>
 }
 
 const CompanyContext = createContext<CompanyContextType>({
-    company: null,
-    isLoading: true,
-    isB2BAdmin: false
+    data: null, isLoading: true, error: null, companyParam: null,
+    reload: async () => {}, updateLeadStatus: async () => false,
 })
 
 export function CompanyProvider({ children }: { children: React.ReactNode }) {
-    const [company, setCompany] = useState<Company | null>(null)
+    const companyParam = useSearchParams().get('company')
+    const [data, setData] = useState<CompanyWorkspace | null>(null)
     const [isLoading, setIsLoading] = useState(true)
-    const [isB2BAdmin, setIsB2BAdmin] = useState(false)
-    const supabase = createClient()
+    const [error, setError] = useState<string | null>(null)
+    const query = companyParam ? `?company=${encodeURIComponent(companyParam)}` : ''
 
-    useEffect(() => {
-        const init = async () => {
-            try {
-                const { data: { user } } = await supabase.auth.getUser()
-                if (!user) return
-
-                // 1. Get profile and check tier
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('tier, company_id')
-                    .eq('user_id', user.id)
-                    .single()
-
-                if (profile?.tier === 'B2B' && profile.company_id) {
-                    // 2. Fetch Company details
-                    const { data: companyData } = await supabase
-                        .from('companies')
-                        .select('*')
-                        .eq('id', profile.company_id)
-                        .single()
-
-                    if (companyData) {
-                        setCompany(companyData)
-                        // For now, any user with B2B tier and linked to company is an "admin" in this dashboard
-                        // In future, add an 'is_company_admin' flag to profiles
-                        setIsB2BAdmin(true)
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to load company context:', error)
-            } finally {
-                setIsLoading(false)
+    const reload = useCallback(async () => {
+        setError(null)
+        try {
+            const res = await fetch(`/api/company/workspace${query}`, { cache: 'no-store' })
+            const body = await res.json()
+            if (!res.ok) {
+                setData(null)
+                setError(res.status === 401 ? 'unauthorized' : res.status === 403 ? 'forbidden' : body.error || 'Gagal memuat')
+                return
             }
+            setData(body)
+        } catch {
+            setError('Gagal memuat dashboard perusahaan')
+        } finally {
+            setIsLoading(false)
         }
+    }, [query])
 
-        init()
-    }, [])
+    useEffect(() => { void reload() }, [reload])
+
+    const updateLeadStatus = async (leadId: string, status: string) => {
+        const res = await fetch(`/api/company/workspace${query}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ leadId, status }),
+        })
+        if (!res.ok) return false
+        setData(prev => prev ? { ...prev, leads: prev.leads.map(l => l.id === leadId ? { ...l, status } : l) } : prev)
+        return true
+    }
 
     return (
-        <CompanyContext.Provider value={{ company, isLoading, isB2BAdmin }}>
+        <CompanyContext.Provider value={{ data, isLoading, error, companyParam, reload, updateLeadStatus }}>
             {children}
         </CompanyContext.Provider>
     )

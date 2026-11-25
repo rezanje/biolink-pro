@@ -2,7 +2,7 @@
 
 import { NotificationsLink } from '@/components/dashboard/CardSaveNotifications'
 import PageMotion from '@/components/motion/PageMotion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -14,7 +14,8 @@ import {
     LogOut,
     CreditCard,
     ExternalLink,
-    IdCard
+    IdCard,
+    Building2
 } from 'lucide-react'
 import PhonePreview from '@/components/dashboard/PhonePreview'
 import { useTier } from '@/app/dashboard/tier-context'
@@ -63,6 +64,21 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     const router = useRouter()
     const { hasFeature } = useTier()
     const { t } = useUiLanguage()
+    // Admin perusahaan (B2B) dapat pintasan ke dashboard perusahaannya.
+    const [isCompanyAdmin, setIsCompanyAdmin] = useState(false)
+    useEffect(() => {
+        const supabase = createClient()
+        supabase.auth.getUser().then(async ({ data: { user } }) => {
+            if (!user) return
+            const { data } = await supabase.from('profiles').select('role, company_id').eq('user_id', user.id).maybeSingle()
+            setIsCompanyAdmin(data?.role === 'company_admin' && Boolean(data.company_id))
+        })
+    }, [])
+    const companyLink = isCompanyAdmin && (
+        <Link href="/company/dashboard" className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-2 text-[12px] font-medium text-ink shadow-row">
+            <Building2 className="h-3.5 w-3.5" strokeWidth={1.8} /> {t('Company portal')}
+        </Link>
+    )
 
     const handleLogout = async () => {
         const supabase = createClient()
@@ -77,7 +93,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     if (KABUT_ROUTES.includes(pathname)) {
         return (
             <div className="min-h-screen bg-canvas font-kabut text-ink">
-                <div className="flex items-center justify-end gap-3 px-5 pt-4"><NotificationsLink /><UiLanguageSelect /></div>
+                <div className="flex items-center justify-end gap-3 px-5 pt-4">{companyLink}<NotificationsLink /><UiLanguageSelect /></div>
                 <PageMotion key={pathname}>{children}</PageMotion>
                 <KabutNav />
             </div>

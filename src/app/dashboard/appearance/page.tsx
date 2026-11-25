@@ -16,7 +16,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import PublicCardPreview from '@/components/dashboard/PublicCardPreview'
 import ThemeCardPreview from '@/components/dashboard/ThemeCardPreview'
-import { CARD_TEMPLATES, CARD_FONTS, CARD_COLORS, cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForTemplate, cardThemeForPreview, canUseCardTemplate, isExclusiveTemplate } from '@/lib/card-design.mjs'
+import { CARD_TEMPLATES, PERSONAL_CARD_TEMPLATES, CARD_FONTS, CARD_COLORS, cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForTemplate, cardThemeForPreview, canUseCardTemplate, isExclusiveTemplate } from '@/lib/card-design.mjs'
 import { useUiLanguage } from '@/components/UiLanguageProvider'
 
 export default function AppearancePage() {
@@ -32,6 +32,8 @@ export default function AppearancePage() {
     const [fontPair, setFontPair] = useState('classic')
     const [userTier, setUserTier] = useState<string>('FREE')
     // Data hak tema: tier, masa berlaku, dan template eksklusif yang dibuka.
+    // Tema perusahaan (B2B): kalau ada, kartu publik selalu memakai tema ini.
+    const [companyTheme, setCompanyTheme] = useState<{ name: string; template: string } | null>(null)
     const [designAccess, setDesignAccess] = useState<{ tier?: string; subscription_valid_until?: string | null; unlocked_templates?: string[] }>({})
     const [previewSlug, setPreviewSlug] = useState('')
     const [previewExpanded, setPreviewExpanded] = useState(false)
@@ -68,7 +70,7 @@ export default function AppearancePage() {
 
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('theme, tier, subscription_valid_until, slug, unlocked_templates')
+                .select('theme, tier, subscription_valid_until, slug, unlocked_templates, company_id')
                 .eq('user_id', user.id)
                 .single()
 
@@ -83,6 +85,11 @@ export default function AppearancePage() {
                 setSavedAppearance(initial)
                 setUserTier(canUsePremiumDesign(profile.tier, profile.subscription_valid_until) ? profile.tier : 'FREE')
                 setDesignAccess({ tier: profile.tier, subscription_valid_until: profile.subscription_valid_until, unlocked_templates: profile.unlocked_templates || [] })
+                if (profile.company_id) {
+                    const { data: company } = await supabase.from('companies').select('name, card_template').eq('id', profile.company_id).maybeSingle()
+                    const template = CARD_TEMPLATES.find(option => option.id === company?.card_template)
+                    if (company && template) setCompanyTheme({ name: company.name, template: template.name })
+                }
                 if (profile.slug) {
                     sessionStorage.setItem(`gentanala_design_preview_${profile.slug}`, JSON.stringify({
                         theme_mode: initial.mode, image_filter: initial.filter, primary: initial.color,
@@ -249,6 +256,12 @@ export default function AppearancePage() {
                 </div>
             )}
 
+            {companyTheme && (
+                <div role="status" className="mt-5 flex items-start gap-3 rounded-card bg-coral-soft p-5 text-coral-soft-ink">
+                    <Palette className="mt-0.5 h-[18px] w-[18px] shrink-0" strokeWidth={1.8} />
+                    <p className="text-[12.5px] leading-relaxed">{t('Your public card uses your company theme ({theme}) from {company}. Layout changes here apply only if your company removes its theme.', { theme: companyTheme.template, company: companyTheme.name })}</p>
+                </div>
+            )}
             <section className="mt-5 rounded-card bg-surface p-5 shadow-card">
                 <div className="flex items-center gap-3">
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fill-subtle text-ink-2"><Palette className="h-[18px] w-[18px]" strokeWidth={1.8} /></span>
@@ -259,7 +272,7 @@ export default function AppearancePage() {
                 </div>
                 <p className="mt-3 text-[11px] text-ink-2">{t('Swipe to browse, tap to choose')}</p>
                 <div ref={layoutRailRef} role="region" aria-label={t('Card Layout')} tabIndex={0} className="relative mt-2 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain p-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-2 focus-visible:outline-offset-2">
-                    {CARD_TEMPLATES.map(option => (
+                    {PERSONAL_CARD_TEMPLATES.map(option => (
                         <button
                             key={option.id}
                             type="button"

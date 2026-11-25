@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, type CSSProperties } from 'react'
 import { notFound, useParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Instagram, Twitter, Linkedin, Globe, ChevronRight, Mail, Phone, Download, Share2, Copy, Check, X, FileText, Image as ImageIcon, ExternalLink, QrCode, Gift, Heart, HelpCircle, Briefcase, ChevronDown, Send, Sparkles, MapPin, Search } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
@@ -24,7 +25,7 @@ import { PET_FEATURE_ENABLED, selectPetCharacter } from '@/lib/pet/pet-selection
 import { getSelectedSpecialGreetingAnimation, getWelcomeCloseDelay, shouldShowSpecialGreetingAnimation } from '@/lib/special-greeting.mjs'
 import { activeRedirectUrl, normalizeUrl } from '@/lib/redirect-mode.mjs'
 import { NeonSkyline } from '@/components/profile/NeonSkyline'
-import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview, publicCardTemplate, isExclusiveTemplate } from '@/lib/card-design.mjs'
+import { cardTemplate, cardFont, cardAccent, accentTextColor, canUsePremiumDesign, cardThemeForPreview, cardThemeForTemplate, publicCardTemplate, isExclusiveTemplate } from '@/lib/card-design.mjs'
 import { canUsePublicTranslate } from '@/lib/profile-display.mjs'
 import { UiLanguageProvider, UiLanguageSelect, useUiLanguage } from '@/components/UiLanguageProvider'
 
@@ -108,6 +109,10 @@ function PublicProfileInner() {
                 .single()
 
             if (dbProfile) {
+                // Anggota perusahaan B2B: tema kartu perusahaan (mis. CNY) dipakai untuk semua anggotanya.
+                const { data: company } = dbProfile.company_id
+                    ? await supabase.from('companies').select('name, logo_url, card_template').eq('id', dbProfile.company_id).maybeSingle()
+                    : { data: null }
                 const uiTheme = dbProfile.theme || {}
                 let draftTheme: Record<string, string> = {}
                 if (designPreview) {
@@ -120,7 +125,9 @@ function PublicProfileInner() {
                 // Locked layouts can be demonstrated in the picker; saved public cards retain tier restrictions.
                 const canPreviewLayout = designPreview && thumbnailTemplate !== null && cardTemplate(thumbnailTemplate) === thumbnailTemplate
                 // Template eksklusif (mis. Neon Coast) hanya tampil kalau dibuka untuk profil ini.
-                const shownTemplate = canPreviewLayout ? cardTemplate(renderedTheme.template_id) : publicCardTemplate(renderedTheme.template_id, dbProfile)
+                const shownTemplate = canPreviewLayout ? cardTemplate(renderedTheme.template_id) : publicCardTemplate(renderedTheme.template_id, dbProfile, Date.now(), company?.card_template)
+                const companyForced = !canPreviewLayout && Boolean(company?.card_template) && shownTemplate === company?.card_template
+                const companyPreset = companyForced ? cardThemeForTemplate(shownTemplate, {}) : null
                 const processedProfile = {
                     ...dbProfile,
                     whatsapp: renderedTheme.whatsapp || '',
@@ -132,9 +139,10 @@ function PublicProfileInner() {
                     links: dbProfile.social_links || uiTheme.links || [],
                     welcome_word: uiTheme.welcome_word || 'hello',
                     welcome_duration: uiTheme.welcome_duration,
-                    primary_color: cardAccent(renderedTheme.primary),
+                    primary_color: cardAccent(companyPreset ? companyPreset.primary : renderedTheme.primary),
+                    company_brand: company ? { name: company.name, logo_url: company.logo_url } : null,
                     template_id: shownTemplate,
-                    font_pair: canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until) || canPreviewLayout || isExclusiveTemplate(shownTemplate) ? cardFont(renderedTheme.font_pair) : 'classic',
+                    font_pair: companyPreset ? cardFont(companyPreset.font_pair) : canUsePremiumDesign(dbProfile.tier, dbProfile.subscription_valid_until) || canPreviewLayout || isExclusiveTemplate(shownTemplate) ? cardFont(renderedTheme.font_pair) : 'classic',
                     active_mode: designPreview ? 'profile' : uiTheme.active_mode || 'profile',
                     redirect_url: uiTheme.redirect_url || '',
                     redirect_type: uiTheme.redirect_type || 'direct',
@@ -384,9 +392,14 @@ function PublicProfileInner() {
     const isPortrait = templateId === 'portrait'
     const isVoyage = templateId === 'voyage'
     const isStatement = templateId === 'statement'
+    const isCny = templateId === 'cny'
+    const cnyCompanyName: string = profile.company_brand?.name || profile.company || profile.display_name || ''
+    const hasCnyIdentity = ['candra naya lestari', 'pt candra naya lestari', 'cny'].includes(cnyCompanyName.trim().toLowerCase())
+    const cnyLogo: string | null = profile.company_brand?.logo_url || (hasCnyIdentity ? '/cny-logo.png' : null)
+    const showCompanyInRole = profile.company && (!isCny || profile.company.trim().toLowerCase() !== profile.display_name?.trim().toLowerCase())
     const isNeon = templateId === 'neon'
     const isPosterTheme = isVoyage || isStatement
-    const isLightMode = profile.theme_mode === 'light' || profile.theme_mode === 'liquid_glass'
+    const isLightMode = !isCny && (profile.theme_mode === 'light' || profile.theme_mode === 'liquid_glass')
     const isLiquidGlass = profile.theme_mode === 'liquid_glass'
     const isGrayscale = profile.image_filter === 'grayscale'
     const primaryColor = cardAccent(profile.primary_color)
@@ -523,12 +536,12 @@ function PublicProfileInner() {
     return (
         <>
             {/* Desktop background */}
-            <div className={`hidden md:block fixed inset-0 -z-10 ${isNeon ? 'bg-[radial-gradient(circle_at_50%_0%,#5b1a6e_0%,#1a0830_55%,#0d0418_100%)]' : isVoyage ? isLightMode ? 'bg-[#a7b58c]' : 'bg-[#15281c]' : isStatement ? isLightMode ? 'bg-[#40ce7a]' : 'bg-[#103526]' : isPortrait ? isLightMode ? 'bg-[#f1eadb]' : 'bg-[#24211e]' : 'bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900'}`} />
+            <div className={`hidden md:block fixed inset-0 -z-10 ${isCny ? 'bg-[#111811]' : isNeon ? 'bg-[radial-gradient(circle_at_50%_0%,#5b1a6e_0%,#1a0830_55%,#0d0418_100%)]' : isVoyage ? isLightMode ? 'bg-[#a7b58c]' : 'bg-[#15281c]' : isStatement ? isLightMode ? 'bg-[#40ce7a]' : 'bg-[#103526]' : isPortrait ? isLightMode ? 'bg-[#f1eadb]' : 'bg-[#24211e]' : 'bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900'}`} />
 
             <div
                 data-card-template={templateId}
                 data-card-expanded={isPortrait && portraitExpanded ? 'true' : 'false'}
-                style={isPortrait || isPosterTheme ? { '--portrait-accent': primaryColor, '--poster-accent': primaryColor } as CSSProperties : undefined}
+                style={isPortrait || isPosterTheme || isCny ? { '--portrait-accent': primaryColor, '--poster-accent': primaryColor, '--cny-accent': primaryColor } as CSSProperties : undefined}
                 data-card-font={fontPair}
                 data-card-mode={profile.theme_mode}
                 onClickCapture={designPreview ? event => {
@@ -607,9 +620,16 @@ function PublicProfileInner() {
                 <div ref={cardScrollRef} className={`card-scroll h-screen md:h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden relative ${isLiquidGlass ? 'bg-[radial-gradient(circle_at_20%_0%,rgba(125,211,252,0.24),transparent_34%),radial-gradient(circle_at_85%_22%,rgba(216,180,254,0.20),transparent_30%),linear-gradient(180deg,#edf7ff_0%,#f7fbff_48%,#eaf1f8_100%)]' : isLightMode ? 'bg-zinc-100' : 'bg-zinc-950'}`}>
 
                     {isVoyage && <header className="card-voyage-header"><span title={profile.company || profile.display_name}>{profile.company || profile.display_name}</span><UiLanguageSelect /></header>}
+                    {isCny && <header className="card-cny-header">
+                        {cnyLogo
+                            // eslint-disable-next-line @next/next/no-img-element
+                            ? <img src={cnyLogo} alt={cnyCompanyName} width={126} height={103} style={{ objectFit: 'contain' }} />
+                            : <span className="card-cny-wordmark">{cnyCompanyName}</span>}
+                        <UiLanguageSelect />
+                    </header>}
 
                     {/* Hero Photo — STICKY, stays fixed while card scrolls over it */}
-                    <div className="card-hero sticky top-0 w-full z-0" style={{ height: '55vh' }}>
+                    <div className="card-hero sticky top-0 w-full z-0" style={{ height: isCny ? 'min(32vh, 300px)' : '55vh' }}>
                         {profile.avatar_url ? (
                             <div className="relative w-full h-full">
                                 <img
@@ -620,6 +640,10 @@ function PublicProfileInner() {
                                 {/* Subtle bottom gradient */}
                                 {!(isPortrait || isPosterTheme) && <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />}
                                 {isNeon && <NeonSkyline />}
+                            </div>
+                        ) : isCny && hasCnyIdentity ? (
+                            <div className="relative h-full w-full">
+                                <Image src="/cny-sprouts.jpg" alt="" fill sizes="(min-width: 768px) 430px, 100vw" className="object-cover" priority />
                             </div>
                         ) : (
                             <div className={`relative w-full h-full flex items-center justify-center ${isLightMode ? 'bg-zinc-200' : 'bg-zinc-900'}`}>
@@ -646,7 +670,7 @@ function PublicProfileInner() {
                             {isPortrait ? <button type="button" className="card-portrait-toggle flex h-9 w-12 items-center justify-center rounded-full hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => setPortraitExpanded(current => !current)} aria-label={portraitExpanded ? t('Show portrait') : t('Expand profile')} aria-expanded={portraitExpanded}><ChevronDown className={`h-5 w-5 ${portraitExpanded ? '' : 'rotate-180'}`} /></button> : <div className={`w-10 h-1 rounded-full ${isLightMode ? 'bg-zinc-300' : 'bg-white/20'}`} />}
                         </div>
 
-                        {!isVoyage && <div className="card-language mb-5 flex justify-end"><UiLanguageSelect /></div>}
+                        {!isVoyage && !isCny && <div className="card-language mb-5 flex justify-end"><UiLanguageSelect /></div>}
 
                         {/* Profile Info */}
                         <div className="card-info text-center mb-8">
@@ -670,15 +694,15 @@ function PublicProfileInner() {
                                 <div className={`card-role flex items-center justify-center gap-2 text-sm mb-4 ${textSecondary}`}>
                                     {isPortrait && <Briefcase className="h-3.5 w-3.5 shrink-0" />}
                                     {profile.job_title && <span>{profile.job_title}</span>}
-                                    {profile.job_title && profile.company && <span className="opacity-50">•</span>}
-                                    {profile.company && <span>{profile.company}</span>}
+                                    {profile.job_title && showCompanyInRole && <span className="opacity-50">•</span>}
+                                    {showCompanyInRole && <span>{profile.company}</span>}
                                 </div>
                             )}
 
                             {profile.bio && (
                                 <div className="px-2">
-                                    <p className={`text-base leading-relaxed ${textSecondary} ${!(bioExpanded || isPosterTheme || (isPortrait && portraitExpanded)) ? 'line-clamp-3' : ''}`}>{profile.bio}</p>
-                                    {profile.bio.length > 150 && !isPosterTheme && !(isPortrait && portraitExpanded) && (
+                                    <p className={`text-base leading-relaxed ${textSecondary} ${!(bioExpanded || isPosterTheme || isCny || (isPortrait && portraitExpanded)) ? 'line-clamp-3' : ''}`}>{profile.bio}</p>
+                                    {profile.bio.length > 150 && !isPosterTheme && !isCny && !(isPortrait && portraitExpanded) && (
                                         <button onClick={() => setBioExpanded(!bioExpanded)} className={`mt-2 text-sm font-medium ${textMuted} underline underline-offset-2`}>
                                             {bioExpanded ? t('Show Less') : t('Read More')}
                                         </button>

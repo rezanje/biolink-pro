@@ -1,168 +1,81 @@
 'use client'
 
-import PageMotion from '@/components/motion/PageMotion'
-import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-    LayoutDashboard,
-    Users,
-    Package,
-    BarChart3,
-    Settings,
-    LogOut,
-    Menu,
-    X,
-    ChevronRight,
-    Building2,
-    ExternalLink
-} from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { Building2, IdCard, LayoutDashboard, LogOut, MessageSquareText, Users } from 'lucide-react'
+import PageMotion from '@/components/motion/PageMotion'
 import { useCompany } from '@/app/company/company-context'
+import { createClient } from '@/lib/supabase/client'
 
-const navItems = [
-    { href: '/company/dashboard', icon: LayoutDashboard, label: 'Overview' },
-    { href: '/company/assets', icon: Package, label: 'Asset Management' },
-    { href: '/company/users', icon: Users, label: 'User Directory' },
-    { href: '/company/analytics', icon: BarChart3, label: 'Analytics' },
-    { href: '/company/settings', icon: Settings, label: 'Settings' },
+const ITEMS = [
+    { href: '/company/dashboard', icon: LayoutDashboard, label: 'Ringkasan' },
+    { href: '/company/users', icon: Users, label: 'Karyawan' },
+    { href: '/company/leads', icon: MessageSquareText, label: 'Leads' },
 ]
 
+// Cangkang dashboard perusahaan, arah desain Kabut (sama dengan dashboard pelanggan).
 export default function CompanyShell({ children }: { children: React.ReactNode }) {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-    const { company } = useCompany()
+    const { data, companyParam } = useCompany()
     const pathname = usePathname()
+    const router = useRouter()
+    const suffix = companyParam ? `?company=${encodeURIComponent(companyParam)}` : ''
+
+    const signOut = async () => {
+        await createClient().auth.signOut()
+        router.push('/login')
+    }
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] flex overflow-hidden">
-            {/* Sidebar Desktop */}
-            <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-zinc-200 shrink-0">
-                <div className="p-8">
-                    {company?.logo_url ? (
-                        <img src={company.logo_url} alt={company.name} className="h-10 w-auto object-contain mb-2" />
-                    ) : (
-                        <div className="flex items-center gap-2 mb-2">
-                            <Building2 className="w-8 h-8 text-blue-600" />
-                            <span className="text-xl font-bold text-zinc-900">{company?.name}</span>
-                        </div>
-                    )}
-                    <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Corporate Portal</p>
-                </div>
-
-                <nav className="flex-1 px-4 space-y-1">
-                    {navItems.map((item) => {
-                        const isActive = pathname === item.href
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                    ? 'bg-zinc-900 text-white shadow-lg shadow-black/5'
-                                    : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'
-                                    }`}
-                            >
-                                <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : ''}`} />
-                                <span className="font-medium">{item.label}</span>
-                            </Link>
-                        )
-                    })}
-                </nav>
-
-                <div className="p-6 border-t border-zinc-100">
-                    <Link
-                        href="/dashboard"
-                        className="flex items-center justify-between p-4 rounded-2xl bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 transition-colors group"
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                                <LayoutDashboard className="w-4 h-4 text-zinc-600" />
-                            </div>
-                            <span className="text-sm font-medium text-zinc-600">Personal View</span>
-                        </div>
-                        <ExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-zinc-600" />
-                    </Link>
-
-                    <button className="flex items-center gap-3 w-full px-4 py-4 mt-4 text-zinc-400 hover:text-red-500 transition-colors">
-                        <LogOut className="w-5 h-5" />
-                        <span className="font-medium">Sign Out</span>
-                    </button>
-                </div>
-            </aside>
-
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col h-screen overflow-hidden">
-                {/* Mobile Header */}
-                <header className="lg:hidden bg-white border-b border-zinc-200 p-4 flex items-center justify-between">
+        <div className="min-h-screen bg-canvas font-kabut text-ink">
+            <div className="mx-auto max-w-[1200px] px-5 pb-[140px] pt-5">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2.5 rounded-full bg-surface py-1.5 pl-1.5 pr-4 shadow-row">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-fill-subtle text-ink-2">
+                            {data?.company.logo_url
+                                // eslint-disable-next-line @next/next/no-img-element
+                                ? <img src={data.company.logo_url} alt="" className="h-full w-full object-contain" />
+                                : <Building2 className="h-4 w-4" strokeWidth={1.8} />}
+                        </span>
+                        <span className="truncate text-[12.5px] font-medium">{data?.company.name}</span>
+                        <span className="hidden text-[11px] text-ink-3 sm:inline">· Portal perusahaan</span>
+                    </div>
                     <div className="flex items-center gap-2">
-                        <Building2 className="w-6 h-6 text-blue-600" />
-                        <span className="font-bold text-zinc-900 truncate max-w-[150px]">{company?.name}</span>
+                        {data?.viewerRole === 'super_admin' && (
+                            <Link href="/admin" className="hidden rounded-full bg-surface px-4 py-2.5 text-[12.5px] font-medium shadow-row sm:inline-flex">Admin Gentanala</Link>
+                        )}
+                        <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2.5 text-[12.5px] font-medium shadow-row">
+                            <IdCard className="h-4 w-4" strokeWidth={1.8} /> <span className="hidden sm:inline">Kartu saya</span>
+                        </Link>
+                        <button onClick={signOut} aria-label="Keluar" className="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2.5 text-[12.5px] font-medium shadow-row">
+                            <LogOut className="h-4 w-4" strokeWidth={1.8} /> <span className="hidden sm:inline">Keluar</span>
+                        </button>
                     </div>
-                    <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-zinc-500">
-                        <Menu className="w-6 h-6" />
-                    </button>
-                </header>
-
-                <main className="flex-1 overflow-y-auto p-6 lg:p-10">
-                    <div className="max-w-7xl mx-auto">
-                        <PageMotion key={pathname}>{children}</PageMotion>
-                    </div>
-                </main>
+                </div>
+                <PageMotion key={pathname}>{children}</PageMotion>
             </div>
 
-            {/* Mobile Sidebar Overlay */}
-            <AnimatePresence>
-                {isSidebarOpen && (
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsSidebarOpen(false)}
-                            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] lg:hidden"
-                        />
-                        <motion.aside
-                            initial={{ x: '-100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '-100%' }}
-                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="fixed inset-y-0 left-0 w-[85%] max-w-xs bg-white shadow-2xl z-[101] lg:hidden flex flex-col"
-                        >
-                            <div className="p-6 flex items-center justify-between border-b border-zinc-100">
-                                <div className="flex items-center gap-2">
-                                    <Building2 className="w-6 h-6 text-blue-600" />
-                                    <span className="font-bold text-zinc-900">{company?.name}</span>
-                                </div>
-                                <button onClick={() => setIsSidebarOpen(false)} className="p-2 text-zinc-400">
-                                    <X className="w-6 h-6" />
-                                </button>
-                            </div>
-
-                            <nav className="flex-1 px-4 py-6 space-y-2">
-                                {navItems.map((item) => {
-                                    const isActive = pathname === item.href
-                                    return (
-                                        <Link
-                                            key={item.href}
-                                            href={item.href}
-                                            onClick={() => setIsSidebarOpen(false)}
-                                            className={`flex items-center justify-between px-4 py-4 rounded-2xl transition-all ${isActive
-                                                ? 'bg-zinc-900 text-white shadow-lg'
-                                                : 'text-zinc-500'
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <item.icon className="w-5 h-5" />
-                                                <span className="font-medium">{item.label}</span>
-                                            </div>
-                                            <ChevronRight className={`w-4 h-4 ${isActive ? 'opacity-100' : 'opacity-20'}`} />
-                                        </Link>
-                                    )
-                                })}
-                            </nav>
-                        </motion.aside>
-                    </>
-                )}
-            </AnimatePresence>
+            <div className="fixed bottom-6 left-[22px] right-[22px] z-50 md:left-1/2 md:w-[300px] md:-translate-x-1/2">
+                <nav aria-label="Navigasi perusahaan" className="h-[68px] rounded-full border border-white/80 bg-white/[0.72] px-2 shadow-nav backdrop-blur-[26px] backdrop-saturate-[1.7]">
+                    <ul className="flex h-full items-center justify-around">
+                        {ITEMS.map(item => {
+                            const active = pathname === item.href
+                            return (
+                                <li key={item.href}>
+                                    <Link
+                                        href={`${item.href}${suffix}`}
+                                        aria-current={active ? 'page' : undefined}
+                                        aria-label={item.label}
+                                        title={item.label}
+                                        className={`flex h-[50px] w-[50px] items-center justify-center rounded-full transition-colors ${active ? 'bg-ink/[0.08] text-ink' : 'text-ink-2 hover:text-ink'}`}
+                                    >
+                                        <item.icon className="h-[21px] w-[21px]" strokeWidth={1.8} />
+                                    </Link>
+                                </li>
+                            )
+                        })}
+                    </ul>
+                </nav>
+            </div>
         </div>
     )
 }

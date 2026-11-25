@@ -8,6 +8,9 @@ export const CARD_TEMPLATES = [
     // exclusive: hanya untuk pelanggan yang dibuka lewat paket promo / admin
     // (profiles.unlocked_templates), tidak ikut Premium biasa.
     { id: 'neon', name: 'Neon Coast', description: 'Sunset neon, palm silhouettes and night-drive glow', exclusive: true },
+    // company: hanya lewat tema perusahaan (companies.card_template), tidak
+    // bisa dipilih perorangan.
+    { id: 'cny', name: 'CNY', description: 'Forest-dark editorial profile for Candra Naya Lestari', company: true },
 ]
 
 export const CARD_FONTS = [
@@ -50,6 +53,13 @@ export function canUsePremiumDesign(tier, validUntil, now = Date.now()) {
     return tier === 'PREMIUM' && (!validUntil || new Date(validUntil).getTime() >= now)
 }
 
+export function isCompanyTemplate(value) {
+    return CARD_TEMPLATES.some(template => template.id === value && template.company)
+}
+
+/** Template yang bisa dipilih perorangan di Appearance (tanpa template perusahaan). */
+export const PERSONAL_CARD_TEMPLATES = CARD_TEMPLATES.filter(template => !template.company)
+
 export function isExclusiveTemplate(value) {
     return CARD_TEMPLATES.some(template => template.id === value && template.exclusive)
 }
@@ -62,13 +72,19 @@ export function isExclusiveTemplate(value) {
 export function canUseCardTemplate(value, profile, now = Date.now()) {
     const template = cardTemplate(value)
     if (template === 'classic') return true
+    if (isCompanyTemplate(template)) return false
     if (isExclusiveTemplate(template)) {
         return Array.isArray(profile?.unlocked_templates) && profile.unlocked_templates.includes(template)
     }
     return canUsePremiumDesign(profile?.tier, profile?.subscription_valid_until, now)
 }
 
-export function publicCardTemplate(value, profile, now = Date.now()) {
+/**
+ * Template kartu publik. Tema perusahaan (companyTemplate) selalu menang:
+ * semua anggota perusahaan B2B tampil seragam.
+ */
+export function publicCardTemplate(value, profile, now = Date.now(), companyTemplate = null) {
+    if (companyTemplate && CARD_TEMPLATES.some(t => t.id === companyTemplate)) return companyTemplate
     const template = cardTemplate(value)
     return canUseCardTemplate(template, profile, now) ? template : 'classic'
 }
@@ -80,6 +96,7 @@ const TEMPLATE_PRESETS = {
     voyage: { theme_mode: 'light', primary: '#123D1B', font_pair: 'bold' },
     statement: { theme_mode: 'light', primary: '#16AE69', font_pair: 'condensed' },
     neon: { theme_mode: 'dark', primary: '#FF2E88', font_pair: 'bold' },
+    cny: { theme_mode: 'dark', primary: '#D73A2B', font_pair: 'classic' },
 }
 
 export function cardThemeForTemplate(value, currentTheme) {
