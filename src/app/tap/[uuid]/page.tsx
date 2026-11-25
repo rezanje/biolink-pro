@@ -94,10 +94,7 @@ export default function TapPage() {
             // 3. Handle Branding Sync & Profile Loading
             if (dbSerial.is_claimed && dbSerial.owner_id) {
                 const { data: ownerProfile } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('user_id', dbSerial.owner_id)
-                    .single()
+                    .rpc('nfc_public_profile_by_owner', { p_user_id: dbSerial.owner_id })
 
                 const isSynced = dbSerial.sync_enabled !== false
                 console.log('--- TAP DEBUG ---')
@@ -117,10 +114,7 @@ export default function TapPage() {
                 // Use a dedicated profile link if it exists
                 if (!isSynced && dbSerial.profile_id) {
                     const { data: independentProfile } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', dbSerial.profile_id)
-                        .single()
+                        .rpc('nfc_public_profile_by_id', { p_id: dbSerial.profile_id })
 
                     if (independentProfile) {
                         setSerial({

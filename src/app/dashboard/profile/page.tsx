@@ -572,15 +572,11 @@ export default function ProfileEditor() {
                 return
             }
 
-            // Check if slug is taken by another user
-            const { data: existingUser } = await supabase
-                .from('profiles')
-                .select('user_id')
-                .eq('slug', formData.slug)
-                .neq('user_id', user.id)
-                .single()
+            // Check if slug is taken by another user (profil orang lain tidak bisa dibaca langsung)
+            const { data: slugAvailable } = await supabase
+                .rpc('nfc_slug_available', { p_slug: formData.slug })
 
-            if (existingUser) {
+            if (slugAvailable === false) {
                 setError(t('This custom profile URL is already in use. Choose another one.'))
                 setIsLoading(false)
                 return

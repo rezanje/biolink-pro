@@ -46,10 +46,7 @@ export async function getSerialByUuid(serialUuid: string): Promise<SerialWithOwn
     // If claimed, fetch owner profile
     if (data.is_claimed && data.owner_id) {
         const { data: ownerProfile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('user_id', data.owner_id)
-            .single()
+            .rpc('nfc_public_profile_by_owner', { p_user_id: data.owner_id })
 
         return {
             ...data,

@@ -36,7 +36,8 @@ export default function SavedCardCollection() {
             if (!user) { window.location.assign('/login?next=/dashboard/analytics'); return }
             setUserId(user.id)
             const [saved, folderResult] = await Promise.all([
-                supabase.from('saved_profiles').select('profile_id,folder_id,created_at,profile:profiles(slug,display_name,company,job_title,avatar_url)').eq('user_id', user.id).order('created_at', { ascending: false }),
+                // Ringkasan kartu orang lain diambil lewat fungsi (tabel profiles tertutup).
+                supabase.rpc('nfc_saved_profile_cards'),
                 supabase.from('card_folders').select('id,name,created_at').eq('user_id', user.id).order('created_at', { ascending: true }),
             ])
             if (saved.error) throw saved.error

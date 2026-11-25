@@ -102,11 +102,9 @@ function PublicProfileInner() {
             const slug = params?.slug as string
             if (!slug) return
 
+            // Kartu publik dibaca lewat fungsi (satu profil, tanpa kolom privat).
             const { data: dbProfile, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('slug', slug)
-                .single()
+                .rpc('nfc_public_profile', { p_slug: slug })
 
             if (dbProfile) {
                 // Anggota perusahaan B2B: tema kartu perusahaan (mis. CNY) dipakai untuk semua anggotanya.
