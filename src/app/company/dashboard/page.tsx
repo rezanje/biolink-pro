@@ -46,6 +46,14 @@ export default function CompanyDashboardPage() {
                 </header>
             )}
 
+            {counts.unclaimed > 0 && (
+                <Link href={`/company/cards${suffix}`} className="mt-5 flex items-center gap-3 rounded-card bg-coral-soft px-5 py-4 text-coral-soft-ink">
+                    <IdCard className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} />
+                    <p className="flex-1 text-[13px]"><b className="font-semibold">{counts.unclaimed} kartu belum diaktifkan</b> karyawan. Lihat daftarnya supaya bisa diingatkan.</p>
+                    <ArrowRight className="h-4 w-4 shrink-0" />
+                </Link>
+            )}
+
             <section className="mt-6 grid grid-cols-2 gap-y-6 rounded-card bg-surface px-3 py-6 shadow-card md:grid-cols-4">
                 {[
                     { icon: Users, tone: 'bg-fill-subtle text-ink-2', value: counts.people, label: 'Karyawan', sub: `${counts.devices} perangkat aktif` },

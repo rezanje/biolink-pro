@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Building2, IdCard, LayoutDashboard, LogOut, MessageSquareText, Users } from 'lucide-react'
+import { Building2, CreditCard, IdCard, LayoutDashboard, LogOut, MessageSquareText, Users } from 'lucide-react'
 import PageMotion from '@/components/motion/PageMotion'
 import { useCompany } from '@/app/company/company-context'
 import { createClient } from '@/lib/supabase/client'
@@ -12,6 +12,7 @@ import type { CSSProperties } from 'react'
 const ITEMS = [
     { href: '/company/dashboard', icon: LayoutDashboard, label: 'Ringkasan' },
     { href: '/company/users', icon: Users, label: 'Karyawan' },
+    { href: '/company/cards', icon: CreditCard, label: 'Kartu' },
     { href: '/company/leads', icon: MessageSquareText, label: 'Leads' },
 ]
 
@@ -64,7 +65,7 @@ export default function CompanyShell({ children }: { children: React.ReactNode }
                 <PageMotion key={pathname}>{children}</PageMotion>
             </div>
 
-            <div className="fixed bottom-6 left-[22px] right-[22px] z-50 md:left-1/2 md:w-[300px] md:-translate-x-1/2">
+            <div className="fixed bottom-6 left-[22px] right-[22px] z-50 md:left-1/2 md:w-[360px] md:-translate-x-1/2">
                 <nav aria-label="Navigasi perusahaan" className="company-nav h-[68px] rounded-full border border-white/80 bg-white/[0.72] px-2 shadow-nav backdrop-blur-[26px] backdrop-saturate-[1.7]">
                     <ul className="flex h-full items-center justify-around">
                         {ITEMS.map(item => {

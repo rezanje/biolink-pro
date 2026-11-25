@@ -54,9 +54,28 @@ export async function GET(request: Request) {
         ])
         if (serials.error || analytics.error || leads.error) throw new Error('Data perusahaan tidak bisa dimuat')
 
-        // Serial yang dibuat untuk perusahaan tapi belum diaktifkan.
-        const { count: unclaimed } = await admin.from('serial_numbers')
-            .select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('is_claimed', false)
+        // Kartu/jam yang dibuat untuk perusahaan ini. UUID lengkap tidak dikirim (itu kunci klaim);
+        // cukup kode pendek untuk mencocokkan dengan kartu fisik.
+        const [companySerials, deviceTypes] = await Promise.all([
+            admin.from('serial_numbers').select('id, serial_uuid, device_type_id, is_claimed, owner_id, claimed_at, nfc_tap_count, last_tapped_at, created_at')
+                .eq('company_id', companyId).order('created_at', { ascending: false }).limit(2000),
+            admin.from('device_types').select('id, name'),
+        ])
+        if (companySerials.error) throw companySerials.error
+        const deviceName = new Map((deviceTypes.data || []).map(d => [d.id, d.name]))
+        const personByUser = new Map((people || []).map(p => [p.user_id, p.id]))
+        const cards = (companySerials.data || []).map(c => ({
+                id: c.id,
+                code: String(c.serial_uuid).slice(0, 8).toUpperCase(),
+                device: (c.device_type_id && deviceName.get(c.device_type_id)) || 'Perangkat',
+                active: Boolean(c.is_claimed),
+                person_id: c.owner_id ? personByUser.get(c.owner_id) || null : null,
+                claimed_at: c.claimed_at,
+                taps: c.nfc_tap_count || 0,
+                last_tapped_at: c.last_tapped_at,
+                created_at: c.created_at,
+            }))
+        const unclaimed = cards.filter(c => !c.active).length
 
         const summary = summarizeCompany({ people: people || [], serials: serials.data || [], analytics: analytics.data || [], leads: leads.data || [] })
         return NextResponse.json({
@@ -65,6 +84,7 @@ export async function GET(request: Request) {
             people: (people || []).map(({ user_id: _userId, ...p }) => p),
             summary: { ...summary, counts: { ...summary.counts, unclaimed: unclaimed || 0 } },
             leads: leads.data || [],
+            cards,
             leadsTruncated: (leads.data || []).length >= MAX_LEADS,
         }, { headers: PRIVATE })
     } catch (error) {

@@ -39,6 +39,18 @@ export interface PersonStats {
     lastLead: string | null
 }
 
+export interface CompanyCard {
+    id: string
+    code: string
+    device: string
+    active: boolean
+    person_id: string | null
+    claimed_at: string | null
+    taps: number
+    last_tapped_at: string | null
+    created_at: string
+}
+
 export interface CompanyWorkspace {
     company: { id: string; name: string; logo_url: string | null; website: string | null; card_template: string | null }
     viewerRole: string
@@ -51,6 +63,7 @@ export interface CompanyWorkspace {
         topPeople: PersonStats[]
     }
     leads: CompanyLead[]
+    cards: CompanyCard[]
     leadsTruncated: boolean
 }
 

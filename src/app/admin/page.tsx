@@ -51,6 +51,7 @@ import { SPECIAL_EDITIONS, normalizeSpecialEditions } from '@/lib/special-greeti
 import { newGiftToken } from '@/lib/gift.mjs'
 import { CatalogSettings, type CatalogItem } from '@/components/admin/CatalogSettings'
 import { PromoPackagesPanel, type PromoPackage } from '@/components/admin/PromoPackagesPanel'
+import { CompanyAdminAccess } from '@/components/admin/CompanyAdminAccess'
 import { PROMO_TEMPLATES } from '@/lib/promo-packages.mjs'
 import { CARD_TEMPLATES } from '@/lib/card-design.mjs'
 
@@ -1705,19 +1706,11 @@ export default function AdminPage() {
                                                 placeholder="e.g. PT. Gentanala Jaya"
                                             />
                                         </div>
-                                        <div className="bg-amber-50/50 p-4 rounded-row border border-amber-100/50">
-                                            <label className="text-xs font-semibold text-ink uppercase flex items-center gap-2 mb-1.5">
-                                                <UserCheck className="w-4 h-4" /> Company Admin Email
-                                            </label>
-                                            <input
-                                                type="email"
-                                                value={editCompany.admin_email || ''}
-                                                onChange={e => setEditCompany({ ...editCompany, admin_email: e.target.value })}
-                                                className="w-full p-3.5 bg-surface border border-hairline focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all rounded-row text-sm outline-none"
-                                                placeholder="e.g. hrd@abadi.com"
-                                            />
-                                            <p className="text-[11px] text-amber-600/80 mt-2 font-medium">Isi email ini untuk mendelegasikan akses admin ke profil company (harus email yang sudah terdaftar sebagai akun).</p>
-                                        </div>
+                                        <CompanyAdminAccess
+                                            companyId={editCompany.id || null}
+                                            admins={users.filter((u: { role?: string; company_id?: string | null }) => u.role === 'company_admin' && u.company_id === editCompany.id)}
+                                            onChanged={() => adminRole ? loadAllData(adminRole, adminCompanyId) : Promise.resolve()}
+                                        />
                                         <div className="grid grid-cols-2 gap-5">
                                             <div>
                                                 <label className="text-xs font-semibold text-ink-2 uppercase ml-1">Website</label>
@@ -1907,21 +1900,6 @@ export default function AdminPage() {
                                                 return
                                             }
                                             if (newCompany) companyId = newCompany.id
-                                        }
-
-                                        // Assign admin role if email is provided
-                                        if (companyId && editCompany.admin_email) {
-                                            const res = await fetch('/api/admin/companies/assign-admin', {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ company_id: companyId, admin_email: editCompany.admin_email })
-                                            })
-                                            const data = await res.json()
-                                            if (!res.ok) {
-                                                alert('Gagal menugaskan Admin: ' + (data.error || 'Unknown error. Pastikan email sudah register.'))
-                                            } else {
-                                                alert(data.message)
-                                            }
                                         }
 
                                         setEditCompany(null)

@@ -51,13 +51,14 @@ export async function GET(request: Request) {
             if (user) {
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('id')
+                    .select('id, role, company_id')
                     .eq('user_id', user.id)
                     .single()
 
                 if (profile) {
-                    // Returning user with profile → Dashboard
-                    return NextResponse.redirect(`${origin}/dashboard`)
+                    // Admin perusahaan → dashboard perusahaan; lainnya → dashboard
+                    const home = profile.role === 'company_admin' && profile.company_id ? '/company/dashboard' : '/dashboard'
+                    return NextResponse.redirect(`${origin}${home}`)
                 }
 
                 // User exists but NO profile = hasn't claimed any card yet

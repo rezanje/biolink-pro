@@ -52,7 +52,15 @@ function LoginContent() {
             return
         }
 
-        const nextUrl = searchParams.get('next') || '/dashboard'
+        // Admin perusahaan langsung ke dashboard perusahaannya.
+        let nextUrl = searchParams.get('next')
+        if (!nextUrl) {
+            const { data: { user } } = await supabase.auth.getUser()
+            const { data: me } = user
+                ? await supabase.from('profiles').select('role, company_id').eq('user_id', user.id).maybeSingle()
+                : { data: null }
+            nextUrl = me?.role === 'company_admin' && me.company_id ? '/company/dashboard' : '/dashboard'
+        }
         router.push(nextUrl)
     }
 
