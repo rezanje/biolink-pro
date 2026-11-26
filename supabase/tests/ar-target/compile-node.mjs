@@ -45,13 +45,12 @@ class NodeCompiler extends CompilerBase {
   }
 }
 
-const [input, output] = process.argv.slice(2)
-const img = decodePng(fs.readFileSync(input))
-console.log('gambar', img.width, 'x', img.height)
+const args = process.argv.slice(2), output = args.pop()
+const imgs = args.map(f => decodePng(fs.readFileSync(f)))
+imgs.forEach((img, i) => console.log('gambar', i, img.width, 'x', img.height))
 const c = new NodeCompiler()
 let last = -10
-await c.compileImageTargets([img], p => { if (p - last >= 10) { last = p; console.log('progress', p.toFixed(0)) } })
+await c.compileImageTargets(imgs, p => { if (p - last >= 10) { last = p; console.log('progress', p.toFixed(0)) } })
 const buf = c.exportData()
 fs.writeFileSync(output, Buffer.from(buf))
-const d = c.data[0]
-console.log('selesai', output, buf.byteLength, 'byte · titik pencocokan', d.matchingData.reduce((n, m) => n + m.maximaPoints.length + m.minimaPoints.length, 0), '· titik tracking', d.trackingData.reduce((n, t) => n + t.points.length, 0))
+console.log('selesai', output, buf.byteLength, 'byte', c.data.map((d, i) => `target ${i}: pencocokan ${d.matchingData.reduce((n, m) => n + m.maximaPoints.length + m.minimaPoints.length, 0)}, tracking ${d.trackingData.reduce((n, t) => n + t.points.length, 0)}`).join(' · '))

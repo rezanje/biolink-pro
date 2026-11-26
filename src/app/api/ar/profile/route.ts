@@ -8,7 +8,10 @@ import { createClient as createSessionClient } from '@/lib/supabase/server'
 //   preview -> hanya pemilik kartu yang sedang login (preview privat).
 // Tidak ada parameter dari browser yang bisa menyalakan fitur ini.
 const NO_STORE = { 'Cache-Control': 'private, no-store', Vary: 'Cookie' }
-const TARGET = '/ar/targets/kartu-uji-01.mind'
+// Target kamera: 0 = Kartu Uji 01 (semua akun), 1 = jam uji (dial jam milik
+// akun pilot pertama; serat kayu tiap jam berbeda, jadi hanya cocok untuk jam itu).
+const TARGET = '/ar/targets/kartu-jam-uji.mind'
+const TARGETS = [{ kind: 'kartu', scale: 1 }, { kind: 'jam', scale: 1.1 }]
 
 export async function GET(request: Request) {
     const slug = normalizeSlug(new URL(request.url).searchParams.get('slug'))
@@ -38,5 +41,5 @@ export async function GET(request: Request) {
     }
     const mode = arModeFor({ pilotIds, previewIds, ownerUserId: profile.user_id, viewerUserId, profileAccess: profile.ar_access })
     if (!mode) return NextResponse.json({ enabled: false }, { status: 404, headers: NO_STORE })
-    return NextResponse.json({ enabled: true, mode, card: arCardFromProfile(profile), target: TARGET }, { headers: NO_STORE })
+    return NextResponse.json({ enabled: true, mode, card: arCardFromProfile(profile), target: TARGET, targets: TARGETS }, { headers: NO_STORE })
 }

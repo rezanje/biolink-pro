@@ -47,7 +47,7 @@
 <div class="layer" id="s-start" hidden><div class="panel">
   <div id="preview"></div>
   <h1>Lihat hologram kartu</h1>
-  <p>Izinkan kamera, lalu arahkan ke permukaan kartu Gentanala.</p>
+  <p>Izinkan kamera, lalu arahkan ke permukaan kartu atau jam Gentanala.</p>
   <button class="btn primary" id="b-start">Buka kamera</button>
   <a class="btn ghost" data-profile-link href="/">Buka profil saja</a>
 </div></div>
@@ -67,7 +67,7 @@
   <span class="chip" id="preview-badge" hidden>Preview pribadi</span>
   <button class="chip" id="b-stop">Tanpa kamera</button>
 </div>
-<div class="layer" id="ar-guide" hidden style="pointer-events:none"><div class="frame"></div><p style="color:#fff;text-shadow:0 1px 8px #000">Arahkan ke kartu</p></div>
+<div class="layer" id="ar-guide" hidden style="pointer-events:none"><div class="frame"></div><p style="color:#fff;text-shadow:0 1px 8px #000">Arahkan ke kartu atau jam</p></div>
 <div class="hint" id="ar-hint" hidden><span class="dot"></span><span id="ar-hint-text">Mencari kartu…</span></div>
 
 <script type="module">
@@ -79,7 +79,7 @@ const params = new URLSearchParams(location.search)
 const slug = (params.get('u') || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 64)
 const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname)
 const state = { card: null, mind: null, texture: null, ar: null, previews: [], foundOnce: false, lostTimer: null, searchTimer: null }
-window.__arState = () => ({ lastError: state.lastError || null, screen: [...document.querySelectorAll('.layer, .top, .hint')].filter(e => !e.hidden).map(e => e.id), hint: $('ar-hint-text').textContent, foundOnce: state.foundOnce })
+window.__arState = () => ({ lastError: state.lastError || null, screen: [...document.querySelectorAll('.layer, .top, .hint')].filter(e => !e.hidden).map(e => e.id), hint: $('ar-hint-text').textContent, foundOnce: state.foundOnce, foundKind: state.foundKind || null })
 
 for (const a of document.querySelectorAll('[data-profile-link]')) a.href = slug ? `/${encodeURIComponent(slug)}` : '/'
 
@@ -196,10 +196,16 @@ async function startAr() {
     const mindar = new MindARThree({ container: $('ar'), imageTargetSrc: state.mind, uiLoading: 'no', uiScanning: 'no', uiError: 'no', filterMinCF: 0.0001, filterBeta: 0.001 })
     state.ar = mindar
     const { renderer, scene, camera } = mindar
-    const anchor = mindar.addAnchor(0)
-    const holo = hologram(state.texture); holo.visible = false; anchor.group.add(holo)
-    anchor.onTargetFound = () => { state.foundOnce = true; clearTimeout(state.lostTimer); clearTimeout(state.searchTimer); holo.userData.t0 = performance.now(); holo.visible = true; $('ar-guide').hidden = true; setHint('Kartu ditemukan'); $('ar-hint').hidden = true }
-    anchor.onTargetLost = () => { holo.visible = false; $('ar-hint').hidden = false; $('ar-guide').hidden = false; setHint('Kartu hilang dari kamera'); state.lostTimer = setTimeout(() => setHint('Arahkan lagi ke kartu, atau buka profil'), 4000) }
+    // Satu file target bisa berisi beberapa benda: 0 = kartu, 1 = jam (uji).
+    // Lebar target = 1 unit, jadi hologram di jam (dial kecil) diperbesar.
+    const targets = state.targets || [{ kind: 'kartu', scale: 1 }]
+    const holos = targets.map((t, i) => {
+      const anchor = mindar.addAnchor(i)
+      const holo = hologram(state.texture); holo.visible = false; holo.scale.setScalar(t.scale || 1); anchor.group.add(holo)
+      anchor.onTargetFound = () => { state.foundOnce = true; state.foundKind = t.kind; clearTimeout(state.lostTimer); clearTimeout(state.searchTimer); holo.userData.t0 = performance.now(); holo.visible = true; $('ar-guide').hidden = true; setHint(t.kind === 'jam' ? 'Jam ditemukan' : 'Kartu ditemukan'); $('ar-hint').hidden = true }
+      anchor.onTargetLost = () => { holo.visible = false; if (holos.some(h => h.visible)) return; $('ar-hint').hidden = false; $('ar-guide').hidden = false; setHint(t.kind === 'jam' ? 'Jam hilang dari kamera' : 'Kartu hilang dari kamera'); state.lostTimer = setTimeout(() => setHint('Arahkan lagi ke kartu atau jam, atau buka profil'), 4000) }
+      return holo
+    })
     // MindAR kadang gagal di dalam tanpa melempar galat (mis. GPU ditolak):
     // jangan biarkan pengguna menunggu selamanya.
     await Promise.race([
@@ -208,8 +214,8 @@ async function startAr() {
     ])
     clearTimeout(startTimer)
     setHint('Mencari kartu…')
-    state.searchTimer = setTimeout(() => { if (!state.foundOnce) setHint('Belum ketemu. Dekatkan kartu & cari tempat terang') }, 9000)
-    renderer.setAnimationLoop(now => { if (holo.visible) animate(holo, now); renderer.render(scene, camera) })
+    state.searchTimer = setTimeout(() => { if (!state.foundOnce) setHint('Belum ketemu. Dekatkan kartu/jam & cari tempat terang') }, 9000)
+    renderer.setAnimationLoop(now => { for (const h of holos) if (h.visible) animate(h, now); renderer.render(scene, camera) })
   } catch (e) {
     clearTimeout(startTimer)
     state.lastError = String(e?.message || e).slice(0, 200)
@@ -241,7 +247,7 @@ try {
   const data = res.ok ? await res.json() : { enabled: false }
   if (!data.enabled) { show('s-unavailable') }
   else {
-    state.card = data.card; state.mind = data.target
+    state.card = data.card; state.mind = data.target; state.targets = data.targets
     if (data.mode === 'preview') $('preview-badge').hidden = false
     state.texture = await cardTexture(data.card)
     show('s-start'); preview($('preview'))
