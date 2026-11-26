@@ -30,3 +30,11 @@ assert.equal(previewSlugsFor({ VERCEL_ENV: 'production', VERCEL_GIT_COMMIT_REF: 
 assert.equal(previewSlugsFor({}).size, 0)
 assert.deepEqual([...previewSlugsFor({ AR_PREVIEW_SLUGS: ' Contoh-1 ,../x' })], ['contoh-1'])
 assert.deepEqual(arConfigSummary({ VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'feat/ar-hologram' }), { environment: 'preview', pilotProfiles: 0, previewAccounts: 0, previewProfiles: 1 })
+
+// Pengaturan admin per akun (profiles.ar_access)
+const none = parsePilotUserIds('')
+assert.equal(arModeFor({ pilotIds: none, previewIds: none, ownerUserId: OWNER, viewerUserId: null, profileAccess: 'pilot' }), 'pilot')
+assert.equal(arModeFor({ pilotIds: none, previewIds: none, ownerUserId: OWNER, viewerUserId: null, profileAccess: 'preview' }), null)
+assert.equal(arModeFor({ pilotIds: none, previewIds: none, ownerUserId: OWNER, viewerUserId: OTHER, profileAccess: 'preview' }), null)
+assert.equal(arModeFor({ pilotIds: none, previewIds: none, ownerUserId: OWNER, viewerUserId: OWNER, profileAccess: 'preview' }), 'preview')
+assert.equal(arModeFor({ pilotIds: none, previewIds: none, ownerUserId: OWNER, viewerUserId: OWNER, profileAccess: 'off' }), null)

@@ -17,13 +17,14 @@ const PROFILE_UPDATE_FIELDS = [
     'subscription_valid_until',
     'unlocked_templates',
     'feature_grants',
+    'ar_access',
     'user_tag',
     'company_id',
     'updated_at',
 ]
 
 // Hak akses berbayar: hanya super admin (bukan admin perusahaan, bukan pemilik).
-export const SUPER_ADMIN_ONLY_FIELDS = ['tier', 'subscription_valid_until', 'unlocked_templates', 'feature_grants']
+export const SUPER_ADMIN_ONLY_FIELDS = ['tier', 'subscription_valid_until', 'unlocked_templates', 'feature_grants', 'ar_access']
 
 const OWNER_UPDATE_FIELDS = new Set(PROFILE_UPDATE_FIELDS.filter(field =>
     ![...SUPER_ADMIN_ONLY_FIELDS, 'user_tag', 'company_id', 'special_edition', 'special_editions'].includes(field)

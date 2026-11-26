@@ -93,6 +93,7 @@ interface SerialWithProfile {
     gift_opened_at: string | null
     // Hak akses & paket
     subscription_valid_until: string | null
+    ar_access: 'off' | 'preview' | 'pilot'
     unlocked_templates: string[]
     feature_grants: string[]
     bundle_id: string | null
@@ -302,6 +303,7 @@ export default function AdminPage() {
                 gift_token: s.gift_token || null,
                 gift_opened_at: s.gift_opened_at || null,
                 subscription_valid_until: profile?.subscription_valid_until || null,
+                ar_access: (['preview', 'pilot'].includes(profile?.ar_access) ? profile.ar_access : 'off') as 'off' | 'preview' | 'pilot',
                 unlocked_templates: Array.isArray(profile?.unlocked_templates) ? profile.unlocked_templates : [],
                 feature_grants: Array.isArray(profile?.feature_grants) ? profile.feature_grants : [],
                 bundle_id: s.bundle_id || null,
@@ -748,6 +750,7 @@ export default function AdminPage() {
                                                         </span>
                                                     )}
                                                     {serial.user_tag && <span className={`${BADGE} bg-butter/40 text-ink`}>{serial.user_tag}</span>}
+                                                    {serial.ar_access !== 'off' && <span className={`${BADGE} bg-sky/40 text-ink`} title="Uji coba hologram AR">AR · {serial.ar_access === 'pilot' ? 'aktif' : 'pribadi'}</span>}
                                                 </div>
                                             )}
                                             {serial.special_editions.length > 0 && (
@@ -1454,6 +1457,28 @@ export default function AdminPage() {
                                                         )}
                                                     </div>
                                                 )}
+                                                <div>
+                                                    <label className="text-xs font-semibold text-ink-2 uppercase">Uji coba hologram AR</label>
+                                                    <div className="mt-2 grid grid-cols-3 gap-1 rounded-full bg-fill-subtle p-1">
+                                                        {([['off', 'Mati'], ['preview', 'Pribadi'], ['pilot', 'Aktif']] as const).map(([value, label]) => (
+                                                            <button
+                                                                key={value}
+                                                                type="button"
+                                                                onClick={() => setEditUser({ ...editUser, ar_access: value })}
+                                                                className={`rounded-full px-3 py-2 text-[12px] font-medium ${(editUser.ar_access || 'off') === value ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink'}`}
+                                                            >
+                                                                {label}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                    <p className="mt-1.5 text-[11px] text-ink-3">
+                                                        {(editUser.ar_access || 'off') === 'pilot'
+                                                            ? 'Siapa pun yang memindai kartu ini bisa melihat hologramnya.'
+                                                            : (editUser.ar_access || 'off') === 'preview'
+                                                                ? 'Hanya pemilik kartu yang sedang login yang bisa melihat hologramnya.'
+                                                                : 'Tombol hologram tidak muncul di kartu ini.'}
+                                                    </p>
+                                                </div>
                                                 {PROMO_TEMPLATES.length > 0 && (
                                                     <div>
                                                         <label className="text-xs font-semibold text-ink-2 uppercase">Tema eksklusif</label>
@@ -1623,6 +1648,7 @@ export default function AdminPage() {
                                                         tier: editUser.tier,
                                                         subscription_valid_until: editUser.subscription_valid_until || null,
                                                         unlocked_templates: editUser.unlocked_templates || [],
+                                                        ar_access: editUser.ar_access || 'off',
                                                     } : {}),
                                                     user_tag: editUser.user_tag,
                                                     company_id: editUser.company_id || null,

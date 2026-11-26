@@ -37,6 +37,7 @@ function superAdminFieldError(updates: Record<string, unknown>): string | null {
         const value = updates.unlocked_templates
         if (!Array.isArray(value) || value.some(id => typeof id !== 'string' || !TEMPLATE_IDS.has(id))) return 'Template tidak dikenal'
     }
+    if ('ar_access' in updates && !['off', 'preview', 'pilot'].includes(String(updates.ar_access))) return 'Mode hologram tidak dikenal'
     if ('feature_grants' in updates) {
         const value = updates.feature_grants
         if (!Array.isArray(value) || value.some(key => typeof key !== 'string' || !/^[a-z0-9_]{1,40}$/.test(key))) return 'Fitur tidak valid'

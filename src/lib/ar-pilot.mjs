@@ -31,13 +31,17 @@ export function normalizeSlug(value) {
     return /^[a-z0-9_-]{1,64}$/.test(s) ? s : null
 }
 
+export const AR_ACCESS_VALUES = ['off', 'preview', 'pilot']
+
 /**
  * Mode hologram untuk satu kartu: 'pilot' | 'preview' | null.
+ * profileAccess = profiles.ar_access yang diatur admin ('off'|'preview'|'pilot').
  * viewerUserId = user yang sedang login (dari sesi server), atau null.
  */
-export function arModeFor({ pilotIds, previewIds, ownerUserId, viewerUserId }) {
-    if (isArPilot(pilotIds, ownerUserId)) return 'pilot'
-    if (isArPilot(previewIds, ownerUserId) && viewerUserId && String(viewerUserId).toLowerCase() === String(ownerUserId).toLowerCase()) return 'preview'
+export function arModeFor({ pilotIds, previewIds, ownerUserId, viewerUserId, profileAccess = 'off' }) {
+    if (profileAccess === 'pilot' || isArPilot(pilotIds, ownerUserId)) return 'pilot'
+    const preview = profileAccess === 'preview' || isArPilot(previewIds, ownerUserId)
+    if (preview && viewerUserId && String(viewerUserId).toLowerCase() === String(ownerUserId).toLowerCase()) return 'preview'
     return null
 }
 
