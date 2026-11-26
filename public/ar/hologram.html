@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Hologram kartu · Gentanala</title>
+<!-- Pilot hologram AR. Library dimuat dari folder sendiri (tanpa CDN). -->
+<script type="importmap">{"imports":{"three":"/vendor/three/three.module.js","three/addons/":"/vendor/three/addons/"}}</script>
+<style>
+  :root { --canvas:#111214; --surface:#1c1d21; --ink:#f5f3e9; --ink2:#b8bcb3; --accent:#e8703a; --line:rgba(245,243,233,.12) }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+  html, body { margin:0; height:100%; background:var(--canvas); color:var(--ink); font:15px/1.45 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; overflow:hidden }
+  #ar { position:fixed; inset:0 }
+  #ar video { object-fit:cover }
+  .layer { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; z-index:10 }
+  .panel { width:100%; max-width:380px; background:var(--surface); border:1px solid var(--line); border-radius:26px; padding:24px; box-shadow:0 24px 60px -30px #000 }
+  h1 { font-size:22px; margin:0 0 6px; letter-spacing:-.02em }
+  p { margin:0; color:var(--ink2); font-size:13.5px }
+  .btn { display:flex; align-items:center; justify-content:center; width:100%; margin-top:10px; padding:14px 18px; border-radius:999px; border:0; font:600 14px system-ui, sans-serif; cursor:pointer; text-decoration:none }
+  .primary { background:var(--accent); color:#fff }
+  .ghost { background:rgba(245,243,233,.08); color:var(--ink) }
+  .hint { position:fixed; left:50%; bottom:calc(28px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:20; display:flex; gap:8px; align-items:center; padding:10px 16px; border-radius:999px; background:rgba(17,18,20,.78); backdrop-filter:blur(12px); font-size:13px; white-space:nowrap }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); animation:p 1.2s infinite }
+  @keyframes p { 50% { opacity:.25 } }
+  .top { position:fixed; top:calc(14px + env(safe-area-inset-top)); left:14px; right:14px; z-index:20; display:flex; justify-content:space-between; gap:8px }
+  .chip { padding:9px 14px; border-radius:999px; background:rgba(17,18,20,.72); backdrop-filter:blur(12px); color:var(--ink); font:600 12.5px system-ui, sans-serif; border:0; text-decoration:none; cursor:pointer }
+  .frame { width:min(78vw,340px); aspect-ratio:1.585; border:2px dashed rgba(245,243,233,.55); border-radius:18px; margin:0 auto 18px }
+  #preview { width:100%; height:260px; margin:-8px 0 6px; touch-action:none }
+  [hidden] { display:none !important }
+</style>
+</head>
+<body>
+<div id="ar" aria-hidden="true"></div>
+
+<!-- 1. Memuat -->
+<div class="layer" id="s-loading"><div class="panel"><h1>Memuat kartu…</h1><p>Sebentar ya.</p></div></div>
+
+<!-- 2. Tidak tersedia (bukan kartu pilot / link salah) -->
+<div class="layer" id="s-unavailable" hidden><div class="panel">
+  <h1>Hologram belum tersedia</h1>
+  <p>Fitur ini masih uji coba untuk kartu tertentu.</p>
+  <a class="btn primary" data-profile-link href="/">Buka profil</a>
+</div></div>
+
+<!-- 3. Mulai -->
+<div class="layer" id="s-start" hidden><div class="panel">
+  <div id="preview"></div>
+  <h1>Lihat hologram kartu</h1>
+  <p>Izinkan kamera, lalu arahkan ke permukaan kartu Gentanala.</p>
+  <button class="btn primary" id="b-start">Buka kamera</button>
+  <a class="btn ghost" data-profile-link href="/">Buka profil saja</a>
+</div></div>
+
+<!-- 4. Kamera tidak bisa dipakai -->
+<div class="layer" id="s-fallback" hidden><div class="panel">
+  <div id="preview2" style="width:100%;height:260px;margin:-8px 0 6px;touch-action:none"></div>
+  <h1 id="fb-title">Kamera tidak bisa dipakai</h1>
+  <p id="fb-text">Kamu tetap bisa melihat kartunya. Geser untuk memutar.</p>
+  <a class="btn primary" data-profile-link href="/">Buka profil</a>
+  <button class="btn ghost" id="b-retry">Coba kamera lagi</button>
+</div></div>
+
+<!-- 5. Mode kamera -->
+<div class="top" id="ar-top" hidden>
+  <a class="chip" data-profile-link href="/">← Profil</a>
+  <button class="chip" id="b-stop">Tanpa kamera</button>
+</div>
+<div class="layer" id="ar-guide" hidden style="pointer-events:none"><div class="frame"></div><p style="color:#fff;text-shadow:0 1px 8px #000">Arahkan ke kartu</p></div>
+<div class="hint" id="ar-hint" hidden><span class="dot"></span><span id="ar-hint-text">Mencari kartu…</span></div>
+
+<script type="module">
+import * as THREE from 'three'
+
+const $ = id => document.getElementById(id)
+const show = (...ids) => { for (const el of document.querySelectorAll('.layer, .top, .hint')) el.hidden = !ids.includes(el.id) }
+const params = new URLSearchParams(location.search)
+const slug = (params.get('u') || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 64)
+const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname)
+const state = { card: null, mind: null, texture: null, ar: null, previews: [], foundOnce: false, lostTimer: null, searchTimer: null }
+window.__arState = () => ({ lastError: state.lastError || null, screen: [...document.querySelectorAll('.layer, .top, .hint')].filter(e => !e.hidden).map(e => e.id), hint: $('ar-hint-text').textContent, foundOnce: state.foundOnce })
+
+for (const a of document.querySelectorAll('[data-profile-link]')) a.href = slug ? `/${encodeURIComponent(slug)}` : '/'
+
+// ---------- Kartu 3D dari data profil (digambar di kanvas, bukan HTML) ----------
+async function loadAvatar(url) {
+  if (!url) return null
+  try {
+    const img = new Image(); img.crossOrigin = 'anonymous'; img.src = url
+    await img.decode(); return img
+  } catch { return null }
+}
+
+function fitText(ctx, text, max) {
+  if (ctx.measureText(text).width <= max) return text
+  while (text.length > 1 && ctx.measureText(text + '…').width > max) text = text.slice(0, -1)
+  return text + '…'
+}
+
+async function cardTexture(card) {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 646
+  const g = c.getContext('2d')
+  const grad = g.createLinearGradient(0, 0, 1024, 646)
+  grad.addColorStop(0, 'rgba(20,28,40,0.92)'); grad.addColorStop(1, 'rgba(48,22,14,0.92)')
+  g.fillStyle = grad; roundRect(g, 0, 0, 1024, 646, 56); g.fill()
+  g.strokeStyle = 'rgba(232,112,58,0.95)'; g.lineWidth = 10; roundRect(g, 5, 5, 1014, 636, 52); g.stroke()
+  for (let y = 0; y < 646; y += 6) { g.fillStyle = 'rgba(255,255,255,0.035)'; g.fillRect(0, y, 1024, 2) } // garis pindai
+  const avatar = await loadAvatar(card.avatar_url)
+  g.save(); g.beginPath(); g.arc(200, 323, 130, 0, Math.PI * 2); g.closePath(); g.clip()
+  if (avatar) { const s = Math.max(260 / avatar.width, 260 / avatar.height); g.drawImage(avatar, 200 - avatar.width * s / 2, 323 - avatar.height * s / 2, avatar.width * s, avatar.height * s) }
+  else { g.fillStyle = '#2d2f35'; g.fillRect(70, 193, 260, 260); g.fillStyle = '#f5f3e9'; g.font = '700 120px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText((card.display_name || '?').trim().charAt(0).toUpperCase() || '?', 200, 330) }
+  g.restore()
+  g.strokeStyle = 'rgba(232,112,58,0.9)'; g.lineWidth = 8; g.beginPath(); g.arc(200, 323, 134, 0, Math.PI * 2); g.stroke()
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic'
+  g.fillStyle = '#f5f3e9'; g.font = '700 64px Georgia, serif'; g.fillText(fitText(g, card.display_name || 'Tanpa nama', 600), 380, 300)
+  g.fillStyle = '#f2b08e'; g.font = '500 36px system-ui, sans-serif'; g.fillText(fitText(g, card.job_title || '', 600), 380, 360)
+  g.fillStyle = 'rgba(245,243,233,0.75)'; g.font = '400 32px system-ui, sans-serif'; g.fillText(fitText(g, card.company || '', 600), 380, 410)
+  g.fillStyle = 'rgba(245,243,233,0.45)'; g.font = '600 22px system-ui, sans-serif'; g.fillText('GENTANALA · DIGITAL PROFILE', 380, 520)
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t
+}
+function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath() }
+
+// Kartu hologram: panel foto/nama + cahaya + cincin. Lebar 1 = lebar kartu fisik.
+function hologram(texture) {
+  const group = new THREE.Group()
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.631), new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide }))
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(1.18, 0.8), new THREE.MeshBasicMaterial({ color: 0xe8703a, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, depthWrite: false }))
+  glow.position.z = -0.01
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.32, 48, 1, true), new THREE.MeshBasicMaterial({ color: 0xe8703a, transparent: true, opacity: 0.12, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }))
+  beam.rotation.x = Math.PI / 2; beam.position.z = -0.17
+  const card = new THREE.Group(); card.add(glow, panel)
+  group.add(beam, card)
+  group.userData = { card, t0: performance.now() }
+  return group
+}
+function animate(group, now, raise = 0.32) {
+  const t = (now - group.userData.t0) / 1000, rise = Math.min(1, t / 0.9), ease = 1 - Math.pow(1 - rise, 3)
+  const card = group.userData.card
+  card.position.z = 0.02 + raise * ease + Math.sin(t * 1.6) * 0.015
+  card.rotation.x = 0.35 * ease
+  card.scale.setScalar(0.6 + 0.4 * ease)
+}
+
+// ---------- Pratinjau tanpa kamera (juga dipakai sebagai cadangan) ----------
+function preview(container) {
+  if (!container || state.previews.some(p => p.container === container)) return
+  try {
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+    const w = container.clientWidth || 320, h = container.clientHeight || 260
+    renderer.setSize(w, h); container.appendChild(renderer.domElement)
+    const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(35, w / h, 0.01, 10)
+    cam.position.set(0, -0.15, 1.9); cam.lookAt(0, 0, 0)
+    const holo = hologram(state.texture); holo.rotation.x = -0.9; scene.add(holo)
+    let drag = null, yaw = 0
+    container.addEventListener('pointerdown', e => { drag = e.clientX })
+    addEventListener('pointerup', () => { drag = null })
+    addEventListener('pointermove', e => { if (drag !== null) { yaw += (e.clientX - drag) / 150; drag = e.clientX } })
+    const loop = now => { holo.rotation.z = yaw + Math.sin(now / 1800) * 0.18; animate(holo, now, 0.25); renderer.render(scene, cam); requestAnimationFrame(loop) }
+    requestAnimationFrame(loop)
+    state.previews.push({ container })
+  } catch {
+    container.innerHTML = ''
+    const img = document.createElement('img'); img.alt = ''; img.style.cssText = 'width:100%;border-radius:16px'
+    img.src = state.texture?.image?.toDataURL?.() || ''; container.appendChild(img)
+  }
+}
+
+function fallback(title, text) {
+  stopAr()
+  $('fb-title').textContent = title; $('fb-text').textContent = text
+  show('s-fallback'); preview($('preview2'))
+}
+
+// ---------- Mode kamera ----------
+function setHint(text) { $('ar-hint-text').textContent = text }
+async function startAr() {
+  show('ar-top', 'ar-guide', 'ar-hint'); setHint('Membuka kamera…')
+  if (!navigator.mediaDevices?.getUserMedia) return fallback('Kamera tidak tersedia', 'Browser ini tidak memberi akses kamera. Kamu tetap bisa melihat kartunya.')
+  // Minta izin kamera sendiri dulu: pesan galatnya jelas (ditolak / tidak ada
+  // kamera), dan izin yang sudah diberikan dipakai ulang oleh MindAR.
+  try {
+    const probe = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+    probe.getTracks().forEach(t => t.stop())
+  } catch (e) {
+    const name = e?.name || ''
+    if (name === 'NotAllowedError' || name === 'SecurityError') return fallback('Izin kamera ditolak', 'Tanpa kamera pun kamu tetap bisa melihat kartunya dan membuka profil.')
+    return fallback('Kamera tidak ditemukan', 'Kamu tetap bisa melihat kartunya dan membuka profil.')
+  }
+  // Pengenal gambar butuh GPU sungguhan (WebGL tanpa "performance caveat").
+  if (!gpuReady()) return fallback('Hologram tidak bisa dijalankan di sini', 'Perangkat atau browser ini belum mendukung. Kamu tetap bisa melihat kartunya.')
+  let startTimer
+  try {
+    const { MindARThree } = await import('/vendor/mindar/mindar-image-three.prod.js')
+    const mindar = new MindARThree({ container: $('ar'), imageTargetSrc: state.mind, uiLoading: 'no', uiScanning: 'no', uiError: 'no', filterMinCF: 0.0001, filterBeta: 0.001 })
+    state.ar = mindar
+    const { renderer, scene, camera } = mindar
+    const anchor = mindar.addAnchor(0)
+    const holo = hologram(state.texture); holo.visible = false; anchor.group.add(holo)
+    anchor.onTargetFound = () => { state.foundOnce = true; clearTimeout(state.lostTimer); clearTimeout(state.searchTimer); holo.userData.t0 = performance.now(); holo.visible = true; $('ar-guide').hidden = true; setHint('Kartu ditemukan'); $('ar-hint').hidden = true }
+    anchor.onTargetLost = () => { holo.visible = false; $('ar-hint').hidden = false; $('ar-guide').hidden = false; setHint('Kartu hilang dari kamera'); state.lostTimer = setTimeout(() => setHint('Arahkan lagi ke kartu, atau buka profil'), 4000) }
+    // MindAR kadang gagal di dalam tanpa melempar galat (mis. GPU ditolak):
+    // jangan biarkan pengguna menunggu selamanya.
+    await Promise.race([
+      mindar.start(),
+      new Promise((_, reject) => { startTimer = setTimeout(() => reject(new Error('start timeout')), 15000) }),
+    ])
+    clearTimeout(startTimer)
+    setHint('Mencari kartu…')
+    state.searchTimer = setTimeout(() => { if (!state.foundOnce) setHint('Belum ketemu. Dekatkan kartu & cari tempat terang') }, 9000)
+    renderer.setAnimationLoop(now => { if (holo.visible) animate(holo, now); renderer.render(scene, camera) })
+  } catch (e) {
+    clearTimeout(startTimer)
+    state.lastError = String(e?.message || e).slice(0, 200)
+    fallback('Hologram tidak bisa dijalankan di sini', 'Perangkat atau browser ini belum mendukung. Kamu tetap bisa melihat kartunya.')
+  }
+}
+function gpuReady() {
+  try {
+    const c = document.createElement('canvas')
+    const gl = c.getContext('webgl2', { failIfMajorPerformanceCaveat: true }) || c.getContext('webgl', { failIfMajorPerformanceCaveat: true })
+    const ok = Boolean(gl)
+    gl?.getExtension('WEBGL_lose_context')?.loseContext()
+    return ok
+  } catch { return false }
+}
+function stopAr() {
+  clearTimeout(state.lostTimer); clearTimeout(state.searchTimer)
+  if (state.ar) { try { state.ar.renderer.setAnimationLoop(null); state.ar.stop() } catch {} ; state.ar = null }
+  $('ar').innerHTML = ''
+}
+
+$('b-start').onclick = () => startAr()
+$('b-retry').onclick = () => startAr()
+$('b-stop').onclick = () => fallback('Mode tanpa kamera', 'Geser untuk memutar kartunya.')
+
+// ---------- Awal ----------
+try {
+  const res = await fetch(`/api/ar/profile?slug=${encodeURIComponent(slug)}`, { cache: 'no-store' })
+  const data = res.ok ? await res.json() : { enabled: false }
+  if (!data.enabled) { show('s-unavailable') }
+  else {
+    state.card = data.card; state.mind = data.target
+    state.texture = await cardTexture(data.card)
+    show('s-start'); preview($('preview'))
+  }
+} catch { show('s-unavailable') }
+
+// Pengait uji lokal saja: mensimulasikan kartu ditemukan/hilang tanpa kamera.
+if (isLocal) window.__arTest = { fallback, stopAr }
+</script>
+</body>
+</html>
