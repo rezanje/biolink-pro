@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { parsePilotUserIds, isArPilot, arCardFromProfile, normalizeSlug, arModeFor } from './ar-pilot.mjs'
+import { parsePilotUserIds, isArPilot, arCardFromProfile, normalizeSlug, arModeFor, previewSlugsFor, arConfigSummary } from './ar-pilot.mjs'
 
 const P = 'a0000000-0000-0000-0000-0000000000a1'
 const ids = parsePilotUserIds(` ${P.toUpperCase()} , bukan-uuid,,`)
@@ -22,3 +22,11 @@ assert.equal(arModeFor({ pilotIds, previewIds, ownerUserId: OWNER, viewerUserId:
 assert.equal(arModeFor({ pilotIds, previewIds, ownerUserId: OWNER, viewerUserId: null }), null)           // anonim, kartu preview
 assert.equal(arModeFor({ pilotIds, previewIds, ownerUserId: OWNER, viewerUserId: OTHER }), null)          // akun lain, kartu preview
 assert.equal(arModeFor({ pilotIds, previewIds, ownerUserId: OTHER, viewerUserId: OTHER }), null)          // tidak terdaftar sama sekali
+
+// Preview per deployment
+assert.deepEqual([...previewSlugsFor({ VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'feat/ar-hologram' })], ['rezanje'])
+assert.equal(previewSlugsFor({ VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'cabang-lain' }).size, 0)
+assert.equal(previewSlugsFor({ VERCEL_ENV: 'production', VERCEL_GIT_COMMIT_REF: 'feat/ar-hologram', AR_PREVIEW_SLUGS: 'rezanje' }).size, 0)
+assert.equal(previewSlugsFor({}).size, 0)
+assert.deepEqual([...previewSlugsFor({ AR_PREVIEW_SLUGS: ' Contoh-1 ,../x' })], ['contoh-1'])
+assert.deepEqual(arConfigSummary({ VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'feat/ar-hologram' }), { environment: 'preview', pilotProfiles: 0, previewAccounts: 0, previewProfiles: 1 })

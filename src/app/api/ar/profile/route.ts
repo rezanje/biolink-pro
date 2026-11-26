@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { arCardFromProfile, arModeFor, normalizeSlug, parsePilotUserIds } from '@/lib/ar-pilot.mjs'
+import { arCardFromProfile, arModeFor, normalizeSlug, parsePilotUserIds, previewSlugsFor } from '@/lib/ar-pilot.mjs'
 import { createClient as createSessionClient } from '@/lib/supabase/server'
 
 // Hologram AR. Ketersediaan ditentukan server dari PEMILIK kartu:
@@ -14,7 +14,8 @@ export async function GET(request: Request) {
     const slug = normalizeSlug(new URL(request.url).searchParams.get('slug'))
     const pilotIds = parsePilotUserIds(process.env.AR_PILOT_USER_IDS)
     const previewIds = parsePilotUserIds(process.env.AR_PREVIEW_USER_IDS)
-    if (!slug || (pilotIds.size === 0 && previewIds.size === 0)) return NextResponse.json({ enabled: false }, { status: 404, headers: NO_STORE })
+    const previewSlugs = previewSlugsFor(process.env)
+    if (!slug || (pilotIds.size === 0 && previewIds.size === 0 && previewSlugs.size === 0)) return NextResponse.json({ enabled: false }, { status: 404, headers: NO_STORE })
 
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY
     if (!key) return NextResponse.json({ enabled: false }, { status: 503, headers: NO_STORE })
@@ -26,6 +27,10 @@ export async function GET(request: Request) {
     if (!profile || profile.is_public === false) return NextResponse.json({ enabled: false }, { status: 404, headers: NO_STORE })
 
     // Sesi hanya dibaca kalau kartu ini ada di daftar preview.
+    // Profil preview per deployment (berdasarkan link) diperlakukan sama:
+    // pemiliknya yang terdaftar, dan tetap harus login sendiri.
+    if (previewSlugs.has(String(profile.slug).toLowerCase()) && profile.user_id) previewIds.add(String(profile.user_id).toLowerCase())
+
     let viewerUserId: string | null = null
     if (previewIds.has(String(profile.user_id).toLowerCase())) {
         const session = await createSessionClient()

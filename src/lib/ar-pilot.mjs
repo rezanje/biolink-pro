@@ -40,3 +40,26 @@ export function arModeFor({ pilotIds, previewIds, ownerUserId, viewerUserId }) {
     if (isArPilot(previewIds, ownerUserId) && viewerUserId && String(viewerUserId).toLowerCase() === String(ownerUserId).toLowerCase()) return 'preview'
     return null
 }
+
+// Preview privat per deployment, tanpa perlu mengubah env Vercel:
+// hanya berlaku di Vercel Preview dari cabang uji ini, dan selalu diabaikan di
+// production. Berisi LINK profil (publik), bukan user id; pemiliknya dicari
+// server, dan hologram tetap hanya untuk pemilik yang sedang login.
+const BRANCH_PREVIEW = { branch: 'feat/ar-hologram', slugs: ['rezanje'] }
+
+export function previewSlugsFor(env) {
+    if (env.VERCEL_ENV === 'production') return new Set()
+    const slugs = String(env.AR_PREVIEW_SLUGS || '').split(',').map(s => normalizeSlug(s)).filter(Boolean)
+    if (env.VERCEL_ENV === 'preview' && env.VERCEL_GIT_COMMIT_REF === BRANCH_PREVIEW.branch) slugs.push(...BRANCH_PREVIEW.slugs)
+    return new Set(slugs)
+}
+
+/** Ringkasan konfigurasi tanpa nilai (untuk verifikasi deployment). */
+export function arConfigSummary(env) {
+    return {
+        environment: env.VERCEL_ENV || 'local',
+        pilotProfiles: parsePilotUserIds(env.AR_PILOT_USER_IDS).size,
+        previewAccounts: parsePilotUserIds(env.AR_PREVIEW_USER_IDS).size,
+        previewProfiles: previewSlugsFor(env).size,
+    }
+}
