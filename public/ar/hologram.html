@@ -64,6 +64,7 @@
 <!-- 5. Mode kamera -->
 <div class="top" id="ar-top" hidden>
   <a class="chip" data-profile-link href="/">← Profil</a>
+  <span class="chip" id="preview-badge" hidden>Preview pribadi</span>
   <button class="chip" id="b-stop">Tanpa kamera</button>
 </div>
 <div class="layer" id="ar-guide" hidden style="pointer-events:none"><div class="frame"></div><p style="color:#fff;text-shadow:0 1px 8px #000">Arahkan ke kartu</p></div>
@@ -241,6 +242,7 @@ try {
   if (!data.enabled) { show('s-unavailable') }
   else {
     state.card = data.card; state.mind = data.target
+    if (data.mode === 'preview') $('preview-badge').hidden = false
     state.texture = await cardTexture(data.card)
     show('s-start'); preview($('preview'))
   }

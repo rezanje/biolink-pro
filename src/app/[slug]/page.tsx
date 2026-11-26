@@ -82,7 +82,7 @@ function PublicProfileInner() {
     const [showQR, setShowQR] = useState(false)
     const [showLeadModal, setShowLeadModal] = useState(false)
     // Pilot hologram AR: server yang menentukan (pemilik kartu terdaftar pilot).
-    const [arEnabled, setArEnabled] = useState(false)
+    const [arMode, setArMode] = useState<'pilot' | 'preview' | null>(null)
     // Pet asisten. Urutan layar pembuka: pet keluar dari kartu dan melambai
     // dulu (babak `petIntro`), baru layar hello — animasi edisi spesial dan
     // kata sapaan yang diketik — lalu pet mendarat di pojok.
@@ -202,7 +202,7 @@ function PublicProfileInner() {
         let live = true
         fetch(`/api/ar/profile?slug=${encodeURIComponent(profile.slug)}`, { cache: 'no-store' })
             .then(res => res.ok ? res.json() : { enabled: false })
-            .then(data => { if (live) setArEnabled(data?.enabled === true) })
+            .then(data => { if (live) setArMode(data?.enabled === true ? (data.mode === 'preview' ? 'preview' : 'pilot') : null) })
             .catch(() => {})
         return () => { live = false }
     }, [profile?.slug, designPreview])
@@ -766,12 +766,12 @@ function PublicProfileInner() {
                             <PublicInterpreter profileSlug={profile.slug} displayName={profile.display_name} />
                         )}
 
-                        {arEnabled && (
+                        {arMode && (
                             <a
                                 href={`/ar/hologram.html?u=${encodeURIComponent(profile.slug)}`}
                                 className={`card-hologram mb-3 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold tracking-wide transition-all active:scale-[0.98] ${isLightMode ? 'bg-white/60 text-zinc-800 border border-white/60' : 'bg-zinc-900/75 text-white border border-white/10'}`}
                             >
-                                <Sparkles className="h-4 w-4" /> {t('View hologram')}
+                                <Sparkles className="h-4 w-4" /> {t('View hologram')}{arMode === 'preview' && <span className="ml-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] uppercase tracking-wider">Preview</span>}
                             </a>
                         )}
 

@@ -1,7 +1,9 @@
-// Pilot hologram AR: hanya kartu milik akun yang terdaftar di
-// AR_PILOT_USER_IDS (user id, dipisah koma) yang bisa membuka hologram.
-// Dicek di server berdasarkan PEMILIK kartu (user_id), bukan link: link bisa
-// diganti, user id tidak.
+// Hologram AR, dua tahap (dicek di server berdasarkan PEMILIK kartu, yaitu
+// profiles.user_id, bukan link: link bisa diganti, user id tidak):
+//   * preview privat  (AR_PREVIEW_USER_IDS): hanya pemilik kartu yang sedang
+//     login yang bisa membuka hologram kartunya sendiri. Pemindai lain tidak.
+//   * pilot           (AR_PILOT_USER_IDS): siapa pun yang memindai kartu itu
+//     (pengunjung tanpa login) bisa melihat hologramnya, sama seperti NFC.
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -27,4 +29,14 @@ export function arCardFromProfile(profile) {
 export function normalizeSlug(value) {
     const s = String(value || '').trim().toLowerCase()
     return /^[a-z0-9_-]{1,64}$/.test(s) ? s : null
+}
+
+/**
+ * Mode hologram untuk satu kartu: 'pilot' | 'preview' | null.
+ * viewerUserId = user yang sedang login (dari sesi server), atau null.
+ */
+export function arModeFor({ pilotIds, previewIds, ownerUserId, viewerUserId }) {
+    if (isArPilot(pilotIds, ownerUserId)) return 'pilot'
+    if (isArPilot(previewIds, ownerUserId) && viewerUserId && String(viewerUserId).toLowerCase() === String(ownerUserId).toLowerCase()) return 'preview'
+    return null
 }

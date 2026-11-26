@@ -1,7 +1,7 @@
 # Target AR kartu (pilot hologram)
 
-- Gambar contoh: `public/ar/targets/sample-card.svg` / `.png` (bukan desain final; ganti dengan artwork kartu dari tim desain).
-- File target MindAR: `public/ar/targets/sample-card.mind`.
+- Target: `public/ar/targets/kartu-uji-01.png` = PNG asli "Target AR Kartu Uji 01" dari tim desain (1700×1080 px, cetak 85×54 mm matte, tanpa crop). File ini juga yang dicetak; sha256 82bf08ed….
+- File target MindAR: `public/ar/targets/kartu-uji-01.mind`.
 
 Menyusun ulang target setelah artwork berubah (jalur CPU, tanpa GPU):
 
